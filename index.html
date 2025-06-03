@@ -1324,8 +1324,10 @@
 
 
         // --- INICIALIZAÇÃO PRINCIPAL DA APLICAÇÃO ---
+        // Esta função é chamada quando o DOM está pronto e o Firebase é inicializado.
         async function initApp() {
             console.log("initApp: Iniciando...");
+
             // Atualiza informações do utilizador no cabeçalho
             if (currentUser) {
                 document.getElementById('user-info').textContent = `Olá, ${userRole === 'secretary' ? 'Secretário(a)' : 'Líder de Unidade'} (ID: ${currentUser.uid})`;
@@ -1352,11 +1354,13 @@
             } catch (error) {
                 console.error("initApp: Erro ao buscar dados Firebase:", error);
                 showMessage("Erro ao carregar dados. Por favor, verifique a configuração do Firebase e as regras de segurança.");
-                // Não retorna aqui, permite que o resto da UI seja renderizada mesmo com erro de dados
             } finally {
                 // Esconde o overlay de carregamento SEMPRE, independentemente do sucesso ou falha
-                document.getElementById('loading-overlay').classList.add('hidden');
-                console.log("initApp: Overlay de carregamento escondido.");
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) { // Verifica se o elemento existe antes de tentar manipular
+                    loadingOverlay.classList.add('hidden');
+                    console.log("initApp: Overlay de carregamento escondido.");
+                }
             }
 
 
