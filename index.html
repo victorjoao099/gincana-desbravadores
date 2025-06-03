@@ -75,13 +75,6 @@
 
 <body class="bg-slate-50 text-slate-800">
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay"
-        class="fixed inset-0 bg-slate-100 bg-opacity-90 flex flex-col justify-center items-center z-50">
-        <div class="animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-blue-500"></div>
-        <p class="mt-4 text-lg text-slate-700">A carregar aplicação...</p>
-    </div>
-
     <!-- Message Box -->
     <div id="messageBox" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 hidden">
         <div class="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full text-center">
@@ -95,48 +88,15 @@
         </div>
     </div>
 
-    <!-- Authentication Section (visible by default, hidden by JS on auth) -->
-    <section id="auth-section"
-        class="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-blue-200 p-4">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
-            <h2 class="text-3xl font-bold text-blue-800 mb-6">Acesso à Gincana</h2>
-            <form id="auth-form" class="space-y-4">
-                <div>
-                    <label for="email" class="sr-only">Email</label>
-                    <input type="email" id="email" placeholder="Email"
-                        class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        required>
-                </div>
-                <div>
-                    <label for="password" class="sr-only">Palavra-passe</label>
-                    <input type="password" id="password" placeholder="Palavra-passe"
-                        class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        required>
-                </div>
-                <button type="submit" id="login-btn"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Iniciar
-                    Sessão</button>
-                <button type="button" id="register-btn"
-                    class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Registar</button>
-            </form>
-            <p class="text-sm text-slate-500 mt-4">
-                Se esta é a sua primeira vez, registe-se. Após o registo, o seu papel (Líder ou Secretário) será
-                definido no sistema.
-            </p>
-        </div>
-    </section>
-
-    <!-- Main Application Content (hidden until authenticated) -->
-    <div id="main-app-content" class="container mx-auto p-4 md:p-8 hidden">
+    <!-- Main Application Content (always visible) -->
+    <div id="main-app-content" class="container mx-auto p-4 md:p-8">
         <!-- Header -->
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold text-blue-800">Gincana de Unidades</h1>
             <h2 class="text-2xl md:text-3xl font-semibold text-slate-600">A Aventura do Desbravador</h2>
             <p class="mt-4 text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas,
                 nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
-            <p id="user-info" class="mt-2 text-sm text-slate-500">Carregando informações do utilizador...</p>
-            <button id="logout-btn"
-                class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Sair</button>
+            <p id="user-info" class="mt-2 text-sm text-slate-500">Bem-vindo à Gincana!</p>
         </header>
 
         <!-- Navigation Tabs -->
@@ -154,7 +114,7 @@
                 class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🛡️
                 Sobre o Clube</button>
             <button data-tab="gestao"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap hidden">⚙️
+                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">⚙️
                 Gestão</button>
         </nav>
 
