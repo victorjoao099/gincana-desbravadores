@@ -24,23 +24,17 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-        // Variáveis globais para acesso ao Firebase (dentro do módulo)
+        // Variáveis de estado do Firebase e da aplicação (dentro do escopo do módulo)
         let firebaseApp = null;
         let db = null;
         let auth = null;
         let currentUser = null;
         let userRole = null;
 
-        // =====================================================================================================
-        // === ATENÇÃO: CONFIGURAÇÃO DO FIREBASE - VOCÊ PRECISA PREENCHER ESTAS VARIÁVEIS ===
-        // =====================================================================================================
-        // 1. Substitua 'SEU_FIREBASE_PROJECT_ID_AQUI' pelo ID do seu projeto Firebase (ex: 'meu-clube-gincana-12345').
-        //    Este ID será usado para organizar os dados no Firestore.
-        const appId = 'gincana-de-unidade';
 
-        // 2. Cole AQUI o objeto 'firebaseConfig' COMPLETO que você copiou do Console do Firebase.
-        //    Ele deve ser parecido com o exemplo abaixo, mas com as suas chaves e IDs reais.
-        window.firebaseConfig = {
+        const appId = 'gincana-de-unidades';
+
+        const firebaseConfig = {
             apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8",
             authDomain: "gincana-de-unidade.firebaseapp.com",
             projectId: "gincana-de-unidade",
@@ -51,9 +45,6 @@
 
         // initialAuthToken não é mais usado com autenticação por e-mail/senha
         const initialAuthToken = null;
-        // =====================================================================================================
-        // === FIM DA CONFIGURAÇÃO DO FIREBASE ===
-        // =====================================================================================================
 
         // Apenas para depuração: Verifique o que está sendo lido na configuração
         console.log("firebaseConfig lido:", firebaseConfig);
@@ -61,7 +52,7 @@
         console.log("authDomain lido:", firebaseConfig.authDomain);
 
 
-        // MessageBox function (retained for consistency with previous responses)
+        // MessageBox function
         const showMessage = (msg, callback, showCancel = false) => {
             const messageBox = document.getElementById('messageBox');
             const messageText = document.getElementById('messageText');
@@ -86,15 +77,14 @@
                 cancelBtn.classList.add('hidden');
             }
         };
-        window.showMessage = showMessage; // Expor para uso global
 
-        // Variáveis de estado da aplicação
+        // Variáveis de estado da aplicação (dados dinâmicos do Firestore)
         let chartInstance = null;
         let currentUnits = [];
         let currentActivities = [];
         let currentSubmissions = [];
 
-        // Funções de operação de dados do Firebase
+        // Funções de operação de dados do Firebase (agora dentro do escopo do módulo)
         async function getUnits() {
             const unitsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'units');
             const q = query(unitsColRef);
@@ -155,7 +145,7 @@
             const totalActivitiesDefined = Object.values(staticData.calendar).flat().length;
             const approvedSubmissionsCount = currentSubmissions.filter(sub => sub.status === 'approved').length;
 
-            document.getElementById('unidade-destaque').textContent = currentUnits.length > 0 ? currentUnits[0].name : 'N/A'; // Corrigido para .name
+            document.getElementById('unidade-destaque').textContent = currentUnits.length > 0 ? currentUnits[0].name : 'N/A';
             document.getElementById('total-pontos').textContent = totalScore;
             document.getElementById('atividades-realizadas').textContent = `${approvedSubmissionsCount} / ${totalActivitiesDefined}`;
 
@@ -170,7 +160,7 @@
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: unitsData.map(item => wrapLabel(item.name, 16)), // Corrigido para .name
+                    labels: unitsData.map(item => wrapLabel(item.name, 16)),
                     datasets: [{
                         label: 'Pontuação da Unidade',
                         data: unitsData.map(item => item.score || 0),
@@ -819,7 +809,7 @@
             const passwordInput = document.getElementById('password');
             const loginBtn = document.getElementById('login-btn');
             const registerBtn = document.getElementById('register-btn');
-            const googleLoginBtn = document.getElementById('google-login-btn'); // Novo botão
+            const googleLoginBtn = document.getElementById('google-login-btn');
             const logoutBtn = document.getElementById('logout-btn');
 
             if (authForm && loginBtn && registerBtn && googleLoginBtn) {
@@ -852,7 +842,6 @@
                     try {
                         const provider = new GoogleAuthProvider();
                         await signInWithPopup(auth, provider);
-                        // onAuthStateChanged irá lidar com a atualização da UI
                     } catch (error) {
                         console.error("Erro ao iniciar sessão com Google:", error);
                         showMessage(`Erro ao iniciar sessão com Google: ${error.message}`);
