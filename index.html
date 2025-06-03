@@ -1,18 +1,159 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gincana de Unidades: A Aventura do Desbravador</title>
+    <!-- Chosen Palette: Warm Neutrals & Serene Blue -->
+    <!-- Application Structure Plan: The application is structured as a single-page tabbed dashboard. This architecture was chosen to provide users with a clean, organized, and non-linear way to access different types of information. Instead of a long scroll, users can instantly switch between contexts: 'Início' for a quick overview and scoreboard, 'Calendário' for planning, 'Regulamento' for rules reference, and 'Sobre o Clube' for foundational information. This task-oriented separation enhances usability and makes finding specific information much faster and more intuitive. -->
     <!-- Visualization & Content Choices: 
-        - Scoreboard (Goal: Compare): A Chart.js horizontal bar chart was selected to visually represent and compare unit scores, as it's highly effective for ranking. This is paired with dynamic stat cards (HTML/CSS) to provide a quick summary (Goal: Inform). Interaction: The chart is dynamically rendered from JS data.
+        - Scoreboard (Goal: Compare): A Chart.js horizontal bar chart was selected to visually represent and compare unit scores, as it's highly effective for ranking. This is paired with dynamic stat cards (HTML/CSS) to provide a quick summary (Goal: Inform). Interaction: The chart is dynamically rendered from JS data fetched from Firestore.
         - Calendar (Goal: Organize/Inform): An accordion-style list, grouped by month, is used instead of a complex calendar grid. This simplifies implementation while still allowing users to easily find activities. Interaction: Clicking a month reveals its activities.
         - Regulations (Goal: Inform/Organize): Content from the regulation report is structured into accordion sections for 'Pontuação', 'Critérios de Desempate', 'Conduta Esperada', and 'Procedimentos para Recursos'. This approach breaks down legalistic text into digestible, expandable chunks.
         - About the Club (Goal: Inform): 'As Bases do Clube' and 'Estrutura e Funções' are presented using accordions. This keeps detailed textual information concise until expanded.
         - Graphics (Goal: Enhance UI): Unicode characters (emojis) are used for icons in the navigation tabs, providing visual cues without the overhead or complexity of image files or SVG, adhering to the constraints.
-        - Library/Method: Chart.js for visualizations. All other elements are built with structured HTML and styled with Tailwind CSS. -->
+        - Library/Method: Chart.js for visualizations. Firestore for remote data storage and real-time updates. Firebase Authentication for user roles. All other elements are built with structured HTML and styled with Tailwind CSS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+        // Global variables for Firebase access
+        window.firebaseApp = null;
+        window.db = null;
+        window.auth = null;
+        window.currentUser = null;
+        window.userRole = null;
+
+        // Expondo funções do Firestore para o escopo global (window)
+        window.doc = doc;
+        window.getDoc = getDoc;
+        window.addDoc = addDoc;
+        window.setDoc = setDoc;
+        window.updateDoc = updateDoc;
+        window.deleteDoc = deleteDoc;
+        window.onSnapshot = onSnapshot;
+        window.collection = collection;
+        window.query = query;
+        window.where = where;
+        window.getDocs = getDocs;
+        window.serverTimestamp = serverTimestamp;
+
+        // =====================================================================================================
+        // === ATENÇÃO: CONFIGURAÇÃO DO FIREBASE - VOCÊ PRECISA PREENCHER ESTAS VARIÁVEIS ===
+        // =====================================================================================================
+        // 1. Substitua 'SEU_FIREBASE_PROJECT_ID_AQUI' pelo ID do seu projeto Firebase (ex: 'meu-clube-gincana-12345').
+        //    Este ID será usado para organizar os dados no Firestore.
+        window.appId = 'gincana-de-unidade';
+
+        // 2. Cole AQUI o objeto 'firebaseConfig' COMPLETO que você copiou do Console do Firebase.
+        //    Ele deve ser parecido com o exemplo abaixo, mas com as suas chaves e IDs reais.
+        //    IMPORTANTE: Estamos definindo window.firebaseConfig para que seja acessível globalmente.
+        window.firebaseConfig = {
+            apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8",
+            authDomain: "gincana-de-unidade.firebaseapp.com",
+            projectId: "gincana-de-unidade",
+            storageBucket: "gincana-de-unidade.firebasestorage.app",
+            messagingSenderId: "497226153394",
+            appId: "1:497226153394:web:35d484f3737e3a3b4938ab"
+        };
+
+        // Para testes locais, o token de autenticação inicial do ambiente Canvas não estará disponível.
+        // Mantenha como 'null' para que o aplicativo use a autenticação anônima por padrão.
+        const initialAuthToken = null;
+        // =====================================================================================================
+        // === FIM DA CONFIGURAÇÃO DO FIREBASE ===
+        // =====================================================================================================
+
+        // Apenas para depuração: Verifique o que está sendo lido na configuração
+        console.log("firebaseConfig lido:", window.firebaseConfig);
+        console.log("window.appId lido:", window.appId);
+        console.log("authDomain lido:", window.firebaseConfig.authDomain);
+
+
+        // MessageBox function (retained for consistency with previous responses)
+        window.showMessage = (msg, callback, showCancel = false) => {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            const confirmBtn = document.getElementById('messageConfirmBtn');
+            const cancelBtn = document.getElementById('messageCancelBtn');
+
+            messageText.textContent = msg;
+            messageBox.classList.remove('hidden');
+
+            confirmBtn.onclick = () => {
+                messageBox.classList.add('hidden');
+                if (callback) callback(true);
+            };
+
+            if (showCancel) {
+                cancelBtn.classList.remove('hidden');
+                cancelBtn.onclick = () => {
+                    messageBox.classList.add('hidden');
+                    if (callback) callback(false);
+                };
+            } else {
+                cancelBtn.classList.add('hidden');
+            }
+        };
+
+        // Firebase Initialization and Authentication
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Verifica se as credenciais foram preenchidas (agora via window.firebaseConfig)
+                if (!window.firebaseConfig.apiKey || !window.firebaseConfig.projectId || !window.firebaseConfig.authDomain) {
+                    window.showMessage("Erro: As credenciais do Firebase (apiKey, projectId, authDomain) não foram preenchidas ou estão incompletas no código. Por favor, insira-as corretamente.");
+                    document.getElementById('loading-overlay').classList.add('hidden');
+                    return;
+                }
+
+                window.firebaseApp = initializeApp(window.firebaseConfig);
+                window.db = getFirestore(window.firebaseApp);
+                window.auth = getAuth(window.firebaseApp);
+
+                onAuthStateChanged(window.auth, async (user) => {
+                    if (user) {
+                        window.currentUser = user;
+                        const userDocRef = doc(window.db, 'artifacts', window.appId, 'users', user.uid);
+                        const userDocSnap = await getDoc(userDocRef);
+
+                        if (userDocSnap.exists()) {
+                            window.userRole = userDocSnap.data().role;
+                        } else {
+                            // Default to 'leader' if no role is set
+                            await setDoc(userDocRef, { role: 'leader', uid: user.uid });
+                            window.userRole = 'leader';
+                        }
+                    } else {
+                        if (initialAuthToken) {
+                            try {
+                                await signInWithCustomToken(window.auth, initialAuthToken);
+                            } catch (error) {
+                                console.error("Erro ao autenticar com token personalizado:", error);
+                                window.showMessage("Erro de autenticação. Tentando autenticação anônima...");
+                                await signInAnonymously(window.auth);
+                            }
+                        } else {
+                            await signInAnonymously(window.auth);
+                        }
+                    }
+                    // Hide loading overlay once auth and role are determined
+                    document.getElementById('loading-overlay').classList.add('hidden');
+                    initApp(); // Initialize the main application logic
+                });
+
+            } catch (error) {
+                console.error("Erro na inicialização do Firebase:", error);
+                window.showMessage("Erro crítico na inicialização do aplicativo. Por favor, recarregue.");
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        });
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -20,64 +161,122 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+
         .tab-button.active {
-            border-bottom-color: #2563eb; /* theme-blue-600 */
+            border-bottom-color: #2563eb;
+            /* theme-blue-600 */
             color: #2563eb;
         }
+
         .content-section {
             display: none;
         }
+
         .content-section.active {
             display: block;
         }
+
         .accordion-content {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-in-out;
         }
-        .accordion-button.open + .accordion-content {
-             max-height: 1000px; /* Adjust as needed for content length */
+
+        .accordion-button.open+.accordion-content {
+            max-height: 1000px;
+            /* Adjust as needed for content length */
         }
+
         .chart-container {
             position: relative;
-            height: 40vh; /* Responsive height */
+            height: 40vh;
+            /* Responsive height */
             width: 100%;
-            max-width: 800px; /* Max width to prevent excessive stretching */
-            margin: auto; /* Center horizontally */
-            max-height: 400px; /* Max height to prevent vertical overflow */
+            max-width: 800px;
+            /* Max width to prevent excessive stretching */
+            margin: auto;
+            /* Center horizontally */
+            max-height: 400px;
+            /* Max height to prevent vertical overflow */
         }
+
         @media (max-width: 768px) {
             .chart-container {
-                height: 60vh; /* Taller on mobile for better readability */
+                height: 60vh;
+                /* Taller on mobile for better readability */
             }
         }
+
         .list-disc-custom li::marker {
-            color: #2563eb; /* Custom bullet color */
+            color: #2563eb;
+            /* Custom bullet color */
         }
+
         .list-decimal-custom li::marker {
-            color: #2563eb; /* Custom number color */
+            color: #2563eb;
+            /* Custom number color */
         }
     </style>
 </head>
+
 <body class="bg-slate-50 text-slate-800">
 
+    <!-- Loading Overlay -->
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-slate-100 bg-opacity-90 flex flex-col justify-center items-center z-50">
+        <div class="animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-blue-500"></div>
+        <p class="mt-4 text-lg text-slate-700">A carregar aplicação...</p>
+    </div>
+
+    <!-- Message Box -->
+    <div id="messageBox" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 hidden">
+        <div class="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full text-center">
+            <p id="messageText" class="text-lg font-semibold mb-4"></p>
+            <div class="flex justify-center space-x-4">
+                <button id="messageConfirmBtn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">OK</button>
+                <button id="messageCancelBtn"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 hidden">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container mx-auto p-4 md:p-8">
+        <!-- Header -->
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold text-blue-800">Gincana de Unidades</h1>
             <h2 class="text-2xl md:text-3xl font-semibold text-slate-600">A Aventura do Desbravador</h2>
-            <p class="mt-4 text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas, nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
+            <p class="mt-4 text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas,
+                nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
+            <p id="user-info" class="mt-2 text-sm text-slate-500">Carregando informações do utilizador...</p>
         </header>
 
+        <!-- Navigation Tabs -->
         <nav class="flex justify-center border-b-2 border-slate-200 mb-8 overflow-x-auto">
-            <button data-tab="inicio" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏁 Início</button>
-            <button data-tab="calendario" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📅 Calendário</button>
-            <button data-tab="regulamento" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📜 Regulamento</button>
-            <button data-tab="sobre" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🛡️ Sobre o Clube</button>
+            <button data-tab="inicio"
+                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏁
+                Início</button>
+            <button data-tab="calendario"
+                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📅
+                Calendário</button>
+            <button data-tab="regulamento"
+                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📜
+                Regulamento</button>
+            <button data-tab="sobre"
+                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🛡️
+                Sobre o Clube</button>
+            <button data-tab="gestao"
+                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap hidden">⚙️
+                Gestão</button>
         </nav>
 
+        <!-- Content Area -->
         <main>
+            <!-- Início / Dashboard Section -->
             <section id="inicio" class="content-section">
-                <p class="mb-6 text-slate-700 text-center">Bem-vindo ao painel da Gincana de Unidades! Aqui você encontra um resumo rápido do progresso e o placar geral das unidades. Explore as outras abas para detalhes sobre o calendário, regulamento e informações do clube.</p>
+                <p class="mb-6 text-slate-700 text-center">Bem-vindo ao painel da Gincana de Unidades! Aqui você
+                    encontra um resumo rápido do progresso e o placar geral das unidades. Explore as outras abas para
+                    detalhes sobre o calendário, regulamento e informações do clube.</p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center">
                     <div class="bg-white p-6 rounded-xl shadow-md">
                         <h3 class="text-slate-500 font-semibold text-lg">Unidade em Destaque</h3>
@@ -101,64 +300,84 @@
                 </div>
             </section>
 
+            <!-- Calendário Section -->
             <section id="calendario" class="content-section">
                 <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Calendário de Atividades</h2>
-                <p class="mb-6 text-slate-700 text-center">Navegue pelas atividades diárias e semanais programadas para cada mês. As atividades semanais ocorrem sempre aos domingos.</p>
+                <p class="mb-6 text-slate-700 text-center">Navegue pelas atividades diárias e semanais programadas para
+                    cada mês. As atividades semanais ocorrem sempre aos domingos.</p>
                 <div id="calendario-container" class="space-y-4">
-                    </div>
+                </div>
             </section>
 
+            <!-- Regulamento Section -->
             <section id="regulamento" class="content-section">
                 <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Regulamento Interno da Gincana</h2>
-                <p class="mb-6 text-slate-700 text-center">Conheça as regras de pontuação, critérios de desempate, conduta esperada e procedimentos para recursos, garantindo uma gincana justa e organizada.</p>
+                <p class="mb-6 text-slate-700 text-center">Conheça as regras de pontuação, critérios de desempate,
+                    conduta esperada e procedimentos para recursos, garantindo uma gincana justa e organizada.</p>
                 <div class="space-y-4">
                     <div class="bg-white rounded-xl shadow-md">
-                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <button
+                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>1. Sistema de Pontuação</span>
                             <span class="transform transition-transform duration-300">▼</span>
                         </button>
                         <div id="pontuacao-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
                             <h4 class="font-bold text-lg text-slate-700">Pontuação Base por Atividade:</h4>
                             <ul class="list-disc list-inside list-disc-custom space-y-1">
-                                <li><strong>Atividades Diárias:</strong> 5 pontos por Desbravador presente e ativo na atividade. 5-10 pontos extras por Desbravador que concluir ou acertar o desafio.</li>
-                                <li><strong>Atividades Semanais:</strong> 20 pontos por unidade que participar integralmente. 30-100 pontos por desempenho/conclusão. 10-50 pontos extras por qualidade/criatividade.</li>
+                                <li><strong>Atividades Diárias:</strong> 5 pontos por Desbravador presente e ativo na
+                                    atividade. 5-10 pontos extras por Desbravador que concluir ou acertar o desafio.
+                                </li>
+                                <li><strong>Atividades Semanais:</strong> 20 pontos por unidade que participar
+                                    integralmente. 30-100 pontos por desempenho/conclusão. 10-50 pontos extras por
+                                    qualidade/criatividade.</li>
                             </ul>
                             <h4 class="font-bold text-lg text-slate-700 mt-4">Bônus Especiais:</h4>
                             <ul class="list-disc list-inside list-disc-custom space-y-1">
-                                <li><strong>"Espírito Desbravador" (Semanal):</strong> 50 pontos para a unidade que demonstrar melhor espírito de equipe, ajuda mútua e entusiasmo.</li>
-                                <li><strong>"Unidade Nota 10" (Mensal):</strong> 100 pontos para a unidade com a maior pontuação acumulada no mês.</li>
-                                <li><strong>"Uniforme Impecável" (Semanal):</strong> 20 pontos para a unidade com todos os membros uniformizados corretamente.</li>
-                                <li><strong>"Desafio Surpresa":</strong> Pontos variados (20-100) para desafios inesperados.</li>
+                                <li><strong>"Espírito Desbravador" (Semanal):</strong> 50 pontos.</li>
+                                <li><strong>"Unidade Nota 10" (Mensal):</strong> 100 pontos.</li>
+                                <li><strong>"Uniforme Impecável" (Semanal):</strong> 20 pontos.</li>
+                                <li><strong>"Desafio Surpresa":</strong> Pontos variáveis.</li>
                             </ul>
                             <h4 class="font-bold text-lg text-slate-700 mt-4">Penalidades:</h4>
                             <ul class="list-disc list-inside list-disc-custom space-y-1">
-                                <li><strong>Atraso na Entrega de Tarefas/Relatos:</strong> -10 pontos por dia de atraso.</li>
-                                <li><strong>Comportamento Antidesbravador:</strong> -20 a -50 pontos (a critério da diretoria).</li>
-                                <li><strong>Falta de Membros em Atividades Obrigatórias:</strong> -10 pontos por membro ausente em atividades semanais.</li>
+                                <li><strong>Atraso na Entrega:</strong> -10 pontos por dia.</li>
+                                <li><strong>Comportamento Antidesbravador:</strong> -20 a -50 pontos.</li>
+                                <li><strong>Falta em Atividades Obrigatórias:</strong> -10 pontos por membro.</li>
                             </ul>
                             <h4 class="font-bold text-lg text-slate-700 mt-4">Placar e Acompanhamento:</h4>
-                            <p>Um Placar Geral visível e atualizado semanalmente (online ou físico) com a pontuação de cada unidade. Um "Painel de Conquistas" registrará visualmente os progressos.</p>
+                            <p>Um Placar Geral visível e atualizado semanalmente (online ou físico) com a pontuação de
+                                cada unidade. Um "Painel de Conquistas" registrará visualmente os progressos.</p>
                             <h4 class="font-bold text-lg text-slate-700 mt-4">Submissão e Validação de Requisitos:</h4>
-                            <p>Os líderes de unidade registrarão a conclusão dos requisitos no "Cantinho da Unidade" (<a href="https://clubes.adventistas.org/br/unit-control/" target="_blank" class="text-blue-600 hover:underline">https://clubes.adventistas.org/br/unit-control/</a>). A secretária do clube validará os requisitos e atribuirá a pontuação via SGC (<a href="[https://sg.sdasystems.org/cms/login.php?lang=pt_br](https://sg.sdasystems.org/cms/login.php?lang=pt_br" target="_blank" class="text-blue-600 hover:underline">https://sg.sdasystems.org/cms/login.php?lang=pt_br</a>). Um PDF com o placar de pontos atualizado será divulgado semanalmente.</p>
+                            <p>Os líderes de unidade registrarão a conclusão dos requisitos no "Cantinho da Unidade" (<a
+                                    href="https://clubes.adventistas.org/br/unit-control/" target="_blank"
+                                    class="text-blue-600 hover:underline">https://clubes.adventistas.org/br/unit-control/</a>).
+                                A secretária do clube validará os requisitos e atribuirá a pontuação via SGC (<a
+                                    href="https://sg.sdasystems.org/cms/login.php?lang=pt_br" target="_blank"
+                                    class="text-blue-600 hover:underline">https://sg.sdasystems.org/cms/login.php?lang=pt_br</a>).
+                                Um PDF com o placar de pontos atualizado será divulgado semanalmente.</p>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-md">
-                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <button
+                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>2. Critérios de Desempate</span>
                             <span class="transform transition-transform duration-300">▼</span>
                         </button>
                         <div id="desempate-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                            <p>Em caso de empate na pontuação final ou em qualquer etapa decisiva, os seguintes critérios serão aplicados sequencialmente:</p>
+                            <p>Em caso de empate na pontuação final ou em qualquer etapa decisiva, os seguintes
+                                critérios serão aplicados sequencialmente:</p>
                             <ol class="list-decimal list-inside list-decimal-custom space-y-1">
                                 <li>Maior número de Bônus "Espírito Desbravador" acumulados.</li>
                                 <li>Maior número de Atividades Semanais concluídas com pontuação máxima.</li>
                                 <li>Menor número de Penalidades registradas.</li>
-                                <li>Sorteio: Em caso de persistência do empate, será realizado um sorteio justo e transparente.</li>
+                                <li>Sorteio: Em caso de persistência do empate, será realizado um sorteio justo e
+                                    transparente.</li>
                             </ol>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-md">
-                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <button
+                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>3. Conduta Esperada</span>
                             <span class="transform transition-transform duration-300">▼</span>
                         </button>
@@ -166,272 +385,897 @@
                             <p>Todos os Desbravadores e líderes devem aderir aos princípios de conduta do Clube:</p>
                             <ul class="list-disc list-inside list-disc-custom space-y-1">
                                 <li><strong>Respeito:</strong> Tratar todos com respeito, cortesia e empatia.</li>
-                                <li><strong>Cooperação:</strong> Trabalhar em equipe, auxiliando os colegas e a unidade.</li>
-                                <li><strong>Disciplina:</strong> Seguir as instruções dos líderes e as regras do clube.</li>
+                                <li><strong>Cooperação:</strong> Trabalhar em equipe, auxiliando os colegas e a unidade.
+                                </li>
+                                <li><strong>Disciplina:</strong> Seguir as instruções dos líderes e as regras do clube.
+                                </li>
                                 <li><strong>Integridade:</strong> Ser honesto em todas as atividades e submissões.</li>
-                                <li><strong>Espírito Esportivo:</strong> Aceitar vitórias e derrotas com humildade e dignidade.</li>
-                                <li><strong>Segurança:</strong> Priorizar a segurança própria e alheia em todas as atividades.</li>
+                                <li><strong>Espírito Esportivo:</strong> Aceitar vitórias e derrotas com humildade e
+                                    dignidade.</li>
+                                <li><strong>Segurança:</strong> Priorizar a segurança própria e alheia em todas as
+                                    atividades.</li>
                             </ul>
-                            <p class="mt-2">Comportamentos que contrariem os ideais do Desbravador ou que prejudiquem o ambiente da gincana serão passíveis de penalidades.</p>
+                            <p class="mt-2">Comportamentos que contrariem os ideais do Desbravador ou que prejudiquem o
+                                ambiente da gincana serão passíveis de penalidades.</p>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-md">
-                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <button
+                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>4. Procedimentos para Recursos (Apelações)</span>
                             <span class="transform transition-transform duration-300">▼</span>
                         </button>
                         <div id="recursos-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                            <p>Caso uma unidade ou líder discorde da pontuação atribuída ou de uma penalidade, poderá apresentar um recurso:</p>
+                            <p>Caso uma unidade ou líder discorde da pontuação atribuída ou de uma penalidade, poderá
+                                apresentar um recurso:</p>
                             <ol class="list-decimal list-inside list-decimal-custom space-y-1">
-                                <li><strong>Comunicação Inicial:</strong> O líder da unidade deve comunicar formalmente a secretária do clube, por escrito (e-mail ou mensagem oficial), no prazo máximo de 24 horas após a divulgação da pontuação contestada.</li>
-                                <li><strong>Análise Preliminar:</strong> A secretária e o diretor associado responsável pela gincana analisarão o recurso e as evidências.</li>
-                                <li><strong>Decisão:</strong> A decisão será comunicada ao líder da unidade em até 48 horas. A decisão da diretoria é final e irrevogável.</li>
+                                <li><strong>Comunicação Inicial:</strong> O líder da unidade deve comunicar formalmente
+                                    a secretária do clube, por escrito (e-mail ou mensagem oficial), no prazo máximo de
+                                    24 horas após a divulgação da pontuação contestada.</li>
+                                <li><strong>Análise Preliminar:</strong> A secretária e o diretor associado responsável
+                                    pela gincana analisarão o recurso e as evidências.</li>
+                                <li><strong>Decisão:</strong> A decisão será comunicada ao líder da unidade em até 48
+                                    horas. A decisão da diretoria é final e irrevogável.</li>
                             </ol>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- Sobre o Clube Section -->
             <section id="sobre" class="content-section">
                 <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Sobre o Clube de Desbravadores</h2>
-                <p class="mb-6 text-slate-700 text-center">Conheça os fundamentos, a história e a estrutura que guiam o Clube de Desbravadores, um movimento mundial dedicado ao desenvolvimento integral de juvenis e adolescentes.</p>
+                <p class="mb-6 text-slate-700 text-center">Conheça os fundamentos, a história e a estrutura que guiam o
+                    Clube de Desbravadores, um movimento mundial dedicado ao desenvolvimento integral de juvenis e
+                    adolescentes.</p>
                 <div class="space-y-4">
                     <div class="bg-white rounded-xl shadow-md">
-                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <button
+                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>As Bases do Clube</span>
                             <span class="transform transition-transform duration-300">▼</span>
                         </button>
                         <div id="bases-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                            </div>
+                        </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-md">
-                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <button
+                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>Estrutura e Funções</span>
                             <span class="transform transition-transform duration-300">▼</span>
                         </button>
                         <div id="funcoes-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                            </div>
+                        </div>
                     </div>
+                </div>
+            </section>
+
+            <!-- Gestão Section (Leader/Secretary Dashboard) -->
+            <section id="gestao" class="content-section">
+                <h2 class="text-3xl font-bold text-center mb-8 text-slate-700" id="gestao-title">Carregando Gestão...
+                </h2>
+                <div id="gestao-content">
+                    <!-- Content will be injected here based on user role -->
                 </div>
             </section>
         </main>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const data = {
-                scores: [
-                    { unit: 'Direção', score: 0 },
-                    { unit: 'GDA', score: 0 },
-                    { unit: 'GDB', score: 0 },
-                    { unit: 'Gaditas', score: 0 },
-                    { unit: 'Sentinelas', score: 0 },
-                    { unit: 'Deltas', score: 0 }
+        // Data definitions (static content)
+        const staticData = {
+            calendar: {
+                "Junho: Mês do Pioneirismo e da Natureza": [
+                    { date: "08/06/2025", title: "Construção de Abrigo Improvisado", desc: "Cada unidade deve construir um abrigo simples e funcional usando materiais naturais ou lona/corda, capaz de proteger minimamente de intempéries. (Pioneirismo)" },
+                    { date: "15/06/2025", title: "Trilha de Observação e Registro", desc: "Caminhada em trilha segura com uma lista de itens da natureza para encontrar, identificar e registrar (fotos, desenhos ou anotações). (Natureza)" },
+                    { date: "22/06/2025", title: "Cozinha Mateira Criativa", desc: "Preparar um lanche simples e saboroso ao ar livre utilizando técnicas de fogueira segura. Criatividade na receita e segurança no manuseio do fogo serão avaliadas. (Culinária/Pioneirismo)" },
+                    { date: "29/06/2025", title: "Caça ao Tesouro da Orientação", desc: "Utilizando bússola e um mapa simples, as unidades devem seguir pistas para encontrar um tesouro escondido. (Orientação)" }
                 ],
-                calendar: {
-                    "Junho: Mês do Pioneirismo e da Natureza": [
-                        { date: "08/06/2025", title: "Construção de Abrigo Improvisado", desc: "Cada unidade deve construir um abrigo simples e funcional usando materiais naturais ou lona/corda, capaz de proteger minimamente de intempéries. (Pioneirismo)" },
-                        { date: "15/06/2025", title: "Trilha de Observação e Registro", desc: "Caminhada em trilha segura com uma lista de itens da natureza para encontrar, identificar e registrar (fotos, desenhos ou anotações). (Natureza)" },
-                        { date: "22/06/2025", title: "Cozinha Mateira Criativa", desc: "Preparar um lanche simples e saboroso ao ar livre utilizando técnicas de fogueira segura. Criatividade na receita e segurança no manuseio do fogo serão avaliadas. (Culinária/Pioneirismo)" },
-                        { date: "29/06/2025", title: "Caça ao Tesouro da Orientação", desc: "Utilizando bússola e um mapa simples, as unidades devem seguir pistas para encontrar um tesouro escondido. (Orientação)" }
-                    ],
-                    "Julho: Mês da Saúde e Bem-Estar": [
-                        { date: "06/07/2025", title: "Circuito de Habilidades Físicas", desc: "Montagem de um circuito com 5 a 7 estações que envolvam corrida, salto, agachamento, flexão, polichinelos (adaptadas à idade e capacidade). As unidades competem para completar o circuito no menor tempo, com boa execução. (Físico)" },
-                        { date: "13/07/2025", title: "Oficina de Primeiros Socorros Básicos", desc: "Simulação de situações de emergência comuns (pequenos cortes, entorses, picadas de inseto). As unidades devem demonstrar como fazer curativos simples, imobilizar um braço, estancar sangramento e acionar ajuda. (Primeiros Socorros)" },
-                        { date: "20/07/2025", title: "Gincana Esportiva Lúdica", desc: "Competições de jogos populares e cooperativos como cabo de guerra, corrida de saco, queimada (com regras adaptadas para segurança e inclusão). O espírito esportivo e a diversão serão valorizados. (Físico/Integração)" },
-                        { date: "27/07/2025", title: "Culinária Saudável Desbravador", desc: "Cada unidade prepara uma receita saudável e saborosa (ex: salada de frutas criativa, sanduíches naturais, sucos detox). A apresentação, o sabor e a explicação dos benefícios nutricionais serão avaliados. (Culinária/Saúde)" }
-                    ],
-                    "Agosto: Mês da Comunicação e Expressão": [
-                         { date: "03/08/2025", title: "Teatro de Fantoches/Mímica com Mensagem", desc: "Cada unidade cria e apresenta uma pequena peça de teatro de fantoches ou uma esquete de mímica com uma mensagem positiva ou um ensinamento moral (ex: sobre honestidade, amizade, respeito). (Criatividade/Expressão)" },
-                         { date: "10/08/2025", title: "Campanha de Conscientização Criativa", desc: "As unidades devem desenvolver uma pequena campanha de conscientização sobre um tema relevante para a comunidade (ex: reciclagem, combate ao bullying, importância da leitura). Podem ser cartazes, vídeos curtos (para exibição interna), jingles ou pequenas apresentações. (Serviço/Comunicação)" },
-                         { date: "17/08/2025", title: "Roda de Conversa: Meus Sonhos e Talentos", desc: "Em um ambiente acolhedor, cada Desbravador compartilha um sonho pessoal ou um talento que possui/gostaria de desenvolver. A escuta ativa e o apoio mútuo são incentivados. (Espiritual/Social)" },
-                         { date: "24/08/2025", title: "Visita e Ação de Doação a uma Instituição", desc: "A unidade organiza e realiza uma visita a um asilo, orfanato ou instituição de caridade (com permissão e acompanhamento da diretoria), levando doações (arrecadadas previamente) e, se possível, realizando uma pequena apresentação ou atividade interativa. (Serviço Comunitário)" },
-                         { date: "31/08/2025", title: "Descanso/Preparação para Setembro", desc: "Dia livre para atividades de autocuidado e reflexão individual."}
-                    ],
-                    "Setembro: Mês do Conhecimento e da História": [
-                        { date: "07/09/2025", title: "Gincana do Conhecimento Desbravador", desc: "Uma competição de perguntas e respostas sobre a história do clube, seus ideais (Voto e Lei), classes, especialidades e regulamentos básicos. (Mental)" },
-                        { date: "14/09/2025", title: "Estudo Bíblico Aprofundado e Apresentação", desc: "Cada unidade escolhe um tema bíblico (ex: a criação, a história de José, os milagres de Jesus) e prepara um pequeno estudo para apresentar de forma criativa (com slides, desenhos, encenação) para as outras unidades. (Espiritual/Mental)" },
-                        { date: "21/09/2025", title: "Projeto de Civismo 'Minha Pátria, Minha História'", desc: "Pesquisar sobre um herói nacional, um símbolo do país (bandeira, hino) ou um evento histórico importante. As unidades devem apresentar suas descobertas de forma criativa (mural, jogral, vídeo). (Cívico/Mental)" },
-                        { date: "28/09/2025", title: "Criação de um 'Museu' do Clube", desc: "Cada unidade monta um pequeno painel ou 'exposição' com fotos, objetos, distintivos e histórias que representem a trajetória da sua unidade e do clube. (História/Criatividade)" }
-                    ],
-                    "Outubro: Mês da Aventura e da Superação": [
-                        { date: "05/10/2025", title: "Circuito de Aventura 'Desbravador Radical'", desc: "Montar um circuito com obstáculos (rastejar sob cordas, pular pneus, passar por túneis improvisados, escalar baixo em estruturas seguras) que exija coordenação, agilidade e trabalho em equipe. (Físico/Mental)" },
-                        { date: "12/10/2025", title: "Desafio de Sobrevivência (Teórico e Prático)", desc: "Simulação de situações de sobrevivência. As unidades devem demonstrar habilidades como purificar água (teórico), fazer um sinal de socorro, montar uma pequena armadilha (segura e não-letal), identificar plantas seguras para consumo (teórico). (Pioneirismo/Mental)" },
-                        { date: "19/10/2025", title: "Jogo Noturno 'Mistério da Mata'", desc: "Um jogo de estratégia ou caça ao tesouro em ambiente escuro (com lanternas e supervisão rigorosa), onde as unidades precisam usar a audição, tato e trabalho em equipe para cumprir objetivos. (Mental/Físico)" },
-                        { date: "26/10/2025", title: "Desafio de Resolução de Problemas 'A Ponte da Unidade'", desc: "Apresentar um problema complexo para as unidades, como 'construir uma ponte que suporte um peso X usando apenas materiais Y e Z'. A criatividade e a eficácia da solução serão avaliadas. (Mental/Engenharia)" }
-                    ],
-                    "Novembro: Mês da Gratidão e da Celebração": [
-                        { date: "02/11/2025", title: "Preparação da Cápsula do Tempo da Gincana", desc: "Cada unidade reúne objetos simbólicos, fotos, mensagens e relatos sobre suas experiências na gincana. A cápsula será lacrada e aberta em uma data futura (ex: daqui a 1 ano), para relembrar as conquistas. (Criatividade/Reflexão)" },
-                        { date: "09/11/2025", title: "Dia da Gratidão e Serviço Comunitário", desc: "Ações de serviço focadas em expressar gratidão à comunidade ou à igreja. Exemplos: limpeza e organização do local do clube, ajuda em eventos da igreja, preparação de cestas básicas para doação. (Serviço/Espiritual)" },
-                        { date: "16/11/2025", title: "Ensaio Geral para a Celebração Final", desc: "As unidades praticam quaisquer apresentações, cantos, jograis ou números de Ordem Unida que desejam apresentar no evento de encerramento. Este é um momento de integração e aprimoramento. (Integração)" },
-                        { date: "23/11/2025", title: "Grande Jogo Final 'A Jornada do Desbravador'", desc: "Uma atividade abrangente que combina elementos de todos os meses, testando diversas habilidades (físicas, mentais, de pioneirismo, etc.) e o espírito de equipe. Pode ser um circuito de estações, um jogo de tabuleiro gigante ou uma grande caça ao tesouro com desafios variados. (Revisão/Integração)" },
-                        { date: "30/11/2025", title: "Última revisão e preparação para a Celebração Final", desc: "Dia dedicado aos últimos preparativos para o grande evento de encerramento da gincana." }
-                    ],
-                    "Dezembro: Grande Celebração e Encerramento": [
-                        { date: "01/12/2025", title: "Grande Celebração e Encerramento da Gincana", desc: "Um evento especial com a presença dos pais, familiares e da comunidade, para celebrar as conquistas da gincana. Incluirá apresentações das unidades, reconhecimento, a revelação do placar final e premiação, uma mensagem final inspiradora dos líderes e confraternização." }
-                    ]
+                "Julho: Mês da Saúde e Bem-Estar": [
+                    { date: "06/07/2025", title: "Circuito de Habilidades Físicas", desc: "Montagem de um circuito com 5 a 7 estações que envolvam corrida, salto, agachamento, flexão, polichinelos (adaptadas à idade e capacidade). As unidades competem para completar o circuito no menor tempo, com boa execução. (Físico)" },
+                    { date: "13/07/2025", title: "Oficina de Primeiros Socorros Básicos", desc: "Simulação de situações de emergência comuns (pequenos cortes, entorses, picadas de inseto). As unidades devem demonstrar como fazer curativos simples, imobilizar um braço, estancar sangramento e acionar ajuda. (Primeiros Socorros)" },
+                    { date: "20/07/2025", title: "Gincana Esportiva Lúdica", desc: "Competições de jogos populares e cooperativos como cabo de guerra, corrida de saco, queimada (com regras adaptadas para segurança e inclusão). O espírito esportivo e a diversão serão valorizados. (Físico/Integração)" },
+                    { date: "27/07/2025", title: "Culinária Saudável Desbravador", desc: "Cada unidade prepara uma receita saudável e saborosa (ex: salada de frutas criativa, sanduíches naturais, sucos detox). A apresentação, o sabor e a explicação dos benefícios nutricionais serão avaliadas. (Culinária/Saúde)" }
+                ],
+                "Agosto: Mês da Comunicação e Expressão": [
+                    { date: "03/08/2025", title: "Teatro de Fantoches/Mímica com Mensagem", desc: "Cada unidade cria e apresenta uma pequena peça de teatro de fantoches ou uma esquete de mímica com uma mensagem positiva ou um ensinamento moral (ex: sobre honestidade, amizade, respeito). (Criatividade/Expressão)" },
+                    { date: "10/08/2025", title: "Campanha de Conscientização Criativa", desc: "As unidades devem desenvolver uma pequena campanha de conscientização sobre um tema relevante para a comunidade (ex: reciclagem, combate ao bullying, importância da leitura). Podem ser cartazes, vídeos curtos (para exibição interna), jingles ou pequenas apresentações. (Serviço/Comunicação)" },
+                    { date: "17/08/2025", title: "Roda de Conversa: Meus Sonhos e Talentos", desc: "Em um ambiente acolhedor, cada Desbravador compartilha um sonho pessoal ou um talento que possui/gostaria de desenvolver. A escuta ativa e o apoio mútuo são incentivados. (Espiritual/Social)" },
+                    { date: "24/08/2025", title: "Visita e Ação de Doação a uma Instituição", desc: "A unidade organiza e realiza uma visita a um asilo, orfanato ou instituição de caridade (com permissão e acompanhamento da diretoria), levando doações (arrecadadas previamente) e, se possível, realizando uma pequena apresentação ou atividade interativa. (Serviço Comunitário)" },
+                    { date: "31/08/2025", title: "Descanso/Preparação para Setembro", desc: "Dia livre para atividades de autocuidado e reflexão individual." }
+                ],
+                "Setembro: Mês do Conhecimento e da História": [
+                    { date: "07/09/2025", title: "Gincana do Conhecimento Desbravador", desc: "Uma competição de perguntas e respostas sobre a história do clube, seus ideais (Voto e Lei), classes, especialidades e regulamentos básicos. (Mental)" },
+                    { date: "14/09/2025", title: "Estudo Bíblico Aprofundado e Apresentação", desc: "Cada unidade escolhe um tema bíblico (ex: a criação, a história de José, os milagres de Jesus) e prepara um pequeno estudo para apresentar de forma criativa (com slides, desenhos, encenação) para as outras unidades. (Espiritual/Mental)" },
+                    { date: "21/09/2025", title: "Projeto de Civismo 'Minha Pátria, Minha História'", desc: "Pesquisar sobre um herói nacional, um símbolo do país (bandeira, hino) ou um evento histórico importante. As unidades devem apresentar suas descobertas de forma criativa (mural, jogral, vídeo). (Cívico/Mental)" },
+                    { date: "28/09/2025", title: "Criação de um 'Museu' do Clube", desc: "Cada unidade monta um pequeno painel ou 'exposição' com fotos, objetos, distintivos e histórias que representem a trajetória da sua unidade e do clube. (História/Criatividade)" }
+                ],
+                "Outubro: Mês da Aventura e da Superação": [
+                    { date: "05/10/2025", title: "Circuito de Aventura 'Desbravador Radical'", desc: "Montar um circuito com obstáculos (rastejar sob cordas, pular pneus, passar por túneis improvisados, escalar baixo em estruturas seguras) que exija coordenação, agilidade e trabalho em equipe. (Físico/Mental)" },
+                    { date: "12/10/2025", title: "Desafio de Sobrevivência (Teórico e Prático)", desc: "Simulação de situações de sobrevivência. As unidades devem demonstrar habilidades como purificar água (teórico), fazer um sinal de socorro, montar uma pequena armadilha (segura e não-letal), identificar plantas seguras para consumo (teórico). (Pioneirismo/Mental)" },
+                    { date: "19/10/2025", title: "Jogo Noturno 'Mistério da Mata'", desc: "Um jogo de estratégia ou caça ao tesouro em ambiente escuro (com lanternas e supervisão rigorosa), onde as unidades precisam usar a audição, tato e trabalho em equipe para cumprir objetivos. (Mental/Físico)" },
+                    { date: "26/10/2025", title: "Desafio de Resolução de Problemas 'A Ponte da Unidade'", desc: "Apresentar um problema complexo para as unidades, como 'construir uma ponte que suporte um peso X usando apenas materiais Y e Z'. A criatividade e a eficácia da solução serão avaliadas. (Mental/Engenharia)" }
+                ],
+                "Novembro: Mês da Gratidão e da Celebração": [
+                    { date: "02/11/2025", title: "Preparação da Cápsula do Tempo da Gincana", desc: "Cada unidade reúne objetos simbólicos, fotos, mensagens e relatos sobre suas experiências na gincana. A cápsula será lacrada e aberta em uma data futura (ex: daqui a 1 ano), para relembrar as conquistas. (Criatividade/Reflexão)" },
+                    { date: "09/11/2025", title: "Dia da Gratidão e Serviço Comunitário", desc: "Ações de serviço focadas em expressar gratidão à comunidade ou à igreja. Exemplos: limpeza e organização do local do clube, ajuda em eventos da igreja, preparação de cestas básicas para doação. (Serviço/Espiritual)" },
+                    { date: "16/11/2025", title: "Ensaio Geral para a Celebração Final", desc: "As unidades praticam quaisquer apresentações, cantos, jograis ou números de Ordem Unida que desejam apresentar no evento de encerramento. Este é um momento de integração e aprimoramento. (Integração)" },
+                    { date: "23/11/2025", title: "Grande Jogo Final 'A Jornada do Desbravador'", desc: "Uma atividade abrangente que combina elementos de todos os meses, testando diversas habilidades (físicas, mentais, de pioneirismo, etc.) e o espírito de equipe. Pode ser um circuito de estações, um jogo de tabuleiro gigante ou uma grande caça ao tesouro com desafios variados. (Revisão/Integração)" },
+                    { date: "30/11/2025", title: "Última revisão e preparação para a Celebração Final", desc: "Dia dedicado aos últimos preparativos para o grande evento de encerramento da gincana." }
+                ],
+                "Dezembro: Grande Celebração e Encerramento": [
+                    { date: "01/12/2025", title: "Grande Celebração e Encerramento da Gincana", desc: "Um evento especial com a presença dos pais, familiares e da comunidade, para celebrar as conquistas da gincana. Incluirá apresentações das unidades, reconhecimento, a revelação do placar final e premiação, uma mensagem final inspiradora dos líderes e confraternização." }
+                ]
+            },
+            bases: [
+                { title: "Origem Histórica", content: "O Clube de Desbravadores foi oficializado em nível mundial no ano de 1950 pela Associação Geral da Igreja Adventista do Sétimo Dia, nos Estados Unidos. Suas raízes, no entanto, remontam a iniciativas anteriores de clubes missionários e de jovens que buscavam o desenvolvimento integral." },
+                { title: "Filosofia", content: "A filosofia do Clube de Desbravadores baseia-se no desenvolvimento harmonioso das forças físicas, mentais e espirituais dos juvenis e adolescentes. O programa busca preparar os jovens para a cidadania útil, o serviço à comunidade e o compromisso com Deus. Tudo o que o Desbravador faz tem um sentido, uma base, um alicerce de valores cristãos e princípios de vida." },
+                { title: "Objetivos Prioritários", content: "Os objetivos do Clube são amplos e visam o crescimento completo do indivíduo: Desenvolvimento Físico, Mental, Espiritual e Social." },
+                { title: "Símbolos do Clube", content: "Os símbolos do Desbravador são elementos visuais e conceituais que representam seus princípios: Ideais (Voto e Lei), Hino, Emblemas, Bandeira, Bandeirim e o Uniforme." }
+            ],
+            funcoes: {
+                "Cargos da Unidade": [
+                    { title: "Conselheiro(a)", content: "É a autoridade máxima dentro da unidade, responsável pela ordem e andamento geral. Atua como elo entre a unidade e a direção do clube. Geralmente, deve ser batizado e ter mais de 18 anos (ou 16+ com supervisão de um diretor maior de idade em atividades externas)." },
+                    { title: "Capitão(ã)", content: "Membro da unidade (10 a 15 anos) responsável por animar o grupo a cumprir o programa, por meio do exemplo e influência pessoal. Lidera a unidade em formações de Ordem Unida e a representa perante a direção. Deve ser organizado, ter liderança, disciplina, honestidade, fidelidade e humildade." },
+                    { title: "Secretário(a) de Unidade", content: "Responsável por manter os registos da unidade atualizados, incluindo chamada de presença, pontualidade, assiduidade, uso do uniforme e higiene pessoal. Idade entre 10 e 15 anos." },
+                    { title: "Tesoureiro(a) de Unidade", content: "Gerencia os pequenos recursos financeiros da unidade, mantendo registos precisos de despesas e receitas. Idade entre 10 e 15 anos." },
+                    { title: "Padioleiro(a) de Unidade", content: "Atua como o 'enfermeiro' da unidade, responsável por auxiliar em pequenos acidentes e aplicar primeiros socorros básicos, sob supervisão. Idade entre 10 e 15 anos." },
+                    { title: "Almoxarife de Unidade", content: "Responsável pela guarda e organização dos materiais e equipamentos da unidade. Idade entre 10 e 15 anos." },
+                    { title: "Capelão(ã) de Unidade", content: "Mantém a ordem e harmonia espiritual da unidade, juntamente com o conselheiro, promovendo momentos de reflexão e estudo bíblico. Idade entre 10 e 15 anos, deve ser de boa índole e respeitador." }
+                ],
+                "Cargos da Direção do Clube": [
+                    { title: "Diretor(a) do Clube", content: "É a autoridade máxima do clube. Responsável por planejar, organizar e supervisionar todas as atividades, manter a ligação com o Pastor e a Associação, presidir as reuniões da comissão executiva e docente, e assegurar um programa completo para o clube. Deve ser um líder maduro, com boa reputação na Igreja e ter o treinamento para oficiais. Deve ser um exemplo de espiritualidade, prontidão, amabilidade, temperança, pontualidade e asseio pessoal, incluindo o uso adequado do uniforme." },
+                    { title: "Diretores(as) Associados(as)", content: "São o braço direito do diretor, responsáveis pelo cumprimento do programa do clube. Coordenam as Classes, Especialidades e Unidades, gerenciando o trabalho dos instrutores e conselheiros. Geralmente há um diretor associado para a ala feminina e outro para a ala masculina. Não há limite para o número de diretores associados, dependendo do tamanho do clube." },
+                    { title: "Secretário(a) do Clube", content: "Assume a responsabilidade pela documentação e registo das atividades do clube. Isso abrange a manutenção de registos de membros, elaboração de relatórios de eventos e comunicação de informações cruciais aos membros e suas famílias. Essencial para a organização administrativa do clube." },
+                    { title: "Tesoureiro(a) do Clube", content: "Gerencia as finanças do clube, mantendo um registo preciso das despesas e receitas, elaborando orçamentos e assegurando o uso responsável dos recursos financeiros disponíveis. Responsável pela saúde financeira do clube." },
+                    { title: "Capelão(ã) do Clube", content: "Encarregado da dimensão espiritual do clube, liderando estudos bíblicos, momentos de oração e promovendo os valores e princípios inerentes à crença Adventista do Sétimo Dia. Essencial para o desenvolvimento espiritual dos Desbravadores." },
+                    { title: "Conselheiros(as) (Gerais) e Instrutores(as)", content: "Os conselheiros supervisionam as unidades, enquanto os instrutores são responsáveis por ensinar as classes e especialidades. Ambos trabalham em estreita colaboração com os diretores associados para garantir a execução do programa educativo do clube. A função de conselheiro é considerada uma das mais importantes, devido ao contato direto com os juvenis." }
+                ]
+            }
+        };
+
+        let chartInstance = null;
+        let currentUnits = [];
+        let currentActivities = [];
+        let currentSubmissions = [];
+
+        // Global functions for Firebase data operations
+        async function getUnits() {
+            const unitsColRef = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'units');
+            const q = query(unitsColRef);
+            return new Promise((resolve, reject) => {
+                onSnapshot(q, (snapshot) => {
+                    currentUnits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    currentUnits.sort((a, b) => (b.score || 0) - (a.score || 0)); // Sort by score descending
+                    resolve(currentUnits);
+                }, reject);
+            });
+        }
+
+        async function getActivities() {
+            const activitiesColRef = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'activities');
+            const q = query(activitiesColRef);
+            return new Promise((resolve, reject) => {
+                onSnapshot(q, (snapshot) => {
+                    currentActivities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    resolve(currentActivities);
+                }, reject);
+            });
+        }
+
+        async function getSubmissions() {
+            const submissionsColRef = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'submissions');
+            const q = query(submissionsColRef);
+            return new Promise((resolve, reject) => {
+                onSnapshot(q, (snapshot) => {
+                    currentSubmissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    currentSubmissions.sort((a, b) => b.submittedAt?.toDate() - a.submittedAt?.toDate()); // Sort by newest
+                    resolve(currentSubmissions);
+                }, reject);
+            });
+        }
+
+
+        // --- UI RENDER FUNCTIONS ---
+        function wrapLabel(label, maxLen) {
+            if (label.length <= maxLen) return label;
+            let wrappedLabel = '';
+            let words = label.split(' ');
+            let currentLine = '';
+            for (let i = 0; i < words.length; i++) {
+                let word = words[i];
+                if ((currentLine + word).length <= maxLen) {
+                    currentLine += (currentLine === '' ? '' : ' ') + word;
+                } else {
+                    wrappedLabel += currentLine + '\n';
+                    currentLine = word;
+                }
+            }
+            wrappedLabel += currentLine;
+            return wrappedLabel;
+        }
+
+        function renderDashboard() {
+            const totalScore = currentUnits.reduce((sum, item) => sum + (item.score || 0), 0);
+            const totalActivitiesDefined = Object.values(staticData.calendar).flat().length;
+            const approvedSubmissionsCount = currentSubmissions.filter(sub => sub.status === 'approved').length;
+
+            document.getElementById('unidade-destaque').textContent = currentUnits.length > 0 ? currentUnits[0].unit : 'N/A';
+            document.getElementById('total-pontos').textContent = totalScore;
+            document.getElementById('atividades-realizadas').textContent = `${approvedSubmissionsCount} / ${totalActivitiesDefined}`;
+
+            renderScoreChart(currentUnits);
+        }
+
+        function renderScoreChart(unitsData) {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: unitsData.map(item => wrapLabel(item.name, 16)),
+                    datasets: [{
+                        label: 'Pontuação da Unidade',
+                        data: unitsData.map(item => item.score || 0),
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                    }]
                 },
-                bases: [
-                    { title: "Origem Histórica", content: "O Clube de Desbravadores foi oficializado em nível mundial no ano de 1950 pela Associação Geral da Igreja Adventista do Sétimo Dia, nos Estados Unidos. Suas raízes, no entanto, remontam a iniciativas anteriores de clubes missionários e de jovens que buscavam o desenvolvimento integral." },
-                    { title: "Filosofia", content: "A filosofia do Clube de Desbravadores baseia-se no desenvolvimento harmonioso das forças físicas, mentais e espirituais dos juvenis e adolescentes. O programa busca preparar os jovens para a cidadania útil, o serviço à comunidade e o compromisso com Deus. Tudo o que o Desbravador faz tem um sentido, uma base, um alicerce de valores cristãos e princípios de vida." },
-                    { title: "Objetivos Prioritários", content: "Os objetivos do Clube são amplos e visam o crescimento completo do indivíduo: Desenvolvimento Físico, Mental, Espiritual e Social." },
-                    { title: "Símbolos do Clube", content: "Os símbolos do Desbravador são elementos visuais e conceituais que representam seus princípios: Ideais (Voto e Lei), Hino, Emblemas, Bandeira, Bandeirim e o Uniforme." }
-                ],
-                funcoes: {
-                    "Cargos da Unidade": [
-                        { title: "Conselheiro(a)", content: "É a autoridade máxima dentro da unidade, responsável pela ordem e andamento geral. Atua como elo entre a unidade e a direção do clube. Geralmente, deve ser batizado e ter mais de 18 anos (ou 16+ com supervisão de um diretor maior de idade em atividades externas)." },
-                        { title: "Capitão(ã)", content: "Membro da unidade (10 a 15 anos) responsável por animar o grupo a cumprir o programa, por meio do exemplo e influência pessoal. Lidera a unidade em formações de Ordem Unida e a representa perante a direção. Deve ser organizado, ter liderança, disciplina, honestidade, fidelidade e humildade." },
-                        { title: "Secretário(a) de Unidade", content: "Responsável por manter os registos da unidade atualizados, incluindo chamada de presença, pontualidade, assiduidade, uso do uniforme e higiene pessoal. Idade entre 10 e 15 anos." },
-                        { title: "Tesoureiro(a) de Unidade", content: "Gerencia os pequenos recursos financeiros da unidade, mantendo registos precisos de despesas e receitas. Idade entre 10 e 15 anos." },
-                        { title: "Padioleiro(a) de Unidade", content: "Atua como o 'enfermeiro' da unidade, responsável por auxiliar em pequenos acidentes e aplicar primeiros socorros básicos, sob supervisão. Idade entre 10 e 15 anos." },
-                        { title: "Almoxarife de Unidade", content: "Responsável pela guarda e organização dos materiais e equipamentos da unidade. Idade entre 10 e 15 anos." },
-                        { title: "Capelão(ã) de Unidade", content: "Mantém a ordem e harmonia espiritual da unidade, juntamente com o conselheiro, promovendo momentos de reflexão e estudo bíblico. Idade entre 10 e 15 anos, deve ser de boa índole e respeitador." }
-                    ],
-                    "Cargos da Direção do Clube": [
-                        { title: "Diretor(a) do Clube", content: "É a autoridade máxima do clube. Responsável por planejar, organizar e supervisionar todas as atividades, manter a ligação com o Pastor e a Associação, presidir as reuniões da comissão executiva e docente, e assegurar um programa completo para o clube. Deve ser um líder maduro, com boa reputação na Igreja e ter o treinamento para oficiais. Deve ser um exemplo de espiritualidade, prontidão, amabilidade, temperança, pontualidade e asseio pessoal, incluindo o uso adequado do uniforme." },
-                        { title: "Diretores(as) Associados(as)", content: "São o braço direito do diretor, responsáveis pelo cumprimento do programa do clube. Coordenam as Classes, Especialidades e Unidades, gerenciando o trabalho dos instrutores e conselheiros. Geralmente há um diretor associado para a ala feminina e outro para a ala masculina. Não há limite para o número de diretores associados, dependendo do tamanho do clube." },
-                        { title: "Secretário(a) do Clube", content: "Assume a responsabilidade pela documentação e registo das atividades do clube. Isso abrange a manutenção de registos de membros, elaboração de relatórios de eventos e comunicação de informações cruciais aos membros e suas famílias. Essencial para a organização administrativa do clube." },
-                        { title: "Tesoureiro(a) do Clube", content: "Gerencia as finanças do clube, mantendo um registo preciso das despesas e receitas, elaborando orçamentos e assegurando o uso responsável dos recursos financeiros disponíveis. Responsável pela saúde financeira do clube." },
-                        { title: "Capelão(ã) do Clube", content: "Encarregado da dimensão espiritual do clube, liderando estudos bíblicos, momentos de oração e promovendo os valores e princípios inerentes à crença Adventista do Sétimo Dia. Essencial para o desenvolvimento espiritual dos Desbravadores." },
-                        { title: "Conselheiros(as) (Gerais) e Instrutores(as)", content: "Os conselheiros supervisionam as unidades, enquanto os instrutores são responsáveis por ensinar as classes e especialidades. Ambos trabalham em estreita colaboração com os diretores associados para garantir a execução do programa educativo do clube. A função de conselheiro é considerada uma das mais importantes, devido ao contato direto com os juvenis." }
-                    ]
-                }
-            };
-
-            let chartInstance = null;
-            const tabs = document.querySelectorAll('.tab-button');
-            const contentSections = document.querySelectorAll('.content-section');
-
-            function wrapLabel(label, maxLen) {
-                if (label.length <= maxLen) return label;
-                let wrappedLabel = '';
-                let words = label.split(' ');
-                let currentLine = '';
-                for (let i = 0; i < words.length; i++) {
-                    let word = words[i];
-                    if ((currentLine + word).length <= maxLen) {
-                        currentLine += (currentLine === '' ? '' : ' ') + word;
-                    } else {
-                        wrappedLabel += currentLine + '\n';
-                        currentLine = word;
-                    }
-                }
-                wrappedLabel += currentLine;
-                return wrappedLabel;
-            }
-
-            function renderDashboard() {
-                const sortedScores = [...data.scores].sort((a, b) => b.score - a.score);
-                const totalScore = data.scores.reduce((sum, item) => sum + item.score, 0);
-                const totalActivities = Object.values(data.calendar).flat().length;
-
-                document.getElementById('unidade-destaque').textContent = sortedScores[0].unit;
-                document.getElementById('total-pontos').textContent = totalScore;
-                document.getElementById('atividades-realizadas').textContent = `0 / ${totalActivities}`;
-
-                renderScoreChart(sortedScores);
-            }
-
-            function renderScoreChart(sortedScores) {
-                const ctx = document.getElementById('scoreChart').getContext('2d');
-                if (chartInstance) {
-                    chartInstance.destroy();
-                }
-                chartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: sortedScores.map(item => wrapLabel(item.unit, 16)),
-                        datasets: [{
-                            label: 'Pontuação da Unidade',
-                            data: sortedScores.map(item => item.score),
-                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                            borderColor: 'rgba(59, 130, 246, 1)',
-                            borderWidth: 1,
-                            borderRadius: 5,
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return `${context.dataset.label}: ${context.raw} pontos`;
-                                    }
-                                }
-                            }
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
                         },
-                        scales: {
-                            x: {
-                                beginAtZero: true,
-                                grid: {
-                                    display: true,
-                                    color: 'rgba(203, 213, 225, 0.5)'
-                                }
-                            },
-                            y: {
-                                grid: {
-                                    display: false
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return `${context.dataset.label}: ${context.raw} pontos`;
                                 }
                             }
                         }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                display: true,
+                                color: 'rgba(203, 213, 225, 0.5)'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
                     }
+                }
+            });
+        }
+
+        function renderCalendar() {
+            const container = document.getElementById('calendario-container');
+            container.innerHTML = '';
+            Object.entries(staticData.calendar).forEach(([month, activities]) => {
+                const monthDiv = document.createElement('div');
+                monthDiv.className = 'bg-white rounded-xl shadow-md';
+
+                const button = document.createElement('button');
+                button.className = 'accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center';
+                button.innerHTML = `<span>${month}</span><span class="transform transition-transform duration-300">▼</span>`;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'accordion-content px-6 pb-6 text-slate-600 space-y-4';
+
+                activities.forEach(activity => {
+                    contentDiv.innerHTML += `
+                        <div class="pt-4 border-t first:border-t-0 border-slate-200">
+                            <p class="font-semibold text-slate-700">${activity.date} - ${activity.title}</p>
+                            <p class="text-sm">${activity.desc}</p>
+                        </div>
+                    `;
                 });
+
+                monthDiv.appendChild(button);
+                monthDiv.appendChild(contentDiv);
+                container.appendChild(monthDiv);
+            });
+        }
+
+        function renderAbout() {
+            const basesContainer = document.getElementById('bases-content');
+            basesContainer.innerHTML = staticData.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join('');
+
+            const funcoesContainer = document.getElementById('funcoes-content');
+            funcoesContainer.innerHTML = '';
+            Object.entries(staticData.funcoes).forEach(([category, roles]) => {
+                let categoryHtml = `<h4 class="font-bold text-lg text-slate-700 pt-4 border-t first:border-t-0 border-slate-200">${category}</h4><ul class="list-disc list-inside list-disc-custom space-y-2">`;
+                roles.forEach(role => {
+                    categoryHtml += `<li><strong>${role.title}:</strong> ${role.content}</li>`;
+                });
+                categoryHtml += `</ul>`;
+                funcoesContainer.innerHTML += categoryHtml;
+            });
+        }
+
+        // --- MANAGEMENT DASHBOARDS (LEADER/SECRETARY) ---
+
+        function renderUnitLeaderDashboard() {
+            document.getElementById('gestao-title').textContent = 'Dashboard do Líder de Unidade';
+            const gestaoContent = document.getElementById('gestao-content');
+            gestaoContent.innerHTML = `
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                    <h3 class="text-xl font-semibold text-blue-600 mb-4">Enviar Atividade Concluída</h3>
+                    <form id="submit-activity-form" class="space-y-4 mb-8">
+                        <div>
+                            <label for="unit-select-leader" class="block text-sm font-medium text-slate-700">Sua Unidade:</label>
+                            <select id="unit-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                                <option value="">Selecione sua unidade</option>
+                            </select>
+                            <p id="no-units-message" class="text-red-500 text-sm mt-2 hidden">Nenhuma unidade encontrada. Peça ao secretário para cadastrar as unidades.</p>
+                        </div>
+                        <div>
+                            <label for="activity-select-leader" class="block text-sm font-medium text-slate-700">Atividade:</label>
+                            <select id="activity-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                                <option value="">Selecione uma atividade</option>
+                            </select>
+                            <p id="no-activities-message" class="text-red-500 text-sm mt-2 hidden">Nenhuma atividade cadastrada. Peça ao secretário para cadastrar as atividades.</p>
+                        </div>
+                        <div>
+                            <label for="details-leader" class="block text-sm font-medium text-slate-700">Detalhes da Conclusão (O que foi feito?):</label>
+                            <textarea id="details-leader" rows="4" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Descreva como a atividade foi concluída..." required></textarea>
+                        </div>
+                        <div>
+                            <label for="photo-url-leader" class="block text-sm font-medium text-slate-700">Link da Foto/Evidência (Opcional):</label>
+                            <input type="text" id="photo-url-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: https://linkdafoto.com/minhafoto.jpg">
+                            <p class="text-xs text-slate-500 mt-1">Em uma aplicação real, aqui haveria um upload de arquivo. Por enquanto, insira um link.</p>
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Enviar para Validação</button>
+                    </form>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-xl font-semibold text-blue-600 mb-4">Meus Envios Recentes</h3>
+                    <div id="leader-submissions-list">
+                        <p class="text-slate-600">Nenhum envio feito ainda para esta unidade.</p>
+                    </div>
+                </div>
+            `;
+
+            const unitSelectLeader = document.getElementById('unit-select-leader');
+            const activitySelectLeader = document.getElementById('activity-select-leader');
+            const noUnitsMessage = document.getElementById('no-units-message');
+            const noActivitiesMessage = document.getElementById('no-activities-message');
+
+            if (currentUnits.length > 0) {
+                unitSelectLeader.innerHTML = currentUnits.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
+                unitSelectLeader.value = currentUnits[0].id; // Select first unit by default
+                noUnitsMessage.classList.add('hidden');
+            } else {
+                noUnitsMessage.classList.remove('hidden');
             }
 
-            function renderCalendar() {
-                const container = document.getElementById('calendario-container');
-                container.innerHTML = '';
-                Object.entries(data.calendar).forEach(([month, activities]) => {
-                    const monthDiv = document.createElement('div');
-                    monthDiv.className = 'bg-white rounded-xl shadow-md';
+            if (currentActivities.length > 0) {
+                activitySelectLeader.innerHTML = '<option value="">Selecione uma atividade</option>' + currentActivities.map(activity => `<option value="${activity.id}">${activity.name} (${activity.type})</option>`).join('');
+                noActivitiesMessage.classList.add('hidden');
+            } else {
+                noActivitiesMessage.classList.remove('hidden');
+            }
 
-                    const button = document.createElement('button');
-                    button.className = 'accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center';
-                    button.innerHTML = `<span>${month}</span><span class="transform transition-transform duration-300">▼</span>`;
-                    
-                    const contentDiv = document.createElement('div');
-                    contentDiv.className = 'accordion-content px-6 pb-6 text-slate-600 space-y-4';
-                    
-                    activities.forEach(activity => {
-                        contentDiv.innerHTML += `
-                            <div class="pt-4 border-t first:border-t-0 border-slate-200">
-                                <p class="font-semibold text-slate-700">${activity.date} - ${activity.title}</p>
-                                <p class="text-sm">${activity.desc}</p>
-                            </div>
+            document.getElementById('submit-activity-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const selectedUnitId = unitSelectLeader.value;
+                const activityId = activitySelectLeader.value;
+                const details = document.getElementById('details-leader').value;
+                const photoUrl = document.getElementById('photo-url-leader').value;
+
+                if (!selectedUnitId || !activityId || !details.trim()) {
+                    window.showMessage("Por favor, preencha todos os campos obrigatórios (Unidade, Atividade e Detalhes).");
+                    return;
+                }
+
+                const activity = currentActivities.find(act => act.id === activityId);
+                if (!activity) {
+                    window.showMessage("Atividade selecionada inválida.");
+                    return;
+                }
+
+                try {
+                    const submissionsColRef = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'submissions');
+                    await addDoc(submissionsColRef, {
+                        unitId: selectedUnitId,
+                        unitName: currentUnits.find(u => u.id === selectedUnitId)?.name || 'Unidade Desconhecida',
+                        activityId: activityId,
+                        activityName: activity.name,
+                        details: details,
+                        photoUrl: photoUrl,
+                        status: 'pending',
+                        submittedBy: window.currentUser.uid,
+                        submittedAt: serverTimestamp(),
+                    });
+                    window.showMessage("Atividade enviada para validação com sucesso!");
+                    document.getElementById('submit-activity-form').reset();
+                } catch (error) {
+                    console.error("Erro ao enviar atividade:", error);
+                    window.showMessage("Erro ao enviar atividade. Tente novamente.");
+                }
+            });
+
+            function updateLeaderSubmissionsList(selectedUnitId) {
+                const leaderSubmissionsList = document.getElementById('leader-submissions-list');
+                const unitSubmissions = currentSubmissions.filter(sub => sub.unitId === selectedUnitId);
+
+                if (unitSubmissions.length === 0) {
+                    leaderSubmissionsList.innerHTML = '<p class="text-slate-600">Nenhum envio feito ainda para esta unidade.</p>';
+                    return;
+                }
+
+                let tableHtml = `
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white rounded-lg shadow-md">
+                            <thead class="bg-blue-100">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tl-lg">Atividade</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Detalhes</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Status</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                unitSubmissions.forEach(sub => {
+                    const statusClass = sub.status === 'pending' ? 'pending' : (sub.status === 'approved' ? 'approved' : 'rejected');
+                    tableHtml += `
+                        <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
+                            <td class="py-3 px-4 text-sm">${sub.activityName}</td>
+                            <td class="py-3 px-4 text-sm max-w-xs truncate">${sub.details}</td>
+                            <td class="py-3 px-4 text-sm">
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold status-badge ${statusClass}">
+                                    ${sub.status === 'pending' ? 'Pendente' : (sub.status === 'approved' ? 'Aprovado' : 'Rejeitado')}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-sm font-bold">${sub.pointsAwarded || 'N/A'}</td>
+                            <td class="py-3 px-4 text-sm">
+                                ${sub.submittedAt ? new Date(sub.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}
+                            </td>
+                        </tr>
+                    `;
+                });
+                tableHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                leaderSubmissionsList.innerHTML = tableHtml;
+            }
+
+            unitSelectLeader.addEventListener('change', (e) => {
+                updateLeaderSubmissionsList(e.target.value);
+            });
+
+            // Initial render of leader submissions based on default selected unit
+            if (unitSelectLeader.value) {
+                updateLeaderSubmissionsList(unitSelectLeader.value);
+            }
+        }
+
+        function renderSecretaryDashboard() {
+            document.getElementById('gestao-title').textContent = 'Dashboard do Secretário do Clube';
+            const gestaoContent = document.getElementById('gestao-content');
+            gestaoContent.innerHTML = `
+                <!-- Gerenciamento de Unidades -->
+                <section class="mb-8 p-4 bg-blue-50 rounded-xl shadow-inner">
+                    <h3 class="text-xl font-semibold text-blue-600 mb-4">Gerenciar Unidades</h3>
+                    <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                        <input type="text" id="new-unit-name" placeholder="Nome da nova unidade" class="flex-grow p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <button id="add-unit-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Adicionar Unidade</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white rounded-lg shadow-md">
+                            <thead class="bg-blue-100">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tl-lg">Unidade</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontuação</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="units-table-body">
+                                <tr><td colspan="3" class="py-4 px-4 text-center text-slate-600">Nenhuma unidade cadastrada.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Gerenciamento de Atividades -->
+                <section class="mb-8 p-4 bg-green-50 rounded-xl shadow-inner">
+                    <h3 class="text-xl font-semibold text-green-600 mb-4">Gerenciar Atividades</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <input type="text" id="new-activity-name" placeholder="Nome da atividade" class="p-3 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                        <select id="new-activity-type" class="p-3 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                            <option value="">Tipo (Físico, Mental, Espiritual, etc.)</option>
+                            <option value="Físico">Físico</option>
+                            <option value="Mental">Mental</option>
+                            <option value="Espiritual">Espiritual</option>
+                            <option value="Social">Social</option>
+                            <option value="Pioneirismo">Pioneirismo</option>
+                            <option value="Natureza">Natureza</option>
+                            <option value="Serviço">Serviço Comunitário</option>
+                            <option value="Culinária">Culinária</option>
+                            <option value="Geral">Geral</option>
+                        </select>
+                        <input type="number" id="new-activity-max-points" placeholder="Pontuação Máxima" class="p-3 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <button id="add-activity-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Adicionar Atividade</button>
+                    <div class="overflow-x-auto mt-6">
+                        <table class="min-w-full bg-white rounded-lg shadow-md">
+                            <thead class="bg-green-100">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tl-lg">Atividade</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Tipo</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos Máx.</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activities-table-body">
+                                <tr><td colspan="4" class="py-4 px-4 text-center text-slate-600">Nenhuma atividade cadastrada.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Validação de Envios Pendentes -->
+                <section class="mb-8 p-4 bg-yellow-50 rounded-xl shadow-inner">
+                    <h3 class="text-xl font-semibold text-yellow-800 mb-4">Envios Pendentes para Validação (<span id="pending-submissions-count">0</span>)</h3>
+                    <div id="pending-submissions-list">
+                        <p class="text-slate-600">Nenhum envio pendente no momento.</p>
+                    </div>
+                </section>
+
+                <!-- Histórico de Envios -->
+                <section class="mb-8 p-4 bg-slate-50 rounded-xl shadow-inner">
+                    <h3 class="text-xl font-semibold text-slate-700 mb-4">Histórico de Todos os Envios</h3>
+                    <div id="all-submissions-list">
+                        <p class="text-slate-600">Nenhum envio registrado ainda.</p>
+                    </div>
+                </section>
+            `;
+
+            // Unit Management
+            document.getElementById('add-unit-btn').addEventListener('click', async () => {
+                const newUnitName = document.getElementById('new-unit-name').value.trim();
+                if (!newUnitName) {
+                    window.showMessage("O nome da unidade não pode ser vazio.");
+                    return;
+                }
+                try {
+                    const unitsColRef = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'units');
+                    await addDoc(unitsColRef, { name: newUnitName, score: 0, createdAt: serverTimestamp() });
+                    window.showMessage(`Unidade "${newUnitName}" adicionada com sucesso!`);
+                    document.getElementById('new-unit-name').value = '';
+                } catch (error) {
+                    console.error("Erro ao adicionar unidade:", error);
+                    window.showMessage("Erro ao adicionar unidade. Tente novamente.");
+                }
+            });
+
+            // Activity Management
+            document.getElementById('add-activity-btn').addEventListener('click', async () => {
+                const name = document.getElementById('new-activity-name').value.trim();
+                const type = document.getElementById('new-activity-type').value;
+                const maxPoints = parseInt(document.getElementById('new-activity-max-points').value);
+
+                if (!name || !type || isNaN(maxPoints) || maxPoints < 0) {
+                    window.showMessage("Por favor, preencha todos os campos da atividade corretamente.");
+                    return;
+                }
+                try {
+                    const activitiesColRef = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'activities');
+                    await addDoc(activitiesColRef, { name, type, maxPoints, createdAt: serverTimestamp() });
+                    window.showMessage(`Atividade "${name}" adicionada com sucesso!`);
+                    document.getElementById('new-activity-name').value = '';
+                    document.getElementById('new-activity-type').value = '';
+                    document.getElementById('new-activity-max-points').value = '';
+                } catch (error) {
+                    console.error("Erro ao adicionar atividade:", error);
+                    window.showMessage("Erro ao adicionar atividade. Tente novamente.");
+                }
+            });
+
+            // Real-time updates for Secretary Dashboard
+            const unsubscribeUnits = onSnapshot(collection(window.db, 'artifacts', window.appId, 'public', 'data', 'units'), (snapshot) => {
+                currentUnits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                currentUnits.sort((a, b) => (b.score || 0) - (a.score || 0));
+                updateUnitsTable();
+                renderDashboard(); // Update dashboard when units change
+            }, (error) => console.error("Erro ao carregar unidades (Secretário):", error));
+
+            const unsubscribeActivities = onSnapshot(collection(window.db, 'artifacts', window.appId, 'public', 'data', 'activities'), (snapshot) => {
+                currentActivities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateActivitiesTable();
+            }, (error) => console.error("Erro ao carregar atividades (Secretário):", error));
+
+            const unsubscribeSubmissions = onSnapshot(collection(window.db, 'artifacts', window.appId, 'public', 'data', 'submissions'), (snapshot) => {
+                currentSubmissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                currentSubmissions.sort((a, b) => b.submittedAt?.toDate() - a.submittedAt?.toDate());
+                updateSubmissionsTables();
+                renderDashboard(); // Update dashboard when submissions change
+            }, (error) => console.error("Erro ao carregar envios (Secretário):", error));
+
+            function updateUnitsTable() {
+                const tbody = document.getElementById('units-table-body');
+                if (!tbody) return;
+                if (currentUnits.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="py-4 px-4 text-center text-slate-600">Nenhuma unidade cadastrada.</td></tr>';
+                } else {
+                    tbody.innerHTML = currentUnits.map(unit => `
+                        <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
+                            <td class="py-3 px-4 text-sm">${unit.name}</td>
+                            <td class="py-3 px-4 text-sm font-bold">${unit.score || 0}</td>
+                            <td class="py-3 px-4 text-sm">
+                                <button data-id="${unit.id}" data-name="${unit.name}" class="delete-unit-btn bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg text-xs transition duration-300 ease-in-out transform hover:scale-105">Excluir</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                    tbody.querySelectorAll('.delete-unit-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => handleDeleteUnit(e.target.dataset.id, e.target.dataset.name));
+                    });
+                }
+            }
+
+            async function handleDeleteUnit(unitId, unitName) {
+                window.showMessage(`Tem certeza que deseja excluir a unidade "${unitName}"? Isso removerá todos os seus dados.`, async (confirmed) => {
+                    if (confirmed) {
+                        try {
+                            const unitDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'units', unitId);
+                            await deleteDoc(unitDocRef);
+                            window.showMessage(`Unidade "${unitName}" excluída com sucesso!`);
+                        } catch (error) {
+                            console.error("Erro ao excluir unidade:", error);
+                            window.showMessage("Erro ao excluir unidade. Tente novamente.");
+                        }
+                    }
+                }, true);
+            }
+
+            function updateActivitiesTable() {
+                const tbody = document.getElementById('activities-table-body');
+                if (!tbody) return;
+                if (currentActivities.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-slate-600">Nenhuma atividade cadastrada.</td></tr>';
+                } else {
+                    tbody.innerHTML = currentActivities.map(activity => `
+                        <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
+                            <td class="py-3 px-4 text-sm">${activity.name}</td>
+                            <td class="py-3 px-4 text-sm">${activity.type}</td>
+                            <td class="py-3 px-4 text-sm font-bold">${activity.maxPoints}</td>
+                            <td class="py-3 px-4 text-sm">
+                                <button data-id="${activity.id}" data-name="${activity.name}" class="delete-activity-btn bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg text-xs transition duration-300 ease-in-out transform hover:scale-105">Excluir</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                    tbody.querySelectorAll('.delete-activity-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => handleDeleteActivity(e.target.dataset.id, e.target.dataset.name));
+                    });
+                }
+            }
+
+            async function handleDeleteActivity(activityId, activityName) {
+                window.showMessage(`Tem certeza que deseja excluir a atividade "${activityName}"?`, async (confirmed) => {
+                    if (confirmed) {
+                        try {
+                            const activityDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'activities', activityId);
+                            await deleteDoc(activityDocRef);
+                            window.showMessage(`Atividade "${activityName}" excluída com sucesso!`);
+                        } catch (error) {
+                            console.error("Erro ao excluir atividade:", error);
+                            window.showMessage("Erro ao excluir atividade. Tente novamente.");
+                        }
+                    }
+                }, true);
+            }
+
+            function updateSubmissionsTables() {
+                const pendingSubmissions = currentSubmissions.filter(sub => sub.status === 'pending');
+                const allSubmissions = currentSubmissions;
+
+                document.getElementById('pending-submissions-count').textContent = pendingSubmissions.length;
+
+                const pendingListDiv = document.getElementById('pending-submissions-list');
+                if (!pendingListDiv) return;
+                if (pendingSubmissions.length === 0) {
+                    pendingListDiv.innerHTML = '<p class="text-slate-600">Nenhum envio pendente no momento.</p>';
+                } else {
+                    let tableHtml = `
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white rounded-lg shadow-md">
+                                <thead class="bg-yellow-100">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tl-lg">Unidade</th>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Atividade</th>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Detalhes</th>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Evidência</th>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos a Atribuir</th>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    pendingSubmissions.forEach(sub => {
+                        const activityMaxPoints = currentActivities.find(act => act.id === sub.activityId)?.maxPoints || 0;
+                        tableHtml += `
+                            <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
+                                <td class="py-3 px-4 text-sm">${sub.unitName}</td>
+                                <td class="py-3 px-4 text-sm">${sub.activityName}</td>
+                                <td class="py-3 px-4 text-sm max-w-xs truncate">${sub.details}</td>
+                                <td class="py-3 px-4 text-sm">
+                                    ${sub.photoUrl ? `<a href="${sub.photoUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Ver Foto</a>` : 'N/A'}
+                                </td>
+                                <td class="py-3 px-4 text-sm">
+                                    <input type="number" value="${activityMaxPoints}" min="0" max="${activityMaxPoints}" data-submission-id="${sub.id}" class="points-input w-20 p-1 border border-slate-300 rounded-md text-center">
+                                    <span class="ml-1 text-xs text-slate-500">/${activityMaxPoints}</span>
+                                </td>
+                                <td class="py-3 px-4 text-sm flex flex-col sm:flex-row gap-2">
+                                    <button data-id="${sub.id}" data-unit-id="${sub.unitId}" class="approve-btn bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded-lg text-xs transition duration-300 ease-in-out transform hover:scale-105">Aprovar</button>
+                                    <button data-id="${sub.id}" class="reject-btn bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg text-xs transition duration-300 ease-in-out transform hover:scale-105">Rejeitar</button>
+                                </td>
+                            </tr>
                         `;
                     });
+                    tableHtml += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    pendingListDiv.innerHTML = tableHtml;
 
-                    monthDiv.appendChild(button);
-                    monthDiv.appendChild(contentDiv);
-                    container.appendChild(monthDiv);
-                });
+                    pendingListDiv.querySelectorAll('.approve-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const submissionId = e.target.dataset.id;
+                            const unitId = e.target.dataset.unitId;
+                            const pointsInput = e.target.closest('tr').querySelector('.points-input');
+                            const points = parseInt(pointsInput.value);
+                            handleApproveSubmission(submissionId, unitId, points);
+                        });
+                    });
+                    pendingListDiv.querySelectorAll('.reject-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => handleRejectSubmission(e.target.dataset.id));
+                    });
+                }
+
+                const allSubmissionsListDiv = document.getElementById('all-submissions-list');
+                if (!allSubmissionsListDiv) return;
+                if (allSubmissions.length === 0) {
+                    allSubmissionsListDiv.innerHTML = '<p class="text-slate-600">Nenhum envio registrado ainda.</p>';
+                } else {
+                    let tableHtml = `
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white rounded-lg shadow-md">
+                                <thead class="bg-slate-200">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tl-lg">Unidade</th>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Atividade</th>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Status</th>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos</th>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Data Envio</th>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Data Validação</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    allSubmissions.forEach(sub => {
+                        const statusClass = sub.status === 'pending' ? 'pending' : (sub.status === 'approved' ? 'approved' : 'rejected');
+                        tableHtml += `
+                            <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
+                                <td class="py-3 px-4 text-sm">${sub.unitName}</td>
+                                <td class="py-3 px-4 text-sm">${sub.activityName}</td>
+                                <td class="py-3 px-4 text-sm">
+                                    <span class="px-2 py-1 rounded-full text-xs font-semibold status-badge ${statusClass}">
+                                        ${sub.status === 'pending' ? 'Pendente' : (sub.status === 'approved' ? 'Aprovado' : 'Rejeitado')}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-sm font-bold">${sub.pointsAwarded || 'N/A'}</td>
+                                <td class="py-3 px-4 text-sm">
+                                    ${sub.submittedAt ? new Date(sub.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}
+                                </td>
+                                <td class="py-3 px-4 text-sm">
+                                    ${sub.validatedAt ? new Date(sub.validatedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tableHtml += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    allSubmissionsListDiv.innerHTML = tableHtml;
+                }
             }
 
-            function renderAbout() {
-                 const basesContainer = document.getElementById('bases-content');
-                 basesContainer.innerHTML = data.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join('');
+            async function handleApproveSubmission(submissionId, unitId, points) {
+                if (points === null || points < 0) {
+                    window.showMessage("Por favor, insira uma pontuação válida.");
+                    return;
+                }
 
-                 const funcoesContainer = document.getElementById('funcoes-content');
-                 funcoesContainer.innerHTML = '';
-                 Object.entries(data.funcoes).forEach(([category, roles]) => {
-                     let categoryHtml = `<h4 class="font-bold text-lg text-slate-700 pt-4 border-t first:border-t-0 border-slate-200">${category}</h4><ul class="list-disc list-inside list-disc-custom space-y-2">`;
-                     roles.forEach(role => {
-                         categoryHtml += `<li><strong>${role.title}:</strong> ${role.content}</li>`;
-                     });
-                     categoryHtml += `</ul>`;
-                     funcoesContainer.innerHTML += categoryHtml;
-                 });
+                window.showMessage(`Confirmar aprovação do envio com ${points} pontos?`, async (confirmed) => {
+                    if (confirmed) {
+                        try {
+                            const submissionDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'submissions', submissionId);
+                            await updateDoc(submissionDocRef, {
+                                status: 'approved',
+                                pointsAwarded: parseInt(points),
+                                validatedAt: serverTimestamp(),
+                            });
+
+                            const unitDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'units', unitId);
+                            const unitSnap = await getDoc(unitDocRef);
+                            if (unitSnap.exists()) {
+                                const currentScore = unitSnap.data().score || 0;
+                                await updateDoc(unitDocRef, {
+                                    score: currentScore + parseInt(points),
+                                });
+                            }
+                            window.showMessage("Envio aprovado e pontuação da unidade atualizada!");
+                        } catch (error) {
+                            console.error("Erro ao aprovar envio:", error);
+                            window.showMessage("Erro ao aprovar envio. Tente novamente.");
+                        }
+                    }
+                }, true);
             }
+
+            async function handleRejectSubmission(submissionId) {
+                window.showMessage("Tem certeza que deseja rejeitar este envio?", async (confirmed) => {
+                    if (confirmed) {
+                        try {
+                            const submissionDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'submissions', submissionId);
+                            await updateDoc(submissionDocRef, {
+                                status: 'rejected',
+                                pointsAwarded: 0,
+                                validatedAt: serverTimestamp(),
+                            });
+                            window.showMessage("Envio rejeitado com sucesso!");
+                        } catch (error) {
+                            console.error("Erro ao rejeitar envio:", error);
+                            window.showMessage("Erro ao rejeitar envio. Tente novamente.");
+                        }
+                    }
+                }, true);
+            }
+        }
+
+        // --- MAIN APPLICATION INITIALIZATION ---
+        async function initApp() {
+            // Update user info in header
+            document.getElementById('user-info').textContent = `Olá, ${window.userRole === 'secretary' ? 'Secretário(a)' : 'Líder de Unidade'} (ID: ${window.currentUser.uid})`;
+
+            // Show/hide 'Gestão' tab based on role
+            if (window.userRole === 'leader' || window.userRole === 'secretary') {
+                document.querySelector('button[data-tab="gestao"]').classList.remove('hidden');
+            }
+
+            // Fetch initial data for all sections
+            await Promise.all([getUnits(), getActivities(), getSubmissions()]);
+
+            // Render static content
+            renderCalendar();
+            renderAbout();
+
+            // Initial tab display
+            const tabs = document.querySelectorAll('.tab-button');
+            const contentSections = document.querySelectorAll('.content-section');
 
             function switchTab(e) {
                 const targetTab = e.currentTarget.dataset.tab;
-                
+
                 tabs.forEach(tab => {
                     tab.classList.toggle('active', tab.dataset.tab === targetTab);
                 });
@@ -442,12 +1286,18 @@
 
                 if (targetTab === 'inicio') {
                     renderDashboard();
+                } else if (targetTab === 'gestao') {
+                    if (window.userRole === 'secretary') {
+                        renderSecretaryDashboard();
+                    } else if (window.userRole === 'leader') {
+                        renderUnitLeaderDashboard();
+                    }
                 }
             }
 
             tabs.forEach(tab => tab.addEventListener('click', switchTab));
 
-            document.body.addEventListener('click', function(event) {
+            document.body.addEventListener('click', function (event) {
                 if (event.target.matches('.accordion-button') || event.target.closest('.accordion-button')) {
                     const button = event.target.matches('.accordion-button') ? event.target : event.target.closest('.accordion-button');
                     const content = button.nextElementSibling;
@@ -455,7 +1305,7 @@
 
                     button.classList.toggle('open');
                     icon.classList.toggle('rotate-180');
-                    
+
                     if (button.classList.contains('open')) {
                         content.style.maxHeight = content.scrollHeight + 'px';
                     } else {
@@ -464,16 +1314,12 @@
                 }
             });
 
-            function init() {
-                document.querySelector('.tab-button[data-tab="inicio"]').classList.add('active');
-                document.getElementById('inicio').classList.add('active');
-                renderDashboard();
-                renderCalendar();
-                renderAbout();
-            }
-
-            init();
-        });
+            // Set initial tab to 'inicio' and render dashboard
+            document.querySelector('.tab-button[data-tab="inicio"]').classList.add('active');
+            document.getElementById('inicio').classList.add('active');
+            renderDashboard();
+        }
     </script>
 </body>
+
 </html>
