@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gincana de Unidades: A Aventura do Desbravador</title>
+    <!-- Visualization & Content Choices: 
+        - Scoreboard (Goal: Compare): A Chart.js horizontal bar chart was selected to visually represent and compare unit scores, as it's highly effective for ranking. This is paired with dynamic stat cards (HTML/CSS) to provide a quick summary (Goal: Inform). Interaction: The chart is dynamically rendered from JS data.
+        - Calendar (Goal: Organize/Inform): An accordion-style list, grouped by month, is used instead of a complex calendar grid. This simplifies implementation while still allowing users to easily find activities. Interaction: Clicking a month reveals its activities.
+        - Regulations (Goal: Inform/Organize): Content from the regulation report is structured into accordion sections for 'Pontuação', 'Critérios de Desempate', 'Conduta Esperada', and 'Procedimentos para Recursos'. This approach breaks down legalistic text into digestible, expandable chunks.
+        - About the Club (Goal: Inform): 'As Bases do Clube' and 'Estrutura e Funções' are presented using accordions. This keeps detailed textual information concise until expanded.
+        - Graphics (Goal: Enhance UI): Unicode characters (emojis) are used for icons in the navigation tabs, providing visual cues without the overhead or complexity of image files or SVG, adhering to the constraints.
+        - Library/Method: Chart.js for visualizations. All other elements are built with structured HTML and styled with Tailwind CSS. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .tab-button.active {
+            border-bottom-color: #2563eb; /* theme-blue-600 */
+            color: #2563eb;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        .accordion-button.open + .accordion-content {
+             max-height: 1000px; /* Adjust as needed for content length */
+        }
+        .chart-container {
+            position: relative;
+            height: 40vh; /* Responsive height */
+            width: 100%;
+            max-width: 800px; /* Max width to prevent excessive stretching */
+            margin: auto; /* Center horizontally */
+            max-height: 400px; /* Max height to prevent vertical overflow */
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 60vh; /* Taller on mobile for better readability */
+            }
+        }
+        .list-disc-custom li::marker {
+            color: #2563eb; /* Custom bullet color */
+        }
+        .list-decimal-custom li::marker {
+            color: #2563eb; /* Custom number color */
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-blue-800">Gincana de Unidades</h1>
+            <h2 class="text-2xl md:text-3xl font-semibold text-slate-600">A Aventura do Desbravador</h2>
+            <p class="mt-4 text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas, nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
+        </header>
+
+        <nav class="flex justify-center border-b-2 border-slate-200 mb-8 overflow-x-auto">
+            <button data-tab="inicio" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏁 Início</button>
+            <button data-tab="calendario" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📅 Calendário</button>
+            <button data-tab="regulamento" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📜 Regulamento</button>
+            <button data-tab="sobre" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🛡️ Sobre o Clube</button>
+        </nav>
+
+        <main>
+            <section id="inicio" class="content-section">
+                <p class="mb-6 text-slate-700 text-center">Bem-vindo ao painel da Gincana de Unidades! Aqui você encontra um resumo rápido do progresso e o placar geral das unidades. Explore as outras abas para detalhes sobre o calendário, regulamento e informações do clube.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-slate-500 font-semibold text-lg">Unidade em Destaque</h3>
+                        <p id="unidade-destaque" class="text-3xl font-bold text-blue-600 mt-2">Carregando...</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-slate-500 font-semibold text-lg">Total de Pontos Acumulados</h3>
+                        <p id="total-pontos" class="text-3xl font-bold text-blue-600 mt-2">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-slate-500 font-semibold text-lg">Atividades Concluídas</h3>
+                        <p id="atividades-realizadas" class="text-3xl font-bold text-blue-600 mt-2">0 / 0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">Placar Geral da Gincana</h3>
+                    <div class="chart-container">
+                        <canvas id="scoreChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="calendario" class="content-section">
+                <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Calendário de Atividades</h2>
+                <p class="mb-6 text-slate-700 text-center">Navegue pelas atividades diárias e semanais programadas para cada mês. As atividades semanais ocorrem sempre aos domingos.</p>
+                <div id="calendario-container" class="space-y-4">
+                    </div>
+            </section>
+
+            <section id="regulamento" class="content-section">
+                <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Regulamento Interno da Gincana</h2>
+                <p class="mb-6 text-slate-700 text-center">Conheça as regras de pontuação, critérios de desempate, conduta esperada e procedimentos para recursos, garantindo uma gincana justa e organizada.</p>
+                <div class="space-y-4">
+                    <div class="bg-white rounded-xl shadow-md">
+                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                            <span>1. Sistema de Pontuação</span>
+                            <span class="transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div id="pontuacao-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
+                            <h4 class="font-bold text-lg text-slate-700">Pontuação Base por Atividade:</h4>
+                            <ul class="list-disc list-inside list-disc-custom space-y-1">
+                                <li><strong>Atividades Diárias:</strong> 5 pontos por Desbravador presente e ativo na atividade. 5-10 pontos extras por Desbravador que concluir ou acertar o desafio.</li>
+                                <li><strong>Atividades Semanais:</strong> 20 pontos por unidade que participar integralmente. 30-100 pontos por desempenho/conclusão. 10-50 pontos extras por qualidade/criatividade.</li>
+                            </ul>
+                            <h4 class="font-bold text-lg text-slate-700 mt-4">Bônus Especiais:</h4>
+                            <ul class="list-disc list-inside list-disc-custom space-y-1">
+                                <li><strong>"Espírito Desbravador" (Semanal):</strong> 50 pontos para a unidade que demonstrar melhor espírito de equipe, ajuda mútua e entusiasmo.</li>
+                                <li><strong>"Unidade Nota 10" (Mensal):</strong> 100 pontos para a unidade com a maior pontuação acumulada no mês.</li>
+                                <li><strong>"Uniforme Impecável" (Semanal):</strong> 20 pontos para a unidade com todos os membros uniformizados corretamente.</li>
+                                <li><strong>"Desafio Surpresa":</strong> Pontos variados (20-100) para desafios inesperados.</li>
+                            </ul>
+                            <h4 class="font-bold text-lg text-slate-700 mt-4">Penalidades:</h4>
+                            <ul class="list-disc list-inside list-disc-custom space-y-1">
+                                <li><strong>Atraso na Entrega de Tarefas/Relatos:</strong> -10 pontos por dia de atraso.</li>
+                                <li><strong>Comportamento Antidesbravador:</strong> -20 a -50 pontos (a critério da diretoria).</li>
+                                <li><strong>Falta de Membros em Atividades Obrigatórias:</strong> -10 pontos por membro ausente em atividades semanais.</li>
+                            </ul>
+                            <h4 class="font-bold text-lg text-slate-700 mt-4">Placar e Acompanhamento:</h4>
+                            <p>Um Placar Geral visível e atualizado semanalmente (online ou físico) com a pontuação de cada unidade. Um "Painel de Conquistas" registrará visualmente os progressos.</p>
+                            <h4 class="font-bold text-lg text-slate-700 mt-4">Submissão e Validação de Requisitos:</h4>
+                            <p>Os líderes de unidade registrarão a conclusão dos requisitos no "Cantinho da Unidade" (<a href="https://clubes.adventistas.org/br/unit-control/" target="_blank" class="text-blue-600 hover:underline">https://clubes.adventistas.org/br/unit-control/</a>). A secretária do clube validará os requisitos e atribuirá a pontuação via SGC (<a href="[https://sg.sdasystems.org/cms/login.php?lang=pt_br](https://sg.sdasystems.org/cms/login.php?lang=pt_br" target="_blank" class="text-blue-600 hover:underline">https://sg.sdasystems.org/cms/login.php?lang=pt_br</a>). Um PDF com o placar de pontos atualizado será divulgado semanalmente.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md">
+                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                            <span>2. Critérios de Desempate</span>
+                            <span class="transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div id="desempate-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
+                            <p>Em caso de empate na pontuação final ou em qualquer etapa decisiva, os seguintes critérios serão aplicados sequencialmente:</p>
+                            <ol class="list-decimal list-inside list-decimal-custom space-y-1">
+                                <li>Maior número de Bônus "Espírito Desbravador" acumulados.</li>
+                                <li>Maior número de Atividades Semanais concluídas com pontuação máxima.</li>
+                                <li>Menor número de Penalidades registradas.</li>
+                                <li>Sorteio: Em caso de persistência do empate, será realizado um sorteio justo e transparente.</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md">
+                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                            <span>3. Conduta Esperada</span>
+                            <span class="transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div id="conduta-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
+                            <p>Todos os Desbravadores e líderes devem aderir aos princípios de conduta do Clube:</p>
+                            <ul class="list-disc list-inside list-disc-custom space-y-1">
+                                <li><strong>Respeito:</strong> Tratar todos com respeito, cortesia e empatia.</li>
+                                <li><strong>Cooperação:</strong> Trabalhar em equipe, auxiliando os colegas e a unidade.</li>
+                                <li><strong>Disciplina:</strong> Seguir as instruções dos líderes e as regras do clube.</li>
+                                <li><strong>Integridade:</strong> Ser honesto em todas as atividades e submissões.</li>
+                                <li><strong>Espírito Esportivo:</strong> Aceitar vitórias e derrotas com humildade e dignidade.</li>
+                                <li><strong>Segurança:</strong> Priorizar a segurança própria e alheia em todas as atividades.</li>
+                            </ul>
+                            <p class="mt-2">Comportamentos que contrariem os ideais do Desbravador ou que prejudiquem o ambiente da gincana serão passíveis de penalidades.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md">
+                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                            <span>4. Procedimentos para Recursos (Apelações)</span>
+                            <span class="transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div id="recursos-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
+                            <p>Caso uma unidade ou líder discorde da pontuação atribuída ou de uma penalidade, poderá apresentar um recurso:</p>
+                            <ol class="list-decimal list-inside list-decimal-custom space-y-1">
+                                <li><strong>Comunicação Inicial:</strong> O líder da unidade deve comunicar formalmente a secretária do clube, por escrito (e-mail ou mensagem oficial), no prazo máximo de 24 horas após a divulgação da pontuação contestada.</li>
+                                <li><strong>Análise Preliminar:</strong> A secretária e o diretor associado responsável pela gincana analisarão o recurso e as evidências.</li>
+                                <li><strong>Decisão:</strong> A decisão será comunicada ao líder da unidade em até 48 horas. A decisão da diretoria é final e irrevogável.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sobre" class="content-section">
+                <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Sobre o Clube de Desbravadores</h2>
+                <p class="mb-6 text-slate-700 text-center">Conheça os fundamentos, a história e a estrutura que guiam o Clube de Desbravadores, um movimento mundial dedicado ao desenvolvimento integral de juvenis e adolescentes.</p>
+                <div class="space-y-4">
+                    <div class="bg-white rounded-xl shadow-md">
+                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                            <span>As Bases do Clube</span>
+                            <span class="transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div id="bases-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
+                            </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md">
+                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                            <span>Estrutura e Funções</span>
+                            <span class="transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div id="funcoes-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
+                            </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const data = {
+                scores: [
+                    { unit: 'Direção', score: 0 },
+                    { unit: 'GDA', score: 0 },
+                    { unit: 'GDB', score: 0 },
+                    { unit: 'Gaditas', score: 0 },
+                    { unit: 'Sentinelas', score: 0 },
+                    { unit: 'Deltas', score: 0 }
+                ],
+                calendar: {
+                    "Junho: Mês do Pioneirismo e da Natureza": [
+                        { date: "08/06/2025", title: "Construção de Abrigo Improvisado", desc: "Cada unidade deve construir um abrigo simples e funcional usando materiais naturais ou lona/corda, capaz de proteger minimamente de intempéries. (Pioneirismo)" },
+                        { date: "15/06/2025", title: "Trilha de Observação e Registro", desc: "Caminhada em trilha segura com uma lista de itens da natureza para encontrar, identificar e registrar (fotos, desenhos ou anotações). (Natureza)" },
+                        { date: "22/06/2025", title: "Cozinha Mateira Criativa", desc: "Preparar um lanche simples e saboroso ao ar livre utilizando técnicas de fogueira segura. Criatividade na receita e segurança no manuseio do fogo serão avaliadas. (Culinária/Pioneirismo)" },
+                        { date: "29/06/2025", title: "Caça ao Tesouro da Orientação", desc: "Utilizando bússola e um mapa simples, as unidades devem seguir pistas para encontrar um tesouro escondido. (Orientação)" }
+                    ],
+                    "Julho: Mês da Saúde e Bem-Estar": [
+                        { date: "06/07/2025", title: "Circuito de Habilidades Físicas", desc: "Montagem de um circuito com 5 a 7 estações que envolvam corrida, salto, agachamento, flexão, polichinelos (adaptadas à idade e capacidade). As unidades competem para completar o circuito no menor tempo, com boa execução. (Físico)" },
+                        { date: "13/07/2025", title: "Oficina de Primeiros Socorros Básicos", desc: "Simulação de situações de emergência comuns (pequenos cortes, entorses, picadas de inseto). As unidades devem demonstrar como fazer curativos simples, imobilizar um braço, estancar sangramento e acionar ajuda. (Primeiros Socorros)" },
+                        { date: "20/07/2025", title: "Gincana Esportiva Lúdica", desc: "Competições de jogos populares e cooperativos como cabo de guerra, corrida de saco, queimada (com regras adaptadas para segurança e inclusão). O espírito esportivo e a diversão serão valorizados. (Físico/Integração)" },
+                        { date: "27/07/2025", title: "Culinária Saudável Desbravador", desc: "Cada unidade prepara uma receita saudável e saborosa (ex: salada de frutas criativa, sanduíches naturais, sucos detox). A apresentação, o sabor e a explicação dos benefícios nutricionais serão avaliados. (Culinária/Saúde)" }
+                    ],
+                    "Agosto: Mês da Comunicação e Expressão": [
+                         { date: "03/08/2025", title: "Teatro de Fantoches/Mímica com Mensagem", desc: "Cada unidade cria e apresenta uma pequena peça de teatro de fantoches ou uma esquete de mímica com uma mensagem positiva ou um ensinamento moral (ex: sobre honestidade, amizade, respeito). (Criatividade/Expressão)" },
+                         { date: "10/08/2025", title: "Campanha de Conscientização Criativa", desc: "As unidades devem desenvolver uma pequena campanha de conscientização sobre um tema relevante para a comunidade (ex: reciclagem, combate ao bullying, importância da leitura). Podem ser cartazes, vídeos curtos (para exibição interna), jingles ou pequenas apresentações. (Serviço/Comunicação)" },
+                         { date: "17/08/2025", title: "Roda de Conversa: Meus Sonhos e Talentos", desc: "Em um ambiente acolhedor, cada Desbravador compartilha um sonho pessoal ou um talento que possui/gostaria de desenvolver. A escuta ativa e o apoio mútuo são incentivados. (Espiritual/Social)" },
+                         { date: "24/08/2025", title: "Visita e Ação de Doação a uma Instituição", desc: "A unidade organiza e realiza uma visita a um asilo, orfanato ou instituição de caridade (com permissão e acompanhamento da diretoria), levando doações (arrecadadas previamente) e, se possível, realizando uma pequena apresentação ou atividade interativa. (Serviço Comunitário)" },
+                         { date: "31/08/2025", title: "Descanso/Preparação para Setembro", desc: "Dia livre para atividades de autocuidado e reflexão individual."}
+                    ],
+                    "Setembro: Mês do Conhecimento e da História": [
+                        { date: "07/09/2025", title: "Gincana do Conhecimento Desbravador", desc: "Uma competição de perguntas e respostas sobre a história do clube, seus ideais (Voto e Lei), classes, especialidades e regulamentos básicos. (Mental)" },
+                        { date: "14/09/2025", title: "Estudo Bíblico Aprofundado e Apresentação", desc: "Cada unidade escolhe um tema bíblico (ex: a criação, a história de José, os milagres de Jesus) e prepara um pequeno estudo para apresentar de forma criativa (com slides, desenhos, encenação) para as outras unidades. (Espiritual/Mental)" },
+                        { date: "21/09/2025", title: "Projeto de Civismo 'Minha Pátria, Minha História'", desc: "Pesquisar sobre um herói nacional, um símbolo do país (bandeira, hino) ou um evento histórico importante. As unidades devem apresentar suas descobertas de forma criativa (mural, jogral, vídeo). (Cívico/Mental)" },
+                        { date: "28/09/2025", title: "Criação de um 'Museu' do Clube", desc: "Cada unidade monta um pequeno painel ou 'exposição' com fotos, objetos, distintivos e histórias que representem a trajetória da sua unidade e do clube. (História/Criatividade)" }
+                    ],
+                    "Outubro: Mês da Aventura e da Superação": [
+                        { date: "05/10/2025", title: "Circuito de Aventura 'Desbravador Radical'", desc: "Montar um circuito com obstáculos (rastejar sob cordas, pular pneus, passar por túneis improvisados, escalar baixo em estruturas seguras) que exija coordenação, agilidade e trabalho em equipe. (Físico/Mental)" },
+                        { date: "12/10/2025", title: "Desafio de Sobrevivência (Teórico e Prático)", desc: "Simulação de situações de sobrevivência. As unidades devem demonstrar habilidades como purificar água (teórico), fazer um sinal de socorro, montar uma pequena armadilha (segura e não-letal), identificar plantas seguras para consumo (teórico). (Pioneirismo/Mental)" },
+                        { date: "19/10/2025", title: "Jogo Noturno 'Mistério da Mata'", desc: "Um jogo de estratégia ou caça ao tesouro em ambiente escuro (com lanternas e supervisão rigorosa), onde as unidades precisam usar a audição, tato e trabalho em equipe para cumprir objetivos. (Mental/Físico)" },
+                        { date: "26/10/2025", title: "Desafio de Resolução de Problemas 'A Ponte da Unidade'", desc: "Apresentar um problema complexo para as unidades, como 'construir uma ponte que suporte um peso X usando apenas materiais Y e Z'. A criatividade e a eficácia da solução serão avaliadas. (Mental/Engenharia)" }
+                    ],
+                    "Novembro: Mês da Gratidão e da Celebração": [
+                        { date: "02/11/2025", title: "Preparação da Cápsula do Tempo da Gincana", desc: "Cada unidade reúne objetos simbólicos, fotos, mensagens e relatos sobre suas experiências na gincana. A cápsula será lacrada e aberta em uma data futura (ex: daqui a 1 ano), para relembrar as conquistas. (Criatividade/Reflexão)" },
+                        { date: "09/11/2025", title: "Dia da Gratidão e Serviço Comunitário", desc: "Ações de serviço focadas em expressar gratidão à comunidade ou à igreja. Exemplos: limpeza e organização do local do clube, ajuda em eventos da igreja, preparação de cestas básicas para doação. (Serviço/Espiritual)" },
+                        { date: "16/11/2025", title: "Ensaio Geral para a Celebração Final", desc: "As unidades praticam quaisquer apresentações, cantos, jograis ou números de Ordem Unida que desejam apresentar no evento de encerramento. Este é um momento de integração e aprimoramento. (Integração)" },
+                        { date: "23/11/2025", title: "Grande Jogo Final 'A Jornada do Desbravador'", desc: "Uma atividade abrangente que combina elementos de todos os meses, testando diversas habilidades (físicas, mentais, de pioneirismo, etc.) e o espírito de equipe. Pode ser um circuito de estações, um jogo de tabuleiro gigante ou uma grande caça ao tesouro com desafios variados. (Revisão/Integração)" },
+                        { date: "30/11/2025", title: "Última revisão e preparação para a Celebração Final", desc: "Dia dedicado aos últimos preparativos para o grande evento de encerramento da gincana." }
+                    ],
+                    "Dezembro: Grande Celebração e Encerramento": [
+                        { date: "01/12/2025", title: "Grande Celebração e Encerramento da Gincana", desc: "Um evento especial com a presença dos pais, familiares e da comunidade, para celebrar as conquistas da gincana. Incluirá apresentações das unidades, reconhecimento, a revelação do placar final e premiação, uma mensagem final inspiradora dos líderes e confraternização." }
+                    ]
+                },
+                bases: [
+                    { title: "Origem Histórica", content: "O Clube de Desbravadores foi oficializado em nível mundial no ano de 1950 pela Associação Geral da Igreja Adventista do Sétimo Dia, nos Estados Unidos. Suas raízes, no entanto, remontam a iniciativas anteriores de clubes missionários e de jovens que buscavam o desenvolvimento integral." },
+                    { title: "Filosofia", content: "A filosofia do Clube de Desbravadores baseia-se no desenvolvimento harmonioso das forças físicas, mentais e espirituais dos juvenis e adolescentes. O programa busca preparar os jovens para a cidadania útil, o serviço à comunidade e o compromisso com Deus. Tudo o que o Desbravador faz tem um sentido, uma base, um alicerce de valores cristãos e princípios de vida." },
+                    { title: "Objetivos Prioritários", content: "Os objetivos do Clube são amplos e visam o crescimento completo do indivíduo: Desenvolvimento Físico, Mental, Espiritual e Social." },
+                    { title: "Símbolos do Clube", content: "Os símbolos do Desbravador são elementos visuais e conceituais que representam seus princípios: Ideais (Voto e Lei), Hino, Emblemas, Bandeira, Bandeirim e o Uniforme." }
+                ],
+                funcoes: {
+                    "Cargos da Unidade": [
+                        { title: "Conselheiro(a)", content: "É a autoridade máxima dentro da unidade, responsável pela ordem e andamento geral. Atua como elo entre a unidade e a direção do clube. Geralmente, deve ser batizado e ter mais de 18 anos (ou 16+ com supervisão de um diretor maior de idade em atividades externas)." },
+                        { title: "Capitão(ã)", content: "Membro da unidade (10 a 15 anos) responsável por animar o grupo a cumprir o programa, por meio do exemplo e influência pessoal. Lidera a unidade em formações de Ordem Unida e a representa perante a direção. Deve ser organizado, ter liderança, disciplina, honestidade, fidelidade e humildade." },
+                        { title: "Secretário(a) de Unidade", content: "Responsável por manter os registos da unidade atualizados, incluindo chamada de presença, pontualidade, assiduidade, uso do uniforme e higiene pessoal. Idade entre 10 e 15 anos." },
+                        { title: "Tesoureiro(a) de Unidade", content: "Gerencia os pequenos recursos financeiros da unidade, mantendo registos precisos de despesas e receitas. Idade entre 10 e 15 anos." },
+                        { title: "Padioleiro(a) de Unidade", content: "Atua como o 'enfermeiro' da unidade, responsável por auxiliar em pequenos acidentes e aplicar primeiros socorros básicos, sob supervisão. Idade entre 10 e 15 anos." },
+                        { title: "Almoxarife de Unidade", content: "Responsável pela guarda e organização dos materiais e equipamentos da unidade. Idade entre 10 e 15 anos." },
+                        { title: "Capelão(ã) de Unidade", content: "Mantém a ordem e harmonia espiritual da unidade, juntamente com o conselheiro, promovendo momentos de reflexão e estudo bíblico. Idade entre 10 e 15 anos, deve ser de boa índole e respeitador." }
+                    ],
+                    "Cargos da Direção do Clube": [
+                        { title: "Diretor(a) do Clube", content: "É a autoridade máxima do clube. Responsável por planejar, organizar e supervisionar todas as atividades, manter a ligação com o Pastor e a Associação, presidir as reuniões da comissão executiva e docente, e assegurar um programa completo para o clube. Deve ser um líder maduro, com boa reputação na Igreja e ter o treinamento para oficiais. Deve ser um exemplo de espiritualidade, prontidão, amabilidade, temperança, pontualidade e asseio pessoal, incluindo o uso adequado do uniforme." },
+                        { title: "Diretores(as) Associados(as)", content: "São o braço direito do diretor, responsáveis pelo cumprimento do programa do clube. Coordenam as Classes, Especialidades e Unidades, gerenciando o trabalho dos instrutores e conselheiros. Geralmente há um diretor associado para a ala feminina e outro para a ala masculina. Não há limite para o número de diretores associados, dependendo do tamanho do clube." },
+                        { title: "Secretário(a) do Clube", content: "Assume a responsabilidade pela documentação e registo das atividades do clube. Isso abrange a manutenção de registos de membros, elaboração de relatórios de eventos e comunicação de informações cruciais aos membros e suas famílias. Essencial para a organização administrativa do clube." },
+                        { title: "Tesoureiro(a) do Clube", content: "Gerencia as finanças do clube, mantendo um registo preciso das despesas e receitas, elaborando orçamentos e assegurando o uso responsável dos recursos financeiros disponíveis. Responsável pela saúde financeira do clube." },
+                        { title: "Capelão(ã) do Clube", content: "Encarregado da dimensão espiritual do clube, liderando estudos bíblicos, momentos de oração e promovendo os valores e princípios inerentes à crença Adventista do Sétimo Dia. Essencial para o desenvolvimento espiritual dos Desbravadores." },
+                        { title: "Conselheiros(as) (Gerais) e Instrutores(as)", content: "Os conselheiros supervisionam as unidades, enquanto os instrutores são responsáveis por ensinar as classes e especialidades. Ambos trabalham em estreita colaboração com os diretores associados para garantir a execução do programa educativo do clube. A função de conselheiro é considerada uma das mais importantes, devido ao contato direto com os juvenis." }
+                    ]
+                }
+            };
+
+            let chartInstance = null;
+            const tabs = document.querySelectorAll('.tab-button');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            function wrapLabel(label, maxLen) {
+                if (label.length <= maxLen) return label;
+                let wrappedLabel = '';
+                let words = label.split(' ');
+                let currentLine = '';
+                for (let i = 0; i < words.length; i++) {
+                    let word = words[i];
+                    if ((currentLine + word).length <= maxLen) {
+                        currentLine += (currentLine === '' ? '' : ' ') + word;
+                    } else {
+                        wrappedLabel += currentLine + '\n';
+                        currentLine = word;
+                    }
+                }
+                wrappedLabel += currentLine;
+                return wrappedLabel;
+            }
+
+            function renderDashboard() {
+                const sortedScores = [...data.scores].sort((a, b) => b.score - a.score);
+                const totalScore = data.scores.reduce((sum, item) => sum + item.score, 0);
+                const totalActivities = Object.values(data.calendar).flat().length;
+
+                document.getElementById('unidade-destaque').textContent = sortedScores[0].unit;
+                document.getElementById('total-pontos').textContent = totalScore;
+                document.getElementById('atividades-realizadas').textContent = `0 / ${totalActivities}`;
+
+                renderScoreChart(sortedScores);
+            }
+
+            function renderScoreChart(sortedScores) {
+                const ctx = document.getElementById('scoreChart').getContext('2d');
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+                chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: sortedScores.map(item => wrapLabel(item.unit, 16)),
+                        datasets: [{
+                            label: 'Pontuação da Unidade',
+                            data: sortedScores.map(item => item.score),
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1,
+                            borderRadius: 5,
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw} pontos`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: {
+                                    display: true,
+                                    color: 'rgba(203, 213, 225, 0.5)'
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function renderCalendar() {
+                const container = document.getElementById('calendario-container');
+                container.innerHTML = '';
+                Object.entries(data.calendar).forEach(([month, activities]) => {
+                    const monthDiv = document.createElement('div');
+                    monthDiv.className = 'bg-white rounded-xl shadow-md';
+
+                    const button = document.createElement('button');
+                    button.className = 'accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center';
+                    button.innerHTML = `<span>${month}</span><span class="transform transition-transform duration-300">▼</span>`;
+                    
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'accordion-content px-6 pb-6 text-slate-600 space-y-4';
+                    
+                    activities.forEach(activity => {
+                        contentDiv.innerHTML += `
+                            <div class="pt-4 border-t first:border-t-0 border-slate-200">
+                                <p class="font-semibold text-slate-700">${activity.date} - ${activity.title}</p>
+                                <p class="text-sm">${activity.desc}</p>
+                            </div>
+                        `;
+                    });
+
+                    monthDiv.appendChild(button);
+                    monthDiv.appendChild(contentDiv);
+                    container.appendChild(monthDiv);
+                });
+            }
+
+            function renderAbout() {
+                 const basesContainer = document.getElementById('bases-content');
+                 basesContainer.innerHTML = data.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join('');
+
+                 const funcoesContainer = document.getElementById('funcoes-content');
+                 funcoesContainer.innerHTML = '';
+                 Object.entries(data.funcoes).forEach(([category, roles]) => {
+                     let categoryHtml = `<h4 class="font-bold text-lg text-slate-700 pt-4 border-t first:border-t-0 border-slate-200">${category}</h4><ul class="list-disc list-inside list-disc-custom space-y-2">`;
+                     roles.forEach(role => {
+                         categoryHtml += `<li><strong>${role.title}:</strong> ${role.content}</li>`;
+                     });
+                     categoryHtml += `</ul>`;
+                     funcoesContainer.innerHTML += categoryHtml;
+                 });
+            }
+
+            function switchTab(e) {
+                const targetTab = e.currentTarget.dataset.tab;
+                
+                tabs.forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.tab === targetTab);
+                });
+
+                contentSections.forEach(section => {
+                    section.classList.toggle('active', section.id === targetTab);
+                });
+
+                if (targetTab === 'inicio') {
+                    renderDashboard();
+                }
+            }
+
+            tabs.forEach(tab => tab.addEventListener('click', switchTab));
+
+            document.body.addEventListener('click', function(event) {
+                if (event.target.matches('.accordion-button') || event.target.closest('.accordion-button')) {
+                    const button = event.target.matches('.accordion-button') ? event.target : event.target.closest('.accordion-button');
+                    const content = button.nextElementSibling;
+                    const icon = button.querySelector('span:last-child');
+
+                    button.classList.toggle('open');
+                    icon.classList.toggle('rotate-180');
+                    
+                    if (button.classList.contains('open')) {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                    } else {
+                        content.style.maxHeight = null;
+                    }
+                }
+            });
+
+            function init() {
+                document.querySelector('.tab-button[data-tab="inicio"]').classList.add('active');
+                document.getElementById('inicio').classList.add('active');
+                renderDashboard();
+                renderCalendar();
+                renderAbout();
+            }
+
+            init();
+        });
+    </script>
+</body>
+</html>
