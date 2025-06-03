@@ -75,6 +75,13 @@
 
 <body class="bg-slate-50 text-slate-800">
 
+    <!-- Loading Overlay -->
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-slate-100 bg-opacity-90 flex flex-col justify-center items-center z-50">
+        <div class="animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-blue-500"></div>
+        <p class="mt-4 text-lg text-slate-700">A carregar aplicação...</p>
+    </div>
+
     <!-- Message Box -->
     <div id="messageBox" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 hidden">
         <div class="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full text-center">
