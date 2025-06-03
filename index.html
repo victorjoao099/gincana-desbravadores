@@ -75,6 +75,13 @@
 
 <body class="bg-slate-50 text-slate-800">
 
+    <!-- Loading Overlay -->
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-slate-100 bg-opacity-90 flex flex-col justify-center items-center z-50">
+        <div class="animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-blue-500"></div>
+        <p class="mt-4 text-lg text-slate-700">A carregar aplicação...</p>
+    </div>
+
     <!-- Message Box -->
     <div id="messageBox" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 hidden">
         <div class="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full text-center">
@@ -88,15 +95,48 @@
         </div>
     </div>
 
-    <!-- Main Application Content (always visible) -->
-    <div id="main-app-content" class="container mx-auto p-4 md:p-8">
+    <!-- Authentication Section (visible by default, hidden by JS on auth) -->
+    <section id="auth-section"
+        class="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-blue-200 p-4">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
+            <h2 class="text-3xl font-bold text-blue-800 mb-6">Acesso à Gincana</h2>
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label for="email" class="sr-only">Email</label>
+                    <input type="email" id="email" placeholder="Email"
+                        class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required>
+                </div>
+                <div>
+                    <label for="password" class="sr-only">Palavra-passe</label>
+                    <input type="password" id="password" placeholder="Palavra-passe"
+                        class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required>
+                </div>
+                <button type="submit" id="login-btn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Iniciar
+                    Sessão</button>
+                <button type="button" id="register-btn"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Registar</button>
+            </form>
+            <p class="text-sm text-slate-500 mt-4">
+                Se esta é a sua primeira vez, registe-se. Após o registo, o seu papel (Líder ou Secretário) será
+                definido no sistema.
+            </p>
+        </div>
+    </section>
+
+    <!-- Main Application Content (hidden until authenticated) -->
+    <div id="main-app-content" class="container mx-auto p-4 md:p-8 hidden">
         <!-- Header -->
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold text-blue-800">Gincana de Unidades</h1>
             <h2 class="text-2xl md:text-3xl font-semibold text-slate-600">A Aventura do Desbravador</h2>
             <p class="mt-4 text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas,
                 nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
-            <p id="user-info" class="mt-2 text-sm text-slate-500">Bem-vindo à Gincana!</p>
+            <p id="user-info" class="mt-2 text-sm text-slate-500">Carregando informações do utilizador...</p>
+            <button id="logout-btn"
+                class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Sair</button>
         </header>
 
         <!-- Navigation Tabs -->
@@ -586,17 +626,7 @@
                             <label for="activity-select-leader" class="block text-sm font-medium text-slate-700">Atividade:</label>
                             <select id="activity-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
                                 <option value="">Selecione uma atividade</option>
-                            </select>
-                            <p id="no-activities-message" class="text-red-500 text-sm mt-2 hidden">Nenhuma atividade cadastrada. Peça ao secretário para cadastrar as atividades.</p>
-                        </div>
-                        <div>
-                            <label for="details-leader" class="block text-sm font-medium text-slate-700">Detalhes da Conclusão (O que foi feito?):</label>
-                            <textarea id="details-leader" rows="4" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Descreva como a atividade foi concluída..." required></textarea>
-                        </div>
-                        <div>
-                            <label for="photo-url-leader" class="block text-sm font-medium text-slate-700">Link da Foto/Evidência (Opcional):</label>
-                            <input type="text" id="photo-url-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: https://linkdafoto.com/minhafoto.jpg">
-                            <p class="text-xs text-slate-500 mt-1">Em uma aplicação real, aqui haveria um upload de arquivo. Por enquanto, insira um link.</p>
+                            </option>
                         </div>
                         <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Enviar para Validação</button>
                     </form>
@@ -1285,17 +1315,78 @@
 
         // --- INICIALIZAÇÃO PRINCIPAL DA APLICAÇÃO ---
         // Esta função é chamada quando o DOM está pronto e o Firebase é inicializado.
-        async function initApp() {
-            console.log("initApp: Iniciando...");
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log("DOMContentLoaded: Iniciando...");
 
-            // Atualiza informações do utilizador no cabeçalho
-            if (currentUser) {
-                document.getElementById('user-info').textContent = `Olá, ${userRole === 'secretary' ? 'Secretário(a)' : 'Líder de Unidade'} (ID: ${currentUser.uid})`;
-                document.getElementById('logout-btn').classList.remove('hidden');
-            } else {
-                document.getElementById('user-info').textContent = `Não autenticado.`;
-                document.getElementById('logout-btn').classList.add('hidden');
+            // Tenta inicializar o Firebase
+            try {
+                if (!firebaseConfig.apiKey || !firebaseConfig.projectId || !firebaseConfig.authDomain) {
+                    throw new Error("As credenciais do Firebase (apiKey, projectId, authDomain) não foram preenchidas ou estão incompletas.");
+                }
+                firebaseApp = initializeApp(firebaseConfig);
+                db = getFirestore(firebaseApp);
+                auth = getAuth(firebaseApp);
+                console.log("Firebase initialized.");
+
+                // Oculta o overlay de carregamento
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('hidden');
+                    console.log("Loading overlay hidden.");
+                }
+
+                // Configura os listeners de autenticação
+                setupAuthFormListeners();
+
+                // Observa o estado de autenticação para exibir a UI correta
+                onAuthStateChanged(auth, async (user) => {
+                    console.log("onAuthStateChanged: Estado do usuário alterado. User:", user);
+                    if (user) {
+                        currentUser = user;
+                        // Tenta buscar o papel do utilizador no Firestore
+                        const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
+                        const userDocSnap = await getDoc(userDocRef);
+
+                        if (userDocSnap.exists()) {
+                            userRole = userDocSnap.data().role;
+                            console.log("User role from Firestore:", userRole);
+                        } else {
+                            // Se o utilizador não tiver um papel, define como líder por padrão
+                            await setDoc(userDocRef, { role: 'leader', uid: user.uid, email: user.email || 'N/A' });
+                            userRole = 'leader';
+                            console.log("User role set to default 'leader'.");
+                        }
+                        // Esconde o formulário de login e mostra o conteúdo principal
+                        document.getElementById('auth-section').classList.add('hidden');
+                        document.getElementById('main-app-content').classList.remove('hidden');
+                        initAppContent(); // Inicializa o conteúdo principal da aplicação
+                    } else {
+                        currentUser = null;
+                        userRole = null;
+                        // Mostra o formulário de login e esconde o conteúdo principal
+                        document.getElementById('auth-section').classList.remove('hidden');
+                        document.getElementById('main-app-content').classList.add('hidden');
+                        console.log("User not authenticated. Showing auth section.");
+                    }
+                });
+
+            } catch (error) {
+                console.error("Erro crítico na inicialização do Firebase:", error);
+                showMessage(`Erro crítico na inicialização do Firebase: ${error.message}. Por favor, verifique a sua consola e as configurações do Firebase.`);
+                // Garante que o overlay é escondido mesmo em caso de erro crítico de inicialização
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('hidden');
+                }
             }
+        });
+
+        // Função para inicializar o conteúdo da aplicação (chamada após autenticação)
+        async function initAppContent() {
+            console.log("initAppContent: Iniciando conteúdo da aplicação.");
+            // Atualiza informações do utilizador no cabeçalho
+            document.getElementById('user-info').textContent = `Olá, ${userRole === 'secretary' ? 'Secretário(a)' : 'Líder de Unidade'} (ID: ${currentUser.uid})`;
+            document.getElementById('logout-btn').classList.remove('hidden');
 
             // Mostra/esconde a aba 'Gestão' com base no papel
             if (userRole === 'leader' || userRole === 'secretary') {
@@ -1306,28 +1397,17 @@
 
             // Busca dados iniciais para todas as secções
             try {
-                if (!db || !appId) {
-                    throw new Error("Firebase Firestore ou App ID não estão inicializados.");
-                }
                 await Promise.all([getUnits(), getActivities(), getSubmissions(), getDemerits()]);
-                console.log("initApp: Dados Firebase carregados com sucesso.");
+                console.log("initAppContent: Dados Firebase carregados com sucesso.");
             } catch (error) {
-                console.error("initApp: Erro ao buscar dados Firebase:", error);
-                showMessage("Erro ao carregar dados. Por favor, verifique a configuração do Firebase e as regras de segurança.");
-            } finally {
-                // Esconde o overlay de carregamento SEMPRE, independentemente do sucesso ou falha
-                const loadingOverlay = document.getElementById('loading-overlay');
-                if (loadingOverlay) { // Verifica se o elemento existe antes de tentar manipular
-                    loadingOverlay.classList.add('hidden');
-                    console.log("initApp: Overlay de carregamento escondido.");
-                }
+                console.error("initAppContent: Erro ao buscar dados Firebase:", error);
+                showMessage("Erro ao carregar dados. Por favor, verifique as regras de segurança do Firestore.");
             }
-
 
             // Renderiza conteúdo estático
             renderCalendar();
             renderAbout();
-            console.log("initApp: Conteúdo estático renderizado.");
+            console.log("initAppContent: Conteúdo estático renderizado.");
 
             // Configura a exibição inicial da aba
             const tabs = document.querySelectorAll('.tab-button');
@@ -1380,7 +1460,7 @@
             document.querySelector('.tab-button[data-tab="inicio"]').classList.add('active');
             document.getElementById('inicio').classList.add('active');
             renderDashboard();
-            console.log("initApp: Inicialização completa da UI.");
+            console.log("initAppContent: Inicialização completa da UI.");
         }
     </script>
 </body>
