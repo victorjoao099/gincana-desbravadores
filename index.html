@@ -20,7 +20,7 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
         // Global variables for Firebase access
@@ -43,6 +43,10 @@
         window.where = where;
         window.getDocs = getDocs;
         window.serverTimestamp = serverTimestamp;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signOut = signOut;
+        window.onAuthStateChanged = onAuthStateChanged; // Expor para uso em initApp
 
         // =====================================================================================================
         // === ATENÇÃO: CONFIGURAÇÃO DO FIREBASE - VOCÊ PRECISA PREENCHER ESTAS VARIÁVEIS ===
@@ -63,8 +67,7 @@
             appId: "1:497226153394:web:35d484f3737e3a3b4938ab"
         };
 
-        // Para testes locais, o token de autenticação inicial do ambiente Canvas não estará disponível.
-        // Mantenha como 'null' para que o aplicativo use a autenticação anônima por padrão.
+        // initialAuthToken não é mais usado com autenticação por e-mail/senha, mas mantido para compatibilidade
         const initialAuthToken = null;
         // =====================================================================================================
         // === FIM DA CONFIGURAÇÃO DO FIREBASE ===
@@ -116,35 +119,36 @@
                 window.db = getFirestore(window.firebaseApp);
                 window.auth = getAuth(window.firebaseApp);
 
+                // Listener de estado de autenticação principal
                 onAuthStateChanged(window.auth, async (user) => {
                     if (user) {
                         window.currentUser = user;
+                        // Tenta buscar o papel do utilizador no Firestore
                         const userDocRef = doc(window.db, 'artifacts', window.appId, 'users', user.uid);
                         const userDocSnap = await getDoc(userDocRef);
 
                         if (userDocSnap.exists()) {
                             window.userRole = userDocSnap.data().role;
                         } else {
-                            // Default to 'leader' if no role is set
-                            await setDoc(userDocRef, { role: 'leader', uid: user.uid });
+                            // Se o utilizador não tiver um papel, define como líder por padrão
+                            // Isso acontece no primeiro login/registo.
+                            await setDoc(userDocRef, { role: 'leader', uid: user.uid, email: user.email || 'N/A' });
                             window.userRole = 'leader';
                         }
+                        // Esconde o formulário de login e mostra o conteúdo principal
+                        document.getElementById('auth-section').classList.add('hidden');
+                        document.getElementById('main-app-content').classList.remove('hidden');
+                        document.getElementById('loading-overlay').classList.add('hidden');
+                        initApp(); // Inicializa a lógica principal da aplicação
                     } else {
-                        if (initialAuthToken) {
-                            try {
-                                await signInWithCustomToken(window.auth, initialAuthToken);
-                            } catch (error) {
-                                console.error("Erro ao autenticar com token personalizado:", error);
-                                window.showMessage("Erro de autenticação. Tentando autenticação anônima...");
-                                await signInAnonymously(window.auth);
-                            }
-                        } else {
-                            await signInAnonymously(window.auth);
-                        }
+                        window.currentUser = null;
+                        window.userRole = null;
+                        // Mostra o formulário de login e esconde o conteúdo principal
+                        document.getElementById('auth-section').classList.remove('hidden');
+                        document.getElementById('main-app-content').classList.add('hidden');
+                        document.getElementById('loading-overlay').classList.add('hidden');
+                        updateAuthUI(); // Atualiza a UI de autenticação (se necessário)
                     }
-                    // Hide loading overlay once auth and role are determined
-                    document.getElementById('loading-overlay').classList.add('hidden');
-                    initApp(); // Initialize the main application logic
                 });
 
             } catch (error) {
@@ -241,7 +245,39 @@
         </div>
     </div>
 
-    <div class="container mx-auto p-4 md:p-8">
+    <!-- Authentication Section -->
+    <section id="auth-section"
+        class="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-blue-200 p-4 hidden">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
+            <h2 class="text-3xl font-bold text-blue-800 mb-6">Acesso à Gincana</h2>
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label for="email" class="sr-only">Email</label>
+                    <input type="email" id="email" placeholder="Email"
+                        class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required>
+                </div>
+                <div>
+                    <label for="password" class="sr-only">Palavra-passe</label>
+                    <input type="password" id="password" placeholder="Palavra-passe"
+                        class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required>
+                </div>
+                <button type="submit" id="login-btn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Iniciar
+                    Sessão</button>
+                <button type="button" id="register-btn"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Registar</button>
+            </form>
+            <p class="text-sm text-slate-500 mt-4">
+                Se esta é a sua primeira vez, registe-se. Após o registo, o seu papel (Líder ou Secretário) será
+                definido no sistema.
+            </p>
+        </div>
+    </section>
+
+    <!-- Main Application Content (hidden until authenticated) -->
+    <div id="main-app-content" class="container mx-auto p-4 md:p-8 hidden">
         <!-- Header -->
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold text-blue-800">Gincana de Unidades</h1>
@@ -249,6 +285,8 @@
             <p class="mt-4 text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas,
                 nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
             <p id="user-info" class="mt-2 text-sm text-slate-500">Carregando informações do utilizador...</p>
+            <button id="logout-btn"
+                class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Sair</button>
         </header>
 
         <!-- Navigation Tabs -->
@@ -1255,11 +1293,19 @@
         // --- MAIN APPLICATION INITIALIZATION ---
         async function initApp() {
             // Update user info in header
-            document.getElementById('user-info').textContent = `Olá, ${window.userRole === 'secretary' ? 'Secretário(a)' : 'Líder de Unidade'} (ID: ${window.currentUser.uid})`;
+            if (window.currentUser) {
+                document.getElementById('user-info').textContent = `Olá, ${window.userRole === 'secretary' ? 'Secretário(a)' : 'Líder de Unidade'} (ID: ${window.currentUser.uid})`;
+                document.getElementById('logout-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('user-info').textContent = `Não autenticado.`;
+                document.getElementById('logout-btn').classList.add('hidden');
+            }
 
             // Show/hide 'Gestão' tab based on role
             if (window.userRole === 'leader' || window.userRole === 'secretary') {
                 document.querySelector('button[data-tab="gestao"]').classList.remove('hidden');
+            } else {
+                document.querySelector('button[data-tab="gestao"]').classList.add('hidden');
             }
 
             // Fetch initial data for all sections
@@ -1291,6 +1337,10 @@
                         renderSecretaryDashboard();
                     } else if (window.userRole === 'leader') {
                         renderUnitLeaderDashboard();
+                    } else {
+                        // Fallback if somehow user gets to gestão tab without role
+                        window.showMessage("Você não tem permissão para aceder a esta seção.");
+                        document.querySelector('.tab-button[data-tab="inicio"]').click(); // Redirect to home
                     }
                 }
             }
