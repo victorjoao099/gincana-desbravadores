@@ -341,7 +341,7 @@
 
     <!-- Firebase SDKs e lógica principal da aplicação (como um módulo) -->
     <script type="module">
-        console.log("Script de módulo a ser executado...");
+        console.log("Script de módulo a ser executado - Versão: 2024-06-04_16:00");
 
         // Importações do Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
@@ -356,14 +356,10 @@
         let userRole = null;
 
         // =====================================================================================================
-        // === ATENÇÃO: CONFIGURAÇÃO DO FIREBASE - VOCÊ PRECISA PREENCHER ESTAS VARIÁVEIS ===
+        // === ATENÇÃO: CONFIGURAÇÃO DO FIREBASE  ===
         // =====================================================================================================
-        // 1. Substitua 'SEU_FIREBASE_PROJECT_ID_AQUI' pelo ID do seu projeto Firebase (ex: 'meu-clube-gincana-12345').
-        //    Este ID será usado para organizar os dados no Firestore.
-        const appId = 'gincana-de-unidade'; // ID do aplicativo, usado para organizar os dados no Firestore
+        const appId = 'gincana-de-unidade';
 
-        // 2. Cole AQUI o objeto 'firebaseConfig' COMPLETO que você copiou do Console do Firebase.
-        //    Ele deve ser parecido com o exemplo abaixo, mas com as suas chaves e IDs reais.
         const firebaseConfig = {
             apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8",
             authDomain: "gincana-de-unidade.firebaseapp.com",
@@ -426,52 +422,143 @@
         let currentSubmissions = [];
         let currentDemerits = []; // Nova variável para deméritos
 
+        // --- DEFINIÇÃO DE DADOS ESTÁTICOS DA APLICAÇÃO (MOVIDO PARA DENTRO DO MÓDULO) ---
+        const staticData = {
+            calendar: {
+                "Junho: Mês do Pioneirismo e da Natureza": [
+                    { date: "08/06/2025", title: "Construção de Abrigo Improvisado", desc: "Cada unidade deve construir um abrigo simples e funcional usando materiais naturais ou lona/corda, capaz de proteger minimamente de intempéries. (Pioneirismo)" },
+                    { date: "15/06/2025", title: "Trilha de Observação e Registro", desc: "Caminhada em trilha segura com uma lista de itens da natureza para encontrar, identificar e registrar (fotos, desenhos ou anotações). (Natureza)" },
+                    { date: "22/06/2025", title: "Cozinha Mateira Criativa", desc: "Preparar um lanche simples e saboroso ao ar livre utilizando técnicas de fogueira segura. Criatividade na receita e segurança no manuseio do fogo serão avaliadas. (Culinária/Pioneirismo)" },
+                    { date: "29/06/2025", title: "Caça ao Tesouro da Orientação", desc: "Utilizando bússola e um mapa simples, as unidades devem seguir pistas para encontrar um tesouro escondido. (Orientação)" }
+                ],
+                "Julho: Mês da Saúde e Bem-Estar": [
+                    { date: "06/07/2025", title: "Circuito de Habilidades Físicas", desc: "Montagem de um circuito com 5 a 7 estações que envolvam corrida, salto, agachamento, flexão, polichinelos (adaptadas à idade e capacidade). As unidades competem para completar o circuito no menor tempo, com boa execução. (Físico)" },
+                    { date: "13/07/2025", title: "Oficina de Primeiros Socorros Básicos", desc: "Simulação de situações de emergência comuns (pequenos cortes, entorses, picadas de inseto). As unidades devem demonstrar como fazer curativos simples, imobilizar um braço, estancar sangramento e acionar ajuda. (Primeiros Socorros)" },
+                    { date: "20/07/2025", title: "Gincana Esportiva Lúdica", desc: "Competições de jogos populares e cooperativos como cabo de guerra, corrida de saco, queimada (com regras adaptadas para segurança e inclusão). O espírito esportivo e a diversão serão valorizados. (Físico/Integração)" },
+                    { date: "27/07/2025", title: "Culinária Saudável Desbravador", desc: "Cada unidade prepara uma receita saudável e saborosa (ex: salada de frutas criativa, sanduíches naturais, sucos detox). A apresentação, o sabor e a explicação dos benefícios nutricionais serão avaliadas. (Culinária/Saúde)" }
+                ],
+                "Agosto: Mês da Comunicação e Expressão": [
+                    { date: "03/08/2025", title: "Teatro de Fantoches/Mímica com Mensagem", desc: "Cada unidade cria e apresenta uma pequena peça de teatro de fantoches ou uma esquete de mímica com uma mensagem positiva ou um ensinamento moral (ex: sobre honestidade, amizade, respeito). (Criatividade/Expressão)" },
+                    { date: "10/08/2025", title: "Campanha de Conscientização Criativa", desc: "As unidades devem desenvolver uma pequena campanha de conscientização sobre um tema relevante para a comunidade (ex: reciclagem, combate ao bullying, importância da leitura). Podem ser cartazes, vídeos curtos (para exibição interna), jingles ou pequenas apresentações. (Serviço/Comunicação)" },
+                    { date: "17/08/2025", title: "Roda de Conversa: Meus Sonhos e Talentos", desc: "Em um ambiente acolhedor, cada Desbravador compartilha um sonho pessoal ou um talento que possui/gostaria de desenvolver. A escuta ativa e o apoio mútuo são incentivados. (Espiritual/Social)" },
+                    { date: "24/08/2025", title: "Visita e Ação de Doação a uma Instituição", desc: "A unidade organiza e realiza uma visita a um asilo, orfanato ou instituição de caridade (com permissão e acompanhamento da diretoria), levando doações (arrecadadas previamente) e, se possível, realizando uma pequena apresentação ou atividade interativa. (Serviço Comunitário)" },
+                    { date: "31/08/2025", title: "Descanso/Preparação para Setembro", desc: "Dia livre para atividades de autocuidado e reflexão individual." }
+                ],
+                "Setembro: Mês do Conhecimento e da História": [
+                    { date: "07/09/2025", title: "Gincana do Conhecimento Desbravador", desc: "Uma competição de perguntas e respostas sobre a história do clube, seus ideais (Voto e Lei), classes, especialidades e regulamentos básicos. (Mental)" },
+                    { date: "14/09/2025", title: "Estudo Bíblico Aprofundado e Apresentação", desc: "Cada unidade escolhe um tema bíblico (ex: a criação, a história de José, os milagres de Jesus) e prepara um pequeno estudo para apresentar de forma criativa (com slides, desenhos, encenação) para as outras unidades. (Espiritual/Mental)" },
+                    { date: "21/09/2025", title: "Projeto de Civismo 'Minha Pátria, Minha História'", desc: "Pesquisar sobre um herói nacional, um símbolo do país (bandeira, hino) ou um evento histórico importante. As unidades devem apresentar suas descobertas de forma criativa (mural, jogral, vídeo). (Cívico/Mental)" },
+                    { date: "28/09/2025", title: "Criação de um 'Museu' do Clube", desc: "Cada unidade monta um pequeno painel ou 'exposição' com fotos, objetos, distintivos e histórias que representem a trajetória da sua unidade e do clube. (História/Criatividade)" }
+                ],
+                "Outubro: Mês da Aventura e da Superação": [
+                    { date: "05/10/2025", title: "Circuito de Aventura 'Desbravador Radical'", desc: "Montar um circuito com obstáculos (rastejar sob cordas, pular pneus, passar por túneis improvisados, escalar baixo em estruturas seguras) que exija coordenação, agilidade e trabalho em equipe. (Físico/Mental)" },
+                    { date: "12/10/2025", title: "Desafio de Sobrevivência (Teórico e Prático)", desc: "Simulação de situações de sobrevivência. As unidades devem demonstrar habilidades como purificar água (teórico), fazer um sinal de socorro, montar uma pequena armadilha (segura e não-letal), identificar plantas seguras para consumo (teórico). (Pioneirismo/Mental)" },
+                    { date: "19/10/2025", title: "Jogo Noturno 'Mistério da Mata'", desc: "Um jogo de estratégia ou caça ao tesouro em ambiente escuro (com lanternas e supervisão rigorosa), onde as unidades precisam usar a audição, tato e trabalho em equipe para cumprir objetivos. (Mental/Físico)" },
+                    { date: "26/10/2025", title: "Desafio de Resolução de Problemas 'A Ponte da Unidade'", desc: "Apresentar um problema complexo para as unidades, como 'construir uma ponte que suporte um peso X usando apenas materiais Y e Z'. A criatividade e a eficácia da solução serão avaliadas. (Mental/Engenharia)" }
+                ],
+                "Novembro: Mês da Gratidão e da Celebração": [
+                    { date: "02/11/2025", title: "Preparação da Cápsula do Tempo da Gincana", desc: "Cada unidade reúne objetos simbólicos, fotos, mensagens e relatos sobre suas experiências na gincana. A cápsula será lacrada e aberta em uma data futura (ex: daqui a 1 ano), para relembrar as conquistas. (Criatividade/Reflexão)" },
+                    { date: "09/11/2025", title: "Dia da Gratidão e Serviço Comunitário", desc: "Ações de serviço focadas em expressar gratidão à comunidade ou à igreja. Exemplos: limpeza e organização do local do clube, ajuda em eventos da igreja, preparação de cestas básicas para doação. (Serviço/Espiritual)" },
+                    { date: "16/11/2025", title: "Ensaio Geral para a Celebração Final", desc: "As unidades praticam quaisquer apresentações, cantos, jograis ou números de Ordem Unida que desejam apresentar no evento de encerramento. Este é um momento de integração e aprimoramento. (Integração)" },
+                    { date: "23/11/2025", title: "Grande Jogo Final 'A Jornada do Desbravador'", desc: "Uma atividade abrangente que combina elementos de todos os meses, testando diversas habilidades (físicas, mentais, de pioneirismo, etc.) e o espírito de equipe. Pode ser um circuito de estações, um jogo de tabuleiro gigante ou uma grande caça ao tesouro com desafios variados. (Revisão/Integração)" },
+                    { date: "30/11/2025", title: "Última revisão e preparação para a Celebração Final", desc: "Dia dedicado aos últimos preparativos para o grande evento de encerramento da gincana." }
+                ],
+                "Dezembro: Grande Celebração e Encerramento": [
+                    { date: "01/12/2025", title: "Grande Celebração e Encerramento da Gincana", desc: "Um evento especial com a presença dos pais, familiares e da comunidade, para celebrar as conquistas da gincana. Incluirá apresentações das unidades, reconhecimento, a revelação do placar final e premiação, uma mensagem final inspiradora dos líderes e confraternização." }
+                ]
+            },
+            bases: [
+                { title: "Origem Histórica", content: "O Clube de Desbravadores foi oficializado em nível mundial no ano de 1950 pela Associação Geral da Igreja Adventista do Sétimo Dia, nos Estados Unidos. Suas raízes, no entanto, remontam a iniciativas anteriores de clubes missionários e de jovens que buscavam o desenvolvimento integral." },
+                { title: "Filosofia", content: "A filosofia do Clube de Desbravadores baseia-se no desenvolvimento harmonioso das forças físicas, mentais e espirituais dos juvenis e adolescentes. O programa busca preparar os jovens para a cidadania útil, o serviço à comunidade e o compromisso com Deus. Tudo o que o Desbravador faz tem um sentido, uma base, um alicerce de valores cristãos e princípios de vida." },
+                { title: "Objetivos Prioritários", content: "Os objetivos do Clube são amplos e visam o crescimento completo do indivíduo: Desenvolvimento Físico, Mental, Espiritual e Social." },
+                { title: "Símbolos do Clube", content: "Os símbolos do Desbravador são elementos visuais e conceituais que representam seus princípios: Ideais (Voto e Lei), Hino, Emblemas, Bandeira, Bandeirim e o Uniforme." }
+            ],
+            funcoes: {
+                "Cargos da Unidade": [
+                    { title: "Conselheiro(a)", content: "É a autoridade máxima dentro da unidade, responsável pela ordem e andamento geral. Atua como elo entre a unidade e a direção do clube. Geralmente, deve ser batizado e ter mais de 18 anos (ou 16+ com supervisão de um diretor maior de idade em atividades externas)." },
+                    { title: "Capitão(ã)", content: "Membro da unidade (10 a 15 anos) responsável por animar o grupo a cumprir o programa, por meio do exemplo e influência pessoal. Lidera a unidade em formações de Ordem Unida e a representa perante a direção. Deve ser organizado, ter liderança, disciplina, honestidade, fidelidade e humildade." },
+                    { title: "Secretário(a) de Unidade", content: "Responsável por manter os registos da unidade atualizados, incluindo chamada de presença, pontualidade, assiduidade, uso do uniforme e higiene pessoal. Idade entre 10 e 15 anos." },
+                    { title: "Tesoureiro(a) de Unidade", content: "Gerencia os pequenos recursos financeiros da unidade, mantendo registos precisos de despesas e receitas. Idade entre 10 e 15 anos." },
+                    { title: "Padioleiro(a) de Unidade", content: "Atua como o 'enfermeiro' da unidade, responsável por auxiliar em pequenos acidentes e aplicar primeiros socorros básicos, sob supervisão. Idade entre 10 e 15 anos." },
+                    { title: "Almoxarife de Unidade", content: "Responsável pela guarda e organização dos materiais e equipamentos da unidade. Idade entre 10 e 15 anos." },
+                    { title: "Capelão(ã) de Unidade", content: "Mantém a ordem e harmonia espiritual da unidade, juntamente com o conselheiro, promovendo momentos de reflexão e estudo bíblico. Idade entre 10 e 15 anos, deve ser de boa índole e respeitador." }
+                ],
+                "Cargos da Direção do Clube": [
+                    { title: "Diretor(a) do Clube", content: "É a autoridade máxima do clube. Responsável por planejar, organizar e supervisionar todas as atividades, manter a ligação com o Pastor e a Associação, presidir as reuniões da comissão executiva e docente, e assegurar um programa completo para o clube. Deve ser um líder maduro, com boa reputação na Igreja e ter o treinamento para oficiais. Deve ser um exemplo de espiritualidade, prontidão, amabilidade, temperança, pontualidade e asseio pessoal, incluindo o uso adequado do uniforme." },
+                    { title: "Diretores(as) Associados(as)", content: "São o braço direito do diretor, responsáveis pelo cumprimento do programa do clube. Coordenam as Classes, Especialidades e Unidades, gerenciando o trabalho dos instrutores e conselheiros. Geralmente há um diretor associado para a ala feminina e outro para a ala masculina. Não há limite para o número de diretores associados, dependendo do tamanho do clube." },
+                    { title: "Secretário(a) do Clube", content: "Assume a responsabilidade pela documentação e registo das atividades do clube. Isso abrange a manutenção de registos de membros, elaboração de relatórios de eventos e comunicação de informações cruciais aos membros e suas famílias. Essencial para a organização administrativa do clube." },
+                    { title: "Tesoureiro(a) do Clube", content: "Gerencia as finanças do clube, mantendo um registo preciso das despesas e receitas, elaborando orçamentos e assegurando o uso responsável dos recursos financeiros disponíveis. Responsável pela saúde financeira do clube." },
+                    { title: "Capelão(ã) do Clube", content: "Encarregado da dimensão espiritual do clube, liderando estudos bíblicos, momentos de oração e promovendo os valores e princípios inerentes à crença Adventista do Sétimo Dia. Essencial para o desenvolvimento espiritual dos Desbravadores." },
+                    { title: "Conselheiros(as) (Gerais) e Instrutores(as)", content: "Os conselheiros supervisionam as unidades, enquanto os instrutores são responsáveis por ensinar as classes e especialidades. Ambos trabalham em estreita colaboração com os diretores associados para garantir a execução do programa educativo do clube. A função de conselheiro é considerada uma das mais importantes, devido ao contato direto com os juvenis." }
+                ]
+            }
+        };
         // Funções de operação de dados do Firebase (agora dentro do escopo do módulo)
         async function getUnits() {
+            console.log("getUnits: Fetching units...");
             const unitsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'units');
             const q = query(unitsColRef);
             return new Promise((resolve, reject) => {
                 onSnapshot(q, (snapshot) => {
                     currentUnits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     currentUnits.sort((a, b) => (b.score || 0) - (a.score || 0)); // Ordenar por pontuação descendente
+                    console.log(`getUnits: Snapshot received for units: ${currentUnits.length} documents`);
                     resolve(currentUnits);
-                }, reject);
+                }, (error) => {
+                    console.error("getUnits: Error fetching units:", error);
+                    reject(error);
+                });
             });
         }
 
         async function getActivities() {
+            console.log("getActivities: Fetching activities...");
             const activitiesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'activities');
             const q = query(activitiesColRef);
             return new Promise((resolve, reject) => {
                 onSnapshot(q, (snapshot) => {
                     currentActivities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    console.log(`getActivities: Snapshot received for activities: ${currentActivities.length} documents`);
                     resolve(currentActivities);
-                }, reject);
+                }, (error) => {
+                    console.error("getActivities: Error fetching activities:", error);
+                    reject(error);
+                });
             });
         }
 
         async function getSubmissions() {
+            console.log("getSubmissions: Fetching submissions...");
             const submissionsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'submissions');
             const q = query(submissionsColRef);
             return new Promise((resolve, reject) => {
                 onSnapshot(q, (snapshot) => {
                     currentSubmissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     currentSubmissions.sort((a, b) => b.submittedAt?.toDate() - a.submittedAt?.toDate()); // Ordenar por mais recente
+                    console.log(`getSubmissions: Snapshot received for submissions: ${currentSubmissions.length} documents`);
                     resolve(currentSubmissions);
-                }, reject);
+                }, (error) => {
+                    console.error("getSubmissions: Error fetching submissions:", error);
+                    reject(error);
+                });
             });
         }
 
         // Nova função para obter deméritos
         async function getDemerits() {
+            console.log("getDemerits: Fetching demerits...");
             const demeritsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'demerits');
             const q = query(demeritsColRef);
             return new Promise((resolve, reject) => {
                 onSnapshot(q, (snapshot) => {
                     currentDemerits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     currentDemerits.sort((a, b) => b.appliedAt?.toDate() - a.appliedAt?.toDate()); // Ordenar por mais recente
+                    console.log(`getDemerits: Snapshot received for demerits: ${currentDemerits.length} documents`);
                     resolve(currentDemerits);
-                }, reject);
+                }, (error) => {
+                    console.error("getDemerits: Error fetching demerits:", error);
+                    reject(error);
+                });
             });
         }
 
@@ -495,6 +582,8 @@
         }
 
         function renderDashboard() {
+            console.log("renderDashboard: Rendering dashboard...");
+            console.log("renderDashboard: currentUnits.length:", currentUnits.length);
             const totalScore = currentUnits.reduce((sum, item) => sum + (item.score || 0), 0);
             const totalActivitiesDefined = Object.values(staticData.calendar).flat().length;
             const approvedSubmissionsCount = currentSubmissions.filter(sub => sub.status === 'approved').length;
@@ -504,9 +593,11 @@
             document.getElementById('atividades-realizadas').textContent = `${approvedSubmissionsCount} / ${totalActivitiesDefined}`;
 
             renderScoreChart(currentUnits);
+            console.log("renderDashboard: Dashboard rendered.");
         }
 
         function renderScoreChart(unitsData) {
+            console.log("renderScoreChart: Rendering score chart...");
             const ctx = document.getElementById('scoreChart').getContext('2d');
             if (chartInstance) {
                 chartInstance.destroy();
@@ -561,9 +652,12 @@
                     }
                 }
             });
+            console.log("renderScoreChart: Score chart rendered.");
         }
 
         function renderCalendar() {
+            console.log("renderCalendar: Rendering calendar...");
+            console.log("renderCalendar: Attempting to access staticData.calendar:", staticData.calendar);
             const container = document.getElementById('calendario-container');
             container.innerHTML = '';
             Object.entries(staticData.calendar).forEach(([month, activities]) => {
@@ -590,9 +684,12 @@
                 monthDiv.appendChild(contentDiv);
                 container.appendChild(monthDiv);
             });
+            console.log("renderCalendar: Calendar rendered.");
         }
 
         function renderAbout() {
+            console.log("renderAbout: Rendering about section...");
+            console.log("renderAbout: Attempting to access staticData.bases:", staticData.bases);
             const basesContainer = document.getElementById('bases-content');
             basesContainer.innerHTML = staticData.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join('');
 
@@ -606,6 +703,7 @@
                 categoryHtml += `</ul>`;
                 funcoesContainer.innerHTML += categoryHtml;
             });
+            console.log("renderAbout: About section rendered.");
         }
 
         function renderUnitLeaderDashboard() {
