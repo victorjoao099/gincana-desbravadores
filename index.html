@@ -360,6 +360,7 @@
         // =====================================================================================================
 
         const appId = 'gincana-de-unidade';
+
         const firebaseConfig = {
             apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8",
             authDomain: "gincana-de-unidade.firebaseapp.com",
@@ -822,15 +823,7 @@
                             <label for="demerit-unit-select" class="block text-sm font-medium text-slate-700">Unidade:</label>
                             <select id="demerit-unit-select" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-red-500 focus:border-red-500" required>
                                 <option value="">Selecione a unidade</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="demerit-points" class="block text-sm font-medium text-slate-700">Pontos de Demérito:</label>
-                            <input type="number" id="demerit-points" min="1" placeholder="Ex: 10" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-red-500 focus:border-red-500" required>
-                        </div>
-                        <div>
-                            <label for="demerit-reason" class="block text-sm font-medium text-slate-700">Razão do Demérito:</label>
-                            <textarea id="demerit-reason" rows="3" placeholder="Descreva a razão do demérito..." class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-red-500 focus:border-red-500" required></textarea>
+                            </option>
                         </div>
                         <button id="apply-demerit-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Aplicar Demérito</button>
                     </div>
