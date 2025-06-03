@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,6 +18,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Firebase SDKs -->
     <script type="module">
+        // Adicione este console.log no topo para verificar se o script está a ser executado
+        console.log("Script de módulo a ser executado...");
+
         // Importações do Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
@@ -30,21 +32,31 @@
         let auth = null;
         let currentUser = null;
         let userRole = null;
+        
+        // =====================================================================================================
+        // === ATENÇÃO: CONFIGURAÇÃO DO FIREBASE - VOCÊ PRECISA PREENCHER ESTAS VARIÁVEIS ===
+        // =====================================================================================================
+        // 1. Substitua 'SEU_FIREBASE_PROJECT_ID_AQUI' pelo ID do seu projeto Firebase (ex: 'meu-clube-gincana-12345').
+        //    Este ID será usado para organizar os dados no Firestore.
+        const appId = 'SEU_FIREBASE_PROJECT_ID_AQUI'; 
 
-
-        const appId = 'gincana-de-unidades';
-
+        // 2. Cole AQUI o objeto 'firebaseConfig' COMPLETO que você copiou do Console do Firebase.
+        //    Ele deve ser parecido com o exemplo abaixo, mas com as suas chaves e IDs reais.
         const firebaseConfig = {
-            apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8",
-            authDomain: "gincana-de-unidade.firebaseapp.com",
-            projectId: "gincana-de-unidade",
-            storageBucket: "gincana-de-unidade.firebasestorage.app",
-            messagingSenderId: "497226153394",
-            appId: "1:497226153394:web:35d484f3737e3a3b4938ab"
+          apiKey: "SUA_API_KEY_AQUI",
+          authDomain: "SEU_AUTH_DOMAIN_AQUI",
+          projectId: "SEU_PROJECT_ID_AQUI", // Geralmente o mesmo que appId
+          storageBucket: "SEU_STORAGE_BUCKET_AQUI",
+          messagingSenderId: "SEU_MESSAGING_SENDER_ID_AQUI",
+          appId: "SEU_APP_ID_AQUI",
+          // measurementId: "SEU_MEASUREMENT_ID_AQUI" // Se tiver Google Analytics ativado
         };
-
+        
         // initialAuthToken não é mais usado com autenticação por e-mail/senha
-        const initialAuthToken = null;
+        const initialAuthToken = null; 
+        // =====================================================================================================
+        // === FIM DA CONFIGURAÇÃO DO FIREBASE ===
+        // =====================================================================================================
 
         // Apenas para depuração: Verifique o que está sendo lido na configuração
         console.log("firebaseConfig lido:", firebaseConfig);
@@ -180,7 +192,7 @@
                         },
                         tooltip: {
                             callbacks: {
-                                label: function (context) {
+                                label: function(context) {
                                     return `${context.dataset.label}: ${context.raw} pontos`;
                                 }
                             }
@@ -199,7 +211,7 @@
                                 display: false
                             },
                             ticks: {
-                                callback: function (value, index, ticks) {
+                                callback: function(value, index, ticks) {
                                     return wrapLabel(this.getLabelForValue(value), 16);
                                 }
                             }
@@ -219,10 +231,10 @@
                 const button = document.createElement('button');
                 button.className = 'accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center';
                 button.innerHTML = `<span>${month}</span><span class="transform transition-transform duration-300">▼</span>`;
-
+                
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'accordion-content px-6 pb-6 text-slate-600 space-y-4';
-
+                
                 activities.forEach(activity => {
                     contentDiv.innerHTML += `
                         <div class="pt-4 border-t first:border-t-0 border-slate-200">
@@ -239,19 +251,19 @@
         }
 
         function renderAbout() {
-            const basesContainer = document.getElementById('bases-content');
-            basesContainer.innerHTML = staticData.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join('');
+             const basesContainer = document.getElementById('bases-content');
+             basesContainer.innerHTML = staticData.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join('');
 
-            const funcoesContainer = document.getElementById('funcoes-content');
-            funcoesContainer.innerHTML = '';
-            Object.entries(staticData.funcoes).forEach(([category, roles]) => {
-                let categoryHtml = `<h4 class="font-bold text-lg text-slate-700 pt-4 border-t first:border-t-0 border-slate-200">${category}</h4><ul class="list-disc list-inside list-disc-custom space-y-2">`;
-                roles.forEach(role => {
-                    categoryHtml += `<li><strong>${role.title}:</strong> ${role.content}</li>`;
-                });
-                categoryHtml += `</ul>`;
-                funcoesContainer.innerHTML += categoryHtml;
-            });
+             const funcoesContainer = document.getElementById('funcoes-content');
+             funcoesContainer.innerHTML = '';
+             Object.entries(staticData.funcoes).forEach(([category, roles]) => {
+                 let categoryHtml = `<h4 class="font-bold text-lg text-slate-700 pt-4 border-t first:border-t-0 border-slate-200">${category}</h4><ul class="list-disc list-inside list-disc-custom space-y-2">`;
+                 roles.forEach(role => {
+                     categoryHtml += `<li><strong>${role.title}:</strong> ${role.content}</li>`;
+                 });
+                 categoryHtml += `</ul>`;
+                 funcoesContainer.innerHTML += categoryHtml;
+             });
         }
 
         // --- DASHBOARDS DE GESTÃO (LÍDER/SECRETÁRIO) ---
@@ -509,7 +521,7 @@
                     await addDoc(unitsColRef, { name: newUnitName, score: 0, createdAt: serverTimestamp() });
                     showMessage(`Unidade "${newUnitName}" adicionada com sucesso!`);
                     document.getElementById('new-unit-name').value = '';
-                } catch (error) {
+                }  catch (error) {
                     console.error("Erro ao adicionar unidade:", error);
                     showMessage("Erro ao adicionar unidade. Tente novamente.");
                 }
@@ -894,7 +906,7 @@
 
             function switchTab(e) {
                 const targetTab = e.currentTarget.dataset.tab;
-
+                
                 tabs.forEach(tab => {
                     tab.classList.toggle('active', tab.dataset.tab === targetTab);
                 });
@@ -920,7 +932,7 @@
 
             tabs.forEach(tab => tab.addEventListener('click', switchTab));
 
-            document.body.addEventListener('click', function (event) {
+            document.body.addEventListener('click', function(event) {
                 if (event.target.matches('.accordion-button') || event.target.closest('.accordion-button')) {
                     const button = event.target.matches('.accordion-button') ? event.target : event.target.closest('.accordion-button');
                     const content = button.nextElementSibling;
@@ -928,7 +940,7 @@
 
                     button.classList.toggle('open');
                     icon.classList.toggle('rotate-180');
-
+                    
                     if (button.classList.contains('open')) {
                         content.style.maxHeight = content.scrollHeight + 'px';
                     } else {
@@ -943,6 +955,5 @@
             renderDashboard();
         }
     </script>
-    </body>
-
+</body>
 </html>
