@@ -147,7 +147,7 @@
                         document.getElementById('auth-section').classList.remove('hidden');
                         document.getElementById('main-app-content').classList.add('hidden');
                         document.getElementById('loading-overlay').classList.add('hidden');
-                        updateAuthUI(); // Atualiza a UI de autenticação (se necessário)
+                        setupAuthFormListeners(); // Configura os listeners do formulário de autenticação
                     }
                 });
 
@@ -677,8 +677,19 @@
                                     return `${context.dataset.label}: ${context.raw} pontos`;
                                 }
                             }
-                        }
-                    },
+                        },
+                        // Ensure labels are wrapped for better readability on smaller charts
+                        // This is a custom plugin or a callback on the scale ticks
+                        // For Chart.js v3+, you might need a custom plugin for multi-line labels on Y-axis
+                        // Example (simplified, may need adjustment for specific Chart.js version):
+                        // afterBuildTicks: function(axis) {
+                        //     axis.ticks = axis.ticks.map(tick => ({
+                        //         value: tick.value,
+                        //         label: wrapLabel(tick.label, 15) // Wrap at 15 characters
+                        //     }));
+                        // }
+                    }
+                    ,
                     scales: {
                         x: {
                             beginAtZero: true,
@@ -690,6 +701,11 @@
                         y: {
                             grid: {
                                 display: false
+                            },
+                            ticks: {
+                                callback: function (value, index, ticks) {
+                                    return wrapLabel(this.getLabelForValue(value), 16); // Apply wrapping to Y-axis labels
+                                }
                             }
                         }
                     }
@@ -1289,6 +1305,60 @@
                 }, true);
             }
         }
+
+        // --- AUTHENTICATION UI LOGIC ---
+        function setupAuthFormListeners() {
+            const authForm = document.getElementById('auth-form');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const loginBtn = document.getElementById('login-btn');
+            const registerBtn = document.getElementById('register-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            if (authForm && loginBtn && registerBtn) {
+                loginBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    const email = emailInput.value;
+                    const password = passwordInput.value;
+                    try {
+                        await window.signInWithEmailAndPassword(window.auth, email, password);
+                        // onAuthStateChanged will handle UI update
+                    } catch (error) {
+                        console.error("Erro ao iniciar sessão:", error);
+                        window.showMessage(`Erro ao iniciar sessão: ${error.message}`);
+                    }
+                };
+
+                registerBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    const email = emailInput.value;
+                    const password = passwordInput.value;
+                    try {
+                        const userCredential = await window.createUserWithEmailAndPassword(window.auth, email, password);
+                        // No primeiro registo, o papel é definido como 'leader' no onAuthStateChanged
+                        window.showMessage("Registo bem-sucedido! A iniciar sessão...");
+                        // onAuthStateChanged will handle UI update
+                    } catch (error) {
+                        console.error("Erro ao registar:", error);
+                        window.showMessage(`Erro ao registar: ${error.message}`);
+                    }
+                };
+            }
+
+            if (logoutBtn) {
+                logoutBtn.onclick = async () => {
+                    try {
+                        await window.signOut(window.auth);
+                        window.showMessage("Sessão terminada com sucesso!");
+                        // onAuthStateChanged will handle UI update
+                    } catch (error) {
+                        console.error("Erro ao terminar sessão:", error);
+                        window.showMessage(`Erro ao terminar sessão: ${error.message}`);
+                    }
+                };
+            }
+        }
+
 
         // --- MAIN APPLICATION INITIALIZATION ---
         async function initApp() {
