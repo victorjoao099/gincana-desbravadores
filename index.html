@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gincana de Unidades: A Aventura do Desbravador</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -15,69 +14,49 @@
         body {
             font-family: 'Inter', sans-serif;
         }
-
         .tab-button.active {
-            border-bottom-color: #2563eb;
-            /* theme-blue-600 */
+            border-bottom-color: #2563eb; /* theme-blue-600 */
             color: #2563eb;
         }
-
         .content-section {
             display: none;
         }
-
         .content-section.active {
             display: block;
         }
-
         .accordion-content {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-in-out;
         }
-
-        .accordion-button.open+.accordion-content {
-            max-height: 1000px;
-            /* Adjust as needed for content length */
+        .accordion-button.open + .accordion-content {
+             max-height: 1000px; /* Adjust as needed for content length */
         }
-
         .chart-container {
             position: relative;
-            height: 40vh;
-            /* Responsive height */
+            height: 40vh; /* Responsive height */
             width: 100%;
-            max-width: 800px;
-            /* Max width to prevent excessive stretching */
-            margin: auto;
-            /* Center horizontally */
-            max-height: 400px;
-            /* Max height to prevent vertical overflow */
+            max-width: 800px; /* Max width to prevent excessive stretching */
+            margin: auto; /* Center horizontally */
+            max-height: 400px; /* Max height to prevent vertical overflow */
         }
-
         @media (max-width: 768px) {
             .chart-container {
-                height: 60vh;
-                /* Taller on mobile for better readability */
+                height: 60vh; /* Taller on mobile for better readability */
             }
         }
-
         .list-disc-custom li::marker {
-            color: #2563eb;
-            /* Custom bullet color */
+            color: #2563eb; /* Custom bullet color */
         }
-
         .list-decimal-custom li::marker {
-            color: #2563eb;
-            /* Custom number color */
+            color: #2563eb; /* Custom number color */
         }
     </style>
 </head>
-
 <body class="bg-slate-50 text-slate-800">
 
     <!-- Loading Overlay -->
-    <div id="loading-overlay"
-        class="fixed inset-0 bg-slate-100 bg-opacity-90 flex flex-col justify-center items-center z-50">
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-100 bg-opacity-90 flex flex-col justify-center items-center z-50">
         <div class="animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-blue-500"></div>
         <p class="mt-4 text-lg text-slate-700">A carregar aplicação...</p>
     </div>
@@ -87,41 +66,30 @@
         <div class="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full text-center">
             <p id="messageText" class="text-lg font-semibold mb-4"></p>
             <div class="flex justify-center space-x-4">
-                <button id="messageConfirmBtn"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">OK</button>
-                <button id="messageCancelBtn"
-                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 hidden">Cancelar</button>
+                <button id="messageConfirmBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">OK</button>
+                <button id="messageCancelBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 hidden">Cancelar</button>
             </div>
         </div>
     </div>
 
     <!-- Authentication Section (visible by default, hidden by JS on auth) -->
-    <section id="auth-section"
-        class="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-blue-200 p-4">
+    <section id="auth-section" class="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-blue-200 p-4">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
             <h2 class="text-3xl font-bold text-blue-800 mb-6">Acesso à Gincana</h2>
             <form id="auth-form" class="space-y-4">
                 <div>
                     <label for="email" class="sr-only">Email</label>
-                    <input type="email" id="email" placeholder="Email"
-                        class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        required>
+                    <input type="email" id="email" placeholder="Email" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
                 </div>
                 <div>
                     <label for="password" class="sr-only">Palavra-passe</label>
-                    <input type="password" id="password" placeholder="Palavra-passe"
-                        class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        required>
+                    <input type="password" id="password" placeholder="Palavra-passe" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
                 </div>
-                <button type="submit" id="login-btn"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Iniciar
-                    Sessão</button>
-                <button type="button" id="register-btn"
-                    class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Registar</button>
+                <button type="submit" id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Iniciar Sessão</button>
+                <button type="button" id="register-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Registar</button>
             </form>
             <p class="text-sm text-slate-500 mt-4">
-                Se esta é a sua primeira vez, registe-se. Após o registo, o seu papel (Líder ou Secretário) será
-                definido no sistema.
+                Se esta é a sua primeira vez, registe-se. Após o registo, o seu papel (Líder ou Secretário) será definido no sistema.
             </p>
         </div>
     </section>
@@ -132,39 +100,25 @@
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold text-blue-800">Gincana de Unidades</h1>
             <h2 class="text-2xl md:text-3xl font-semibold text-slate-600">A Aventura do Desbravador</h2>
-            <p class="mt-4 text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas,
-                nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
+            <p class="mt-4 text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas, nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
             <p id="user-info" class="mt-2 text-sm text-slate-500">Carregando informações do utilizador...</p>
-            <button id="logout-btn"
-                class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Sair</button>
+            <button id="logout-btn" class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Sair</button>
         </header>
 
         <!-- Navigation Tabs -->
         <nav class="flex justify-center border-b-2 border-slate-200 mb-8 overflow-x-auto">
-            <button data-tab="inicio"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏁
-                Início</button>
-            <button data-tab="calendario"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📅
-                Calendário</button>
-            <button data-tab="regulamento"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📜
-                Regulamento</button>
-            <button data-tab="sobre"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🛡️
-                Sobre o Clube</button>
-            <button data-tab="gestao"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap hidden">⚙️
-                Gestão</button>
+            <button data-tab="inicio" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏁 Início</button>
+            <button data-tab="calendario" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📅 Calendário</button>
+            <button data-tab="regulamento" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📜 Regulamento</button>
+            <button data-tab="sobre" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🛡️ Sobre o Clube</button>
+            <button data-tab="gestao" class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap hidden">⚙️ Gestão</button>
         </nav>
 
         <!-- Content Area -->
         <main>
             <!-- Início / Dashboard Section -->
             <section id="inicio" class="content-section">
-                <p class="mb-6 text-slate-700 text-center">Bem-vindo ao painel da Gincana de Unidades! Aqui você
-                    encontra um resumo rápido do progresso e o placar geral das unidades. Explore as outras abas para
-                    detalhes sobre o calendário, regulamento e informações do clube.</p>
+                <p class="mb-6 text-slate-700 text-center">Bem-vindo ao painel da Gincana de Unidades! Aqui você encontra um resumo rápido do progresso e o placar geral das unidades. Explore as outras abas para detalhes sobre o calendário, regulamento e informações do clube.</p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center">
                     <div class="bg-white p-6 rounded-xl shadow-md">
                         <h3 class="text-slate-500 font-semibold text-lg">Unidade em Destaque</h3>
@@ -191,33 +145,26 @@
             <!-- Calendário Section -->
             <section id="calendario" class="content-section">
                 <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Calendário de Atividades</h2>
-                <p class="mb-6 text-slate-700 text-center">Navegue pelas atividades diárias e semanais programadas para
-                    cada mês. As atividades semanais ocorrem sempre aos domingos.</p>
+                <p class="mb-6 text-slate-700 text-center">Navegue pelas atividades diárias e semanais programadas para cada mês. As atividades semanais ocorrem sempre aos domingos.</p>
                 <div id="calendario-container" class="space-y-4">
-                </div>
+                    </div>
             </section>
 
             <!-- Regulamento Section -->
             <section id="regulamento" class="content-section">
                 <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Regulamento Interno da Gincana</h2>
-                <p class="mb-6 text-slate-700 text-center">Conheça as regras de pontuação, critérios de desempate,
-                    conduta esperada e procedimentos para recursos, garantindo uma gincana justa e organizada.</p>
+                <p class="mb-6 text-slate-700 text-center">Conheça as regras de pontuação, critérios de desempate, conduta esperada e procedimentos para recursos, garantindo uma gincana justa e organizada.</p>
                 <div class="space-y-4">
                     <div class="bg-white rounded-xl shadow-md">
-                        <button
-                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>1. Sistema de Pontuação</span>
                             <span class="transform transition-transform duration-300">▼</span>
                         </button>
                         <div id="pontuacao-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
                             <h4 class="font-bold text-lg text-slate-700">Pontuação Base por Atividade:</h4>
                             <ul class="list-disc list-inside list-disc-custom space-y-1">
-                                <li><strong>Atividades Diárias:</strong> 5 pontos por Desbravador presente e ativo na
-                                    atividade. 5-10 pontos extras por Desbravador que concluir ou acertar o desafio.
-                                </li>
-                                <li><strong>Atividades Semanais:</strong> 20 pontos por unidade que participar
-                                    integralmente. 30-100 pontos por desempenho/conclusão. 10-50 pontos extras por
-                                    qualidade/criatividade.</li>
+                                <li><strong>Atividades Diárias:</strong> 5 pontos por Desbravador presente e ativo na atividade. 5-10 pontos extras por Desbravador que concluir ou acertar o desafio.</li>
+                                <li><strong>Atividades Semanais:</strong> 20 pontos por unidade que participar integralmente. 30-100 pontos por desempenho/conclusão. 10-50 pontos extras por qualidade/criatividade.</li>
                             </ul>
                             <h4 class="font-bold text-lg text-slate-700 mt-4">Bônus Especiais:</h4>
                             <ul class="list-disc list-inside list-disc-custom space-y-1">
@@ -233,39 +180,28 @@
                                 <li><strong>Falta em Atividades Obrigatórias:</strong> -10 pontos por membro.</li>
                             </ul>
                             <h4 class="font-bold text-lg text-slate-700 mt-4">Placar e Acompanhamento:</h4>
-                            <p>Um Placar Geral visível e atualizado semanalmente (online ou físico) com a pontuação de
-                                cada unidade. Um "Painel de Conquistas" registrará visualmente os progressos.</p>
+                            <p>Um Placar Geral visível e atualizado semanalmente (online ou físico) com a pontuação de cada unidade. Um "Painel de Conquistas" registrará visualmente os progressos.</p>
                             <h4 class="font-bold text-lg text-slate-700 mt-4">Submissão e Validação de Requisitos:</h4>
-                            <p>Os líderes de unidade registrarão a conclusão dos requisitos no "Cantinho da Unidade" (<a
-                                    href="https://clubes.adventistas.org/br/unit-control/" target="_blank"
-                                    class="text-blue-600 hover:underline">https://clubes.adventistas.org/br/unit-control/</a>).
-                                A secretária do clube validará os requisitos e atribuirá a pontuação via SGC (<a
-                                    href="https://sg.sdasystems.org/cms/login.php?lang=pt_br" target="_blank"
-                                    class="text-blue-600 hover:underline">https://sg.sdasystems.org/cms/login.php?lang=pt_br</a>).
-                                Um PDF com o placar de pontos atualizado será divulgado semanalmente.</p>
+                            <p>Os líderes de unidade registrarão a conclusão dos requisitos no "Cantinho da Unidade" (<a href="https://clubes.adventistas.org/br/unit-control/" target="_blank" class="text-blue-600 hover:underline">https://clubes.adventistas.org/br/unit-control/</a>). A secretária do clube validará os requisitos e atribuirá a pontuação via SGC (<a href="https://sg.sdasystems.org/cms/login.php?lang=pt_br" target="_blank" class="text-blue-600 hover:underline">https://sg.sdasystems.org/cms/login.php?lang=pt_br</a>). Um PDF com o placar de pontos atualizado será divulgado semanalmente.</p>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-md">
-                        <button
-                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>2. Critérios de Desempate</span>
                             <span class="transform transition-transform duration-300">▼</span>
                         </button>
                         <div id="desempate-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                            <p>Em caso de empate na pontuação final ou em qualquer etapa decisiva, os seguintes
-                                critérios serão aplicados sequencialmente:</p>
+                            <p>Em caso de empate na pontuação final ou em qualquer etapa decisiva, os seguintes critérios serão aplicados sequencialmente:</p>
                             <ol class="list-decimal list-inside list-decimal-custom space-y-1">
                                 <li>Maior número de Bônus "Espírito Desbravador" acumulados.</li>
                                 <li>Maior número de Atividades Semanais concluídas com pontuação máxima.</li>
                                 <li>Menor número de Penalidades registradas.</li>
-                                <li>Sorteio: Em caso de persistência do empate, será realizado um sorteio justo e
-                                    transparente.</li>
+                                <li>Sorteio: Em caso de persistência do empate, será realizado um sorteio justo e transparente.</li>
                             </ol>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-md">
-                        <button
-                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>3. Conduta Esperada</span>
                             <span class="transform transition-transform duration-300">▼</span>
                         </button>
@@ -273,37 +209,26 @@
                             <p>Todos os Desbravadores e líderes devem aderir aos princípios de conduta do Clube:</p>
                             <ul class="list-disc list-inside list-disc-custom space-y-1">
                                 <li><strong>Respeito:</strong> Tratar todos com respeito, cortesia e empatia.</li>
-                                <li><strong>Cooperação:</strong> Trabalhar em equipe, auxiliando os colegas e a unidade.
-                                </li>
-                                <li><strong>Disciplina:</strong> Seguir as instruções dos líderes e as regras do clube.
-                                </li>
+                                <li><strong>Cooperação:</strong> Trabalhar em equipe, auxiliando os colegas e a unidade.</li>
+                                <li><strong>Disciplina:</strong> Seguir as instruções dos líderes e as regras do clube.</li>
                                 <li><strong>Integridade:</strong> Ser honesto em todas as atividades e submissões.</li>
-                                <li><strong>Espírito Esportivo:</strong> Aceitar vitórias e derrotas com humildade e
-                                    dignidade.</li>
-                                <li><strong>Segurança:</strong> Priorizar a segurança própria e alheia em todas as
-                                    atividades.</li>
+                                <li><strong>Espírito Esportivo:</strong> Aceitar vitórias e derrotas com humildade e dignidade.</li>
+                                <li><strong>Segurança:</strong> Priorizar a segurança própria e alheia em todas as atividades.</li>
                             </ul>
-                            <p class="mt-2">Comportamentos que contrariem os ideais do Desbravador ou que prejudiquem o
-                                ambiente da gincana serão passíveis de penalidades.</p>
+                            <p class="mt-2">Comportamentos que contrariem os ideais do Desbravador ou que prejudiquem o ambiente da gincana serão passíveis de penalidades.</p>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-md">
-                        <button
-                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>4. Procedimentos para Recursos (Apelações)</span>
                             <span class="transform transition-transform duration-300">▼</span>
                         </button>
                         <div id="recursos-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                            <p>Caso uma unidade ou líder discorde da pontuação atribuída ou de uma penalidade, poderá
-                                apresentar um recurso:</p>
+                            <p>Caso uma unidade ou líder discorde da pontuação atribuída ou de uma penalidade, poderá apresentar um recurso:</p>
                             <ol class="list-decimal list-inside list-decimal-custom space-y-1">
-                                <li><strong>Comunicação Inicial:</strong> O líder da unidade deve comunicar formalmente
-                                    a secretária do clube, por escrito (e-mail ou mensagem oficial), no prazo máximo de
-                                    24 horas após a divulgação da pontuação contestada.</li>
-                                <li><strong>Análise Preliminar:</strong> A secretária e o diretor associado responsável
-                                    pela gincana analisarão o recurso e as evidências.</li>
-                                <li><strong>Decisão:</strong> A decisão será comunicada ao líder da unidade em até 48
-                                    horas. A decisão da diretoria é final e irrevogável.</li>
+                                <li><strong>Comunicação Inicial:</strong> O líder da unidade deve comunicar formalmente a secretária do clube, por escrito (e-mail ou mensagem oficial), no prazo máximo de 24 horas após a divulgação da pontuação contestada.</li>
+                                <li><strong>Análise Preliminar:</strong> A secretária e o diretor associado responsável pela gincana analisarão o recurso e as evidências.</li>
+                                <li><strong>Decisão:</strong> A decisão será comunicada ao líder da unidade em até 48 horas. A decisão da diretoria é final e irrevogável.</li>
                             </ol>
                         </div>
                     </div>
@@ -312,27 +237,23 @@
 
             <section id="sobre" class="content-section">
                 <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Sobre o Clube de Desbravadores</h2>
-                <p class="mb-6 text-slate-700 text-center">Conheça os fundamentos, a história e a estrutura que guiam o
-                    Clube de Desbravadores, um movimento mundial dedicado ao desenvolvimento integral de juvenis e
-                    adolescentes.</p>
+                <p class="mb-6 text-slate-700 text-center">Conheça os fundamentos, a história e a estrutura que guiam o Clube de Desbravadores, um movimento mundial dedicado ao desenvolvimento integral de juvenis e adolescentes.</p>
                 <div class="space-y-4">
                     <div class="bg-white rounded-xl shadow-md">
-                        <button
-                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>As Bases do Clube</span>
                             <span class="transform transition-transform duration-300">▼</span>
-                        </button>
+                            </button>
                         <div id="bases-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                        </div>
+                            </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-md">
-                        <button
-                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <button class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>Estrutura e Funções</span>
                             <span class="transform transition-transform duration-300">▼</span>
-                        </button>
+                            </button>
                         <div id="funcoes-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                        </div>
+                            </div>
                     </div>
                 </div>
             </section>
@@ -354,27 +275,28 @@
         let auth = null;
         let currentUser = null;
         let userRole = null;
-
+        
         // =====================================================================================================
         // === ATENÇÃO: CONFIGURAÇÃO DO FIREBASE - VOCÊ PRECISA PREENCHER ESTAS VARIÁVEIS ===
         // =====================================================================================================
         // 1. Substitua 'SEU_FIREBASE_PROJECT_ID_AQUI' pelo ID do seu projeto Firebase (ex: 'meu-clube-gincana-12345').
         //    Este ID será usado para organizar os dados no Firestore.
-        const appId = 'gincana-de-unidade';
+        const appId = 'SEU_FIREBASE_PROJECT_ID_AQUI'; 
 
         // 2. Cole AQUI o objeto 'firebaseConfig' COMPLETO que você copiou do Console do Firebase.
         //    Ele deve ser parecido com o exemplo abaixo, mas com as suas chaves e IDs reais.
         const firebaseConfig = {
-            apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8",
-            authDomain: "gincana-de-unidade.firebaseapp.com",
-            projectId: "gincana-de-unidade",
-            storageBucket: "gincana-de-unidade.firebasestorage.app",
-            messagingSenderId: "497226153394",
-            appId: "1:497226153394:web:35d484f3737e3a3b4938ab"
+          apiKey: "SUA_API_KEY_AQUI",
+          authDomain: "SEU_AUTH_DOMAIN_AQUI",
+          projectId: "SEU_PROJECT_ID_AQUI", // Geralmente o mesmo que appId
+          storageBucket: "SEU_STORAGE_BUCKET_AQUI",
+          messagingSenderId: "SEU_MESSAGING_SENDER_ID_AQUI",
+          appId: "SEU_APP_ID_AQUI",
+          // measurementId: "SEU_MEASUREMENT_ID_AQUI" // Se tiver Google Analytics ativado
         };
-
+        
         // initialAuthToken não é mais usado com autenticação por e-mail/senha
-        const initialAuthToken = null;
+        const initialAuthToken = null; 
         // =====================================================================================================
         // === FIM DA CONFIGURAÇÃO DO FIREBASE ===
         // =====================================================================================================
@@ -452,7 +374,7 @@
 
         async function getSubmissions() {
             const submissionsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'submissions');
-            const q = query(submissionsColRef);
+            const q = query(submissionsColRef); 
             return new Promise((resolve, reject) => {
                 onSnapshot(q, (snapshot) => {
                     currentSubmissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -534,7 +456,7 @@
                         },
                         tooltip: {
                             callbacks: {
-                                label: function (context) {
+                                label: function(context) {
                                     return `${context.dataset.label}: ${context.raw} pontos`;
                                 }
                             }
@@ -553,7 +475,7 @@
                                 display: false
                             },
                             ticks: {
-                                callback: function (value, index, ticks) {
+                                callback: function(value, index, ticks) {
                                     return wrapLabel(this.getLabelForValue(value), 16);
                                 }
                             }
@@ -573,10 +495,10 @@
                 const button = document.createElement('button');
                 button.className = 'accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center';
                 button.innerHTML = `<span>${month}</span><span class="transform transition-transform duration-300">▼</span>`;
-
+                
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'accordion-content px-6 pb-6 text-slate-600 space-y-4';
-
+                
                 activities.forEach(activity => {
                     contentDiv.innerHTML += `
                         <div class="pt-4 border-t first:border-t-0 border-slate-200">
@@ -593,19 +515,19 @@
         }
 
         function renderAbout() {
-            const basesContainer = document.getElementById('bases-content');
-            basesContainer.innerHTML = staticData.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join('');
+             const basesContainer = document.getElementById('bases-content');
+             basesContainer.innerHTML = staticData.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join('');
 
-            const funcoesContainer = document.getElementById('funcoes-content');
-            funcoesContainer.innerHTML = '';
-            Object.entries(staticData.funcoes).forEach(([category, roles]) => {
-                let categoryHtml = `<h4 class="font-bold text-lg text-slate-700 pt-4 border-t first:border-t-0 border-slate-200">${category}</h4><ul class="list-disc list-inside list-disc-custom space-y-2">`;
-                roles.forEach(role => {
-                    categoryHtml += `<li><strong>${role.title}:</strong> ${role.content}</li>`;
-                });
-                categoryHtml += `</ul>`;
-                funcoesContainer.innerHTML += categoryHtml;
-            });
+             const funcoesContainer = document.getElementById('funcoes-content');
+             funcoesContainer.innerHTML = '';
+             Object.entries(staticData.funcoes).forEach(([category, roles]) => {
+                 let categoryHtml = `<h4 class="font-bold text-lg text-slate-700 pt-4 border-t first:border-t-0 border-slate-200">${category}</h4><ul class="list-disc list-inside list-disc-custom space-y-2">`;
+                 roles.forEach(role => {
+                     categoryHtml += `<li><strong>${role.title}:</strong> ${role.content}</li>`;
+                 });
+                 categoryHtml += `</ul>`;
+                 funcoesContainer.innerHTML += categoryHtml;
+             });
         }
 
         function renderUnitLeaderDashboard() {
@@ -977,7 +899,7 @@
                     await addDoc(unitsColRef, { name: newUnitName, score: 0, createdAt: serverTimestamp() });
                     showMessage(`Unidade "${newUnitName}" adicionada com sucesso!`);
                     document.getElementById('new-unit-name').value = '';
-                } catch (error) {
+                }  catch (error) {
                     console.error("Erro ao adicionar unidade:", error);
                     showMessage("Erro ao adicionar unidade. Tente novamente.");
                 }
@@ -1358,7 +1280,7 @@
                 document.getElementById('loading-overlay').classList.add('hidden');
                 console.log("initApp: Overlay de carregamento escondido.");
             }
-
+            
 
             // Renderiza conteúdo estático
             renderCalendar();
@@ -1371,7 +1293,7 @@
 
             function switchTab(e) {
                 const targetTab = e.currentTarget.dataset.tab;
-
+                
                 tabs.forEach(tab => {
                     tab.classList.toggle('active', tab.dataset.tab === targetTab);
                 });
@@ -1396,7 +1318,7 @@
 
             tabs.forEach(tab => tab.addEventListener('click', switchTab));
 
-            document.body.addEventListener('click', function (event) {
+            document.body.addEventListener('click', function(event) {
                 if (event.target.matches('.accordion-button') || event.target.closest('.accordion-button')) {
                     const button = event.target.matches('.accordion-button') ? event.target : event.target.closest('.accordion-button');
                     const content = button.nextElementSibling;
@@ -1404,7 +1326,7 @@
 
                     button.classList.toggle('open');
                     icon.classList.toggle('rotate-180');
-
+                    
                     if (button.classList.contains('open')) {
                         content.style.maxHeight = content.scrollHeight + 'px';
                     } else {
@@ -1420,5 +1342,4 @@
         }
     </script>
 </body>
-
 </html>
