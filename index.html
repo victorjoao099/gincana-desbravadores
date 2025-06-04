@@ -356,14 +356,10 @@
         let userRole = null;
 
         // =====================================================================================================
-        // === ATENÇÃO: CONFIGURAÇÃO DO FIREBASE - VOCÊ PRECISA PREENCHER ESTAS VARIÁVEIS ===
+        // === ATENÇÃO: CONFIGURAÇÃO DO FIREBASE ===
         // =====================================================================================================
-        // 1. Substitua 'SEU_FIREBASE_PROJECT_ID_AQUI' pelo ID do seu projeto Firebase (ex: 'meu-clube-gincana-12345').
-        //    Este ID será usado para organizar os dados no Firestore.
         const appId = 'gincana-de-unidade';
 
-        // 2. Cole AQUI o objeto 'firebaseConfig' COMPLETO que você copiou do Console do Firebase.
-        //    Ele deve ser parecido com o exemplo abaixo, mas com as suas chaves e IDs reais.
         const firebaseConfig = {
             apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8",
             authDomain: "gincana-de-unidade.firebaseapp.com",
@@ -711,6 +707,7 @@
         }
 
         function renderUnitLeaderDashboard() {
+            console.log("renderUnitLeaderDashboard: Rendering Unit Leader Dashboard...");
             document.getElementById('gestao-title').textContent = 'Dashboard do Líder de Unidade';
             const gestaoContent = document.getElementById('gestao-content');
             gestaoContent.innerHTML = `
@@ -1521,6 +1518,7 @@
                 if (targetTab === 'inicio') {
                     renderDashboard();
                 } else if (targetTab === 'gestao') {
+                    // Renderiza o dashboard de gestão apenas quando a aba é ativada
                     if (userRole === 'secretary') {
                         renderSecretaryDashboard();
                     } else if (userRole === 'leader') {
