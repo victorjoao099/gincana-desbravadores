@@ -70,6 +70,39 @@
             color: #2563eb;
             /* Custom number color */
         }
+
+        /* Estilos para status de submissão */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            /* pill shape */
+            font-size: 0.75rem;
+            /* text-xs */
+            font-weight: 600;
+            /* semibold */
+            text-transform: capitalize;
+        }
+
+        .status-badge.pending {
+            background-color: #fef9c3;
+            /* yellow-100 */
+            color: #ca8a04;
+            /* yellow-700 */
+        }
+
+        .status-badge.approved {
+            background-color: #dcfce7;
+            /* green-100 */
+            color: #16a34a;
+            /* green-700 */
+        }
+
+        .status-badge.rejected {
+            background-color: #fee2e2;
+            /* red-100 */
+            color: #dc2626;
+            /* red-700 */
+        }
     </style>
 </head>
 
@@ -136,7 +169,7 @@
                 nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
             <p id="user-info" class="mt-2 text-sm text-slate-500">Carregando informações do utilizador...</p>
             <button id="logout-btn"
-                class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Sair</button>
+                class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md hidden">Sair</button>
         </header>
 
         <!-- Navigation Tabs -->
@@ -154,7 +187,7 @@
                 class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🛡️
                 Sobre o Clube</button>
             <button data-tab="gestao"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">⚙️
+                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap hidden">⚙️
                 Gestão</button>
         </nav>
 
@@ -310,6 +343,7 @@
                 </div>
             </section>
 
+            <!-- Sobre o Clube Section -->
             <section id="sobre" class="content-section">
                 <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Sobre o Clube de Desbravadores</h2>
                 <p class="mb-6 text-slate-700 text-center">Conheça os fundamentos, a história e a estrutura que guiam o
@@ -336,12 +370,23 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Gestão Section -->
+            <section id="gestao" class="content-section">
+                <!-- *** CORREÇÃO PRINCIPAL: Adicionar h2#gestao-title e div#gestao-content aqui *** -->
+                <h2 id="gestao-title" class="text-3xl font-bold text-center mb-8 text-slate-700">
+                    Carregando informações de gestão...
+                </h2>
+                <div id="gestao-content" class="space-y-6">
+                    <!-- O conteúdo específico do papel (Líder ou Secretário) será carregado aqui pelo JavaScript -->
+                </div>
+            </section>
         </main>
     </div>
 
     <!-- Firebase SDKs e lógica principal da aplicação (como um módulo) -->
     <script type="module">
-        console.log("Script de módulo a ser executado - Versão: 2024-06-04_16:00");
+        console.log("Script de módulo a ser executado - Versão: 2024-06-04_16:00_FIXED");
 
         // Importações do Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
@@ -358,27 +403,24 @@
         // =====================================================================================================
         // === ATENÇÃO: CONFIGURAÇÃO DO FIREBASE ===
         // =====================================================================================================
-        const appId = 'gincana-de-unidade';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'gincana-de-unidade'; // Usar __app_id se disponível
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8",
+        const firebaseConfigFromGlobal = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+        const firebaseConfig = firebaseConfigFromGlobal || {
+            apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8", // Substitua se necessário, ou deixe para __firebase_config
             authDomain: "gincana-de-unidade.firebaseapp.com",
             projectId: "gincana-de-unidade",
-            storageBucket: "gincana-de-unidade.firebasestorage.app",
+            storageBucket: "gincana-de-unidade.appspot.com", // Corrigido: .appspot.com é comum para storageBucket
             messagingSenderId: "497226153394",
             appId: "1:497226153394:web:35d484f3737e3a3b4938ab"
         };
-
-        // initialAuthToken não é mais usado com autenticação por e-mail/senha
-        const initialAuthToken = null;
         // =====================================================================================================
         // === FIM DA CONFIGURAÇÃO DO FIREBASE ===
         // =====================================================================================================
 
-        // Apenas para depuração: Verifique o que está sendo lido na configuração
-        console.log("firebaseConfig lido:", firebaseConfig);
-        console.log("appId lido:", appId);
-        console.log("authDomain lido:", firebaseConfig.authDomain);
+        console.log("firebaseConfig a ser usado:", firebaseConfig);
+        console.log("appId a ser usado:", appId);
 
 
         // MessageBox function
@@ -388,30 +430,38 @@
             const confirmBtn = document.getElementById('messageConfirmBtn');
             const cancelBtn = document.getElementById('messageCancelBtn');
 
-            // Verifica se os elementos da caixa de mensagem existem antes de manipulá-los
             if (!messageBox || !messageText || !confirmBtn || !cancelBtn) {
                 console.error("Erro: Elementos da caixa de mensagem não encontrados. Não é possível exibir a mensagem.");
-                alert(msg); // Fallback para alert se a caixa de mensagem não estiver pronta
-                if (callback) callback(true); // Tenta chamar o callback mesmo no fallback
+                // Fallback para alert se a caixa de mensagem não estiver pronta (NÃO RECOMENDADO PARA PRODUÇÃO FINAL)
+                // window.alert(msg); 
+                console.warn("Fallback para console.log:", msg);
+                if (callback) callback(true);
                 return;
             }
 
             messageText.textContent = msg;
             messageBox.classList.remove('hidden');
 
-            confirmBtn.onclick = () => {
+            // Remove event listeners antigos para evitar múltiplas execuções
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+
+            newConfirmBtn.onclick = () => {
                 messageBox.classList.add('hidden');
                 if (callback) callback(true);
             };
 
             if (showCancel) {
-                cancelBtn.classList.remove('hidden');
-                cancelBtn.onclick = () => {
+                newCancelBtn.classList.remove('hidden');
+                newCancelBtn.onclick = () => {
                     messageBox.classList.add('hidden');
                     if (callback) callback(false);
                 };
             } else {
-                cancelBtn.classList.add('hidden');
+                newCancelBtn.classList.add('hidden');
             }
         };
 
@@ -420,9 +470,9 @@
         let currentUnits = [];
         let currentActivities = [];
         let currentSubmissions = [];
-        let currentDemerits = []; // Nova variável para deméritos
+        let currentDemerits = [];
 
-        // --- DEFINIÇÃO DE DADOS ESTÁTICOS DA APLICAÇÃO (MOVIDO PARA DENTRO DO MÓDULO) ---
+        // --- DEFINIÇÃO DE DADOS ESTÁTICOS DA APLICAÇÃO ---
         const staticData = {
             calendar: {
                 "Junho: Mês do Pioneirismo e da Natureza": [
@@ -493,11 +543,11 @@
                 ]
             }
         };
-        // Funções de operação de dados do Firebase (agora dentro do escopo do módulo)
+        // Funções de operação de dados do Firebase
         async function getUnits() {
             console.log("getUnits: Fetching units...");
             const unitsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'units');
-            const q = query(unitsColRef);
+            const q = query(unitsColRef); // Não precisa de orderBy aqui, ordenamos no cliente
             return new Promise((resolve, reject) => {
                 onSnapshot(q, (snapshot) => {
                     currentUnits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -514,10 +564,12 @@
         async function getActivities() {
             console.log("getActivities: Fetching activities...");
             const activitiesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'activities');
-            const q = query(activitiesColRef);
+            const q = query(activitiesColRef); // Ordenar por nome ou data de criação se necessário, no cliente ou com índice
             return new Promise((resolve, reject) => {
                 onSnapshot(q, (snapshot) => {
                     currentActivities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Opcional: ordenar atividades, por exemplo, por nome
+                    currentActivities.sort((a, b) => a.name.localeCompare(b.name));
                     console.log(`getActivities: Snapshot received for activities: ${currentActivities.length} documents`);
                     resolve(currentActivities);
                 }, (error) => {
@@ -530,11 +582,11 @@
         async function getSubmissions() {
             console.log("getSubmissions: Fetching submissions...");
             const submissionsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'submissions');
-            const q = query(submissionsColRef);
+            const q = query(submissionsColRef); // Ordenar por data de submissão
             return new Promise((resolve, reject) => {
                 onSnapshot(q, (snapshot) => {
                     currentSubmissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentSubmissions.sort((a, b) => b.submittedAt?.toDate() - a.submittedAt?.toDate()); // Ordenar por mais recente
+                    currentSubmissions.sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0)); // Mais recente primeiro
                     console.log(`getSubmissions: Snapshot received for submissions: ${currentSubmissions.length} documents`);
                     resolve(currentSubmissions);
                 }, (error) => {
@@ -544,15 +596,14 @@
             });
         }
 
-        // Nova função para obter deméritos
         async function getDemerits() {
             console.log("getDemerits: Fetching demerits...");
             const demeritsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'demerits');
-            const q = query(demeritsColRef);
+            const q = query(demeritsColRef); // Ordenar por data de aplicação
             return new Promise((resolve, reject) => {
                 onSnapshot(q, (snapshot) => {
                     currentDemerits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentDemerits.sort((a, b) => b.appliedAt?.toDate() - a.appliedAt?.toDate()); // Ordenar por mais recente
+                    currentDemerits.sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0)); // Mais recente primeiro
                     console.log(`getDemerits: Snapshot received for demerits: ${currentDemerits.length} documents`);
                     resolve(currentDemerits);
                 }, (error) => {
@@ -564,33 +615,49 @@
 
 
         function wrapLabel(label, maxLen) {
+            if (!label) return '';
             if (label.length <= maxLen) return label;
-            let wrappedLabel = '';
-            let words = label.split(' ');
+
+            const lines = [];
             let currentLine = '';
-            for (let i = 0; i < words.length; i++) {
-                let word = words[i];
-                if ((currentLine + word).length <= maxLen) {
-                    currentLine += (currentLine === '' ? '' : ' ') + word;
+            const words = label.split(' ');
+
+            for (const word of words) {
+                if ((currentLine + (currentLine ? ' ' : '') + word).length <= maxLen) {
+                    currentLine += (currentLine ? ' ' : '') + word;
                 } else {
-                    wrappedLabel += currentLine + '\n';
+                    if (currentLine) lines.push(currentLine);
                     currentLine = word;
+                    // Se uma única palavra for maior que maxLen, ela ficará sozinha em uma linha (e pode estourar)
+                    // Para um tratamento mais robusto, poderia quebrar a palavra, mas para Chart.js, múltiplas linhas é o objetivo.
+                    while (currentLine.length > maxLen) {
+                        lines.push(currentLine.substring(0, maxLen));
+                        currentLine = currentLine.substring(maxLen);
+                    }
                 }
             }
-            wrappedLabel += currentLine;
-            return wrappedLabel;
+            if (currentLine) lines.push(currentLine);
+            return lines; // Chart.js aceita array de strings para múltiplas linhas
         }
 
         function renderDashboard() {
             console.log("renderDashboard: Rendering dashboard...");
-            console.log("renderDashboard: currentUnits.length:", currentUnits.length);
+            const unidadeDestaqueEl = document.getElementById('unidade-destaque');
+            const totalPontosEl = document.getElementById('total-pontos');
+            const atividadesRealizadasEl = document.getElementById('atividades-realizadas');
+
+            if (!unidadeDestaqueEl || !totalPontosEl || !atividadesRealizadasEl) {
+                console.error("Elementos do dashboard não encontrados.");
+                return;
+            }
+
             const totalScore = currentUnits.reduce((sum, item) => sum + (item.score || 0), 0);
             const totalActivitiesDefined = Object.values(staticData.calendar).flat().length;
             const approvedSubmissionsCount = currentSubmissions.filter(sub => sub.status === 'approved').length;
 
-            document.getElementById('unidade-destaque').textContent = currentUnits.length > 0 ? currentUnits[0].name : 'N/A';
-            document.getElementById('total-pontos').textContent = totalScore;
-            document.getElementById('atividades-realizadas').textContent = `${approvedSubmissionsCount} / ${totalActivitiesDefined}`;
+            unidadeDestaqueEl.textContent = currentUnits.length > 0 && currentUnits[0].name ? currentUnits[0].name : 'N/A';
+            totalPontosEl.textContent = totalScore;
+            atividadesRealizadasEl.textContent = `${approvedSubmissionsCount} / ${totalActivitiesDefined}`;
 
             renderScoreChart(currentUnits);
             console.log("renderDashboard: Dashboard rendered.");
@@ -598,14 +665,20 @@
 
         function renderScoreChart(unitsData) {
             console.log("renderScoreChart: Rendering score chart...");
-            const ctx = document.getElementById('scoreChart').getContext('2d');
+            const scoreChartEl = document.getElementById('scoreChart');
+            if (!scoreChartEl) {
+                console.error("Elemento canvas 'scoreChart' não encontrado.");
+                return;
+            }
+            const ctx = scoreChartEl.getContext('2d');
+
             if (chartInstance) {
                 chartInstance.destroy();
             }
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: unitsData.map(item => wrapLabel(item.name, 16)),
+                    labels: unitsData.map(item => wrapLabel(item.name, 15)), // Ajuste maxLen conforme necessário
                     datasets: [{
                         label: 'Pontuação da Unidade',
                         data: unitsData.map(item => item.score || 0),
@@ -644,9 +717,8 @@
                                 display: false
                             },
                             ticks: {
-                                callback: function (value, index, ticks) {
-                                    return wrapLabel(this.getLabelForValue(value), 16);
-                                }
+                                // A quebra de linha já é tratada pela função wrapLabel retornando um array
+                                autoSkip: false, // Garante que todos os rótulos sejam mostrados se possível
                             }
                         }
                     }
@@ -657,8 +729,11 @@
 
         function renderCalendar() {
             console.log("renderCalendar: Rendering calendar...");
-            console.log("renderCalendar: Attempting to access staticData.calendar:", staticData.calendar);
             const container = document.getElementById('calendario-container');
+            if (!container) {
+                console.error("Elemento 'calendario-container' não encontrado.");
+                return;
+            }
             container.innerHTML = '';
             Object.entries(staticData.calendar).forEach(([month, activities]) => {
                 const monthDiv = document.createElement('div');
@@ -689,11 +764,16 @@
 
         function renderAbout() {
             console.log("renderAbout: Rendering about section...");
-            console.log("renderAbout: Attempting to access staticData.bases:", staticData.bases);
             const basesContainer = document.getElementById('bases-content');
+            const funcoesContainer = document.getElementById('funcoes-content');
+
+            if (!basesContainer || !funcoesContainer) {
+                console.error("Elementos 'bases-content' ou 'funcoes-content' não encontrados.");
+                return;
+            }
+
             basesContainer.innerHTML = staticData.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join('');
 
-            const funcoesContainer = document.getElementById('funcoes-content');
             funcoesContainer.innerHTML = '';
             Object.entries(staticData.funcoes).forEach(([category, roles]) => {
                 let categoryHtml = `<h4 class="font-bold text-lg text-slate-700 pt-4 border-t first:border-t-0 border-slate-200">${category}</h4><ul class="list-disc list-inside list-disc-custom space-y-2">`;
@@ -708,8 +788,20 @@
 
         function renderUnitLeaderDashboard() {
             console.log("renderUnitLeaderDashboard: Rendering Unit Leader Dashboard...");
-            document.getElementById('gestao-title').textContent = 'Dashboard do Líder de Unidade';
+            const gestaoTitleEl = document.getElementById('gestao-title');
+            if (gestaoTitleEl) {
+                gestaoTitleEl.textContent = 'Dashboard do Líder de Unidade';
+            } else {
+                console.error("Elemento 'gestao-title' não encontrado ao renderizar dashboard do líder.");
+                return;
+            }
+
             const gestaoContent = document.getElementById('gestao-content');
+            if (!gestaoContent) {
+                console.error("Elemento 'gestao-content' não encontrado ao renderizar dashboard do líder.");
+                return;
+            }
+
             gestaoContent.innerHTML = `
                 <div class="bg-white p-6 rounded-xl shadow-md mb-8">
                     <h3 class="text-xl font-semibold text-blue-600 mb-4">Enviar Atividade Concluída</h3>
@@ -719,13 +811,22 @@
                             <select id="unit-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
                                 <option value="">Selecione sua unidade</option>
                             </select>
-                            <p id="no-units-message" class="text-red-500 text-sm mt-2 hidden">Nenhuma unidade encontrada. Peça ao secretário para cadastrar as unidades.</p>
+                            <p id="no-units-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma unidade encontrada. Peça ao secretário para cadastrar as unidades.</p>
                         </div>
                         <div>
                             <label for="activity-select-leader" class="block text-sm font-medium text-slate-700">Atividade:</label>
                             <select id="activity-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
                                 <option value="">Selecione uma atividade</option>
-                            </option>
+                            </select>
+                            <p id="no-activities-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma atividade cadastrada. Peça ao secretário para cadastrar as atividades.</p>
+                        </div>
+                        <div>
+                            <label for="details-leader" class="block text-sm font-medium text-slate-700">Detalhes da Conclusão:</label>
+                            <textarea id="details-leader" rows="3" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required placeholder="Descreva como a atividade foi realizada, quem participou, etc."></textarea>
+                        </div>
+                        <div>
+                            <label for="photo-url-leader" class="block text-sm font-medium text-slate-700">URL da Foto (Opcional):</label>
+                            <input type="url" id="photo-url-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="https://exemplo.com/foto.jpg">
                         </div>
                         <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Enviar para Validação</button>
                     </form>
@@ -741,22 +842,24 @@
 
             const unitSelectLeader = document.getElementById('unit-select-leader');
             const activitySelectLeader = document.getElementById('activity-select-leader');
-            const noUnitsMessage = document.getElementById('no-units-message');
-            const noActivitiesMessage = document.getElementById('no-activities-message');
+            const noUnitsMessageLeader = document.getElementById('no-units-message-leader');
+            const noActivitiesMessageLeader = document.getElementById('no-activities-message-leader');
 
             if (currentUnits.length > 0) {
-                unitSelectLeader.innerHTML = currentUnits.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
-                unitSelectLeader.value = currentUnits[0].id; // Select first unit by default
-                noUnitsMessage.classList.add('hidden');
+                unitSelectLeader.innerHTML = '<option value="">Selecione sua unidade</option>' + currentUnits.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
+                // Não selecionar a primeira unidade por defeito aqui, deixar o utilizador escolher
+                if (noUnitsMessageLeader) noUnitsMessageLeader.classList.add('hidden');
             } else {
-                noUnitsMessage.classList.remove('hidden');
+                unitSelectLeader.innerHTML = '<option value="">Nenhuma unidade cadastrada</option>';
+                if (noUnitsMessageLeader) noUnitsMessageLeader.classList.remove('hidden');
             }
 
             if (currentActivities.length > 0) {
                 activitySelectLeader.innerHTML = '<option value="">Selecione uma atividade</option>' + currentActivities.map(activity => `<option value="${activity.id}">${activity.name} (${activity.type})</option>`).join('');
-                noActivitiesMessage.classList.add('hidden');
+                if (noActivitiesMessageLeader) noActivitiesMessageLeader.classList.add('hidden');
             } else {
-                noActivitiesMessage.classList.remove('hidden');
+                activitySelectLeader.innerHTML = '<option value="">Nenhuma atividade cadastrada</option>';
+                if (noActivitiesMessageLeader) noActivitiesMessageLeader.classList.remove('hidden');
             }
 
             document.getElementById('submit-activity-form').addEventListener('submit', async (e) => {
@@ -766,10 +869,19 @@
                 const details = document.getElementById('details-leader').value;
                 const photoUrl = document.getElementById('photo-url-leader').value;
 
-                if (!selectedUnitId || !activityId || !details.trim()) {
-                    showMessage("Por favor, preencha todos os campos obrigatórios (Unidade, Atividade e Detalhes).");
+                if (!selectedUnitId) {
+                    showMessage("Por favor, selecione sua unidade.");
                     return;
                 }
+                if (!activityId) {
+                    showMessage("Por favor, selecione uma atividade.");
+                    return;
+                }
+                if (!details.trim()) {
+                    showMessage("Por favor, preencha os detalhes da conclusão.");
+                    return;
+                }
+
 
                 const activity = currentActivities.find(act => act.id === activityId);
                 if (!activity) {
@@ -792,6 +904,10 @@
                     });
                     showMessage("Atividade enviada para validação com sucesso!");
                     document.getElementById('submit-activity-form').reset();
+                    // Resetar selects para o placeholder
+                    unitSelectLeader.value = "";
+                    activitySelectLeader.value = "";
+
                 } catch (error) {
                     console.error("Erro ao enviar atividade:", error);
                     showMessage("Erro ao enviar atividade. Tente novamente.");
@@ -800,6 +916,13 @@
 
             function updateLeaderSubmissionsList(selectedUnitId) {
                 const leaderSubmissionsList = document.getElementById('leader-submissions-list');
+                if (!leaderSubmissionsList) return;
+
+                if (!selectedUnitId) { // Se nenhuma unidade estiver selecionada, mostrar mensagem
+                    leaderSubmissionsList.innerHTML = '<p class="text-slate-600">Selecione uma unidade para ver os envios.</p>';
+                    return;
+                }
+
                 const unitSubmissions = currentSubmissions.filter(sub => sub.unitId === selectedUnitId);
 
                 if (unitSubmissions.length === 0) {
@@ -816,7 +939,7 @@
                                     <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Detalhes</th>
                                     <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Status</th>
                                     <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Data</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Data</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -825,14 +948,14 @@
                     const statusClass = sub.status === 'pending' ? 'pending' : (sub.status === 'approved' ? 'approved' : 'rejected');
                     tableHtml += `
                         <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
-                            <td class="py-3 px-4 text-sm">${sub.activityName}</td>
-                            <td class="py-3 px-4 text-sm max-w-xs truncate">${sub.details}</td>
+                            <td class="py-3 px-4 text-sm">${sub.activityName || 'N/A'}</td>
+                            <td class="py-3 px-4 text-sm max-w-xs truncate" title="${sub.details}">${sub.details || 'N/A'}</td>
                             <td class="py-3 px-4 text-sm">
-                                <span class="px-2 py-1 rounded-full text-xs font-semibold status-badge ${statusClass}">
+                                <span class="status-badge ${statusClass}">
                                     ${sub.status === 'pending' ? 'Pendente' : (sub.status === 'approved' ? 'Aprovado' : 'Rejeitado')}
                                 </span>
                             </td>
-                            <td class="py-3 px-4 text-sm font-bold">${sub.pointsAwarded || 'N/A'}</td>
+                            <td class="py-3 px-4 text-sm font-bold">${sub.pointsAwarded !== undefined ? sub.pointsAwarded : 'N/A'}</td>
                             <td class="py-3 px-4 text-sm">
                                 ${sub.submittedAt ? new Date(sub.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}
                             </td>
@@ -851,14 +974,26 @@
                 updateLeaderSubmissionsList(e.target.value);
             });
 
-            if (unitSelectLeader.value) {
-                updateLeaderSubmissionsList(unitSelectLeader.value);
-            }
+            // Inicializa a lista de submissões (pode estar vazia se nenhuma unidade for selecionada por padrão)
+            updateLeaderSubmissionsList(unitSelectLeader.value);
         }
 
+
         function renderSecretaryDashboard() {
-            document.getElementById('gestao-title').textContent = 'Dashboard do Secretário do Clube';
+            console.log("renderSecretaryDashboard: Rendering Secretary Dashboard...");
+            const gestaoTitleEl = document.getElementById('gestao-title');
+            if (gestaoTitleEl) {
+                gestaoTitleEl.textContent = 'Dashboard do Secretário do Clube';
+            } else {
+                console.error("Elemento 'gestao-title' não encontrado ao renderizar dashboard do secretário.");
+                return;
+            }
+
             const gestaoContent = document.getElementById('gestao-content');
+            if (!gestaoContent) {
+                console.error("Elemento 'gestao-content' não encontrado ao renderizar dashboard do secretário.");
+                return;
+            }
             gestaoContent.innerHTML = `
                 <section class="mb-8 p-4 bg-blue-50 rounded-xl shadow-inner">
                     <h3 class="text-xl font-semibold text-blue-600 mb-4">Gerenciar Unidades</h3>
@@ -898,7 +1033,7 @@
                             <option value="Culinária">Culinária</option>
                             <option value="Geral">Geral</option>
                         </select>
-                        <input type="number" id="new-activity-max-points" placeholder="Pontuação Máxima" class="p-3 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                        <input type="number" id="new-activity-max-points" placeholder="Pontuação Máxima" class="p-3 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" min="0">
                     </div>
                     <button id="add-activity-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Adicionar Atividade</button>
                     <div class="overflow-x-auto mt-6">
@@ -925,7 +1060,15 @@
                             <label for="demerit-unit-select" class="block text-sm font-medium text-slate-700">Unidade:</label>
                             <select id="demerit-unit-select" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-red-500 focus:border-red-500" required>
                                 <option value="">Selecione a unidade</option>
-                            </option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="demerit-points" class="block text-sm font-medium text-slate-700">Pontos a Deduzir:</label>
+                            <input type="number" id="demerit-points" min="1" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-red-500 focus:border-red-500" required placeholder="Ex: 10">
+                        </div>
+                        <div>
+                            <label for="demerit-reason" class="block text-sm font-medium text-slate-700">Razão do Demérito:</label>
+                            <textarea id="demerit-reason" rows="3" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-red-500 focus:border-red-500" required placeholder="Descreva o motivo do demérito"></textarea>
                         </div>
                         <button id="apply-demerit-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Aplicar Demérito</button>
                     </div>
@@ -933,10 +1076,10 @@
                         <table class="min-w-full bg-white rounded-lg shadow-md">
                             <thead class="bg-red-100">
                                 <tr>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Unidade</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tl-lg">Unidade</th>
                                     <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos</th>
                                     <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Razão</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Data</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Data</th>
                                 </tr>
                             </thead>
                             <tbody id="demerits-table-body">
@@ -953,7 +1096,7 @@
                     </div>
                 </section>
 
-                <section class="mb-8 p-4 bg-slate-50 rounded-xl shadow-inner">
+                <section class="p-4 bg-slate-100 rounded-xl shadow-inner"> <!-- Removido mb-8 da última seção -->
                     <h3 class="text-xl font-semibold text-slate-700 mb-4">Histórico de Todos os Envios</h3>
                     <div id="all-submissions-list">
                         <p class="text-slate-600">Nenhum envio registrado ainda.</p>
@@ -967,7 +1110,6 @@
             const demeritReasonTextarea = document.getElementById('demerit-reason');
             const applyDemeritBtn = document.getElementById('apply-demerit-btn');
 
-            // Populate demerit unit select
             if (currentUnits.length > 0) {
                 demeritUnitSelect.innerHTML = '<option value="">Selecione a unidade</option>' + currentUnits.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
             } else {
@@ -979,32 +1121,36 @@
                 const points = parseInt(demeritPointsInput.value);
                 const reason = demeritReasonTextarea.value.trim();
 
-                if (!unitId || isNaN(points) || points <= 0 || !reason) {
-                    showMessage("Por favor, preencha todos os campos do demérito corretamente (Unidade, Pontos > 0, Razão).");
-                    return;
+                if (!unitId) {
+                    showMessage("Por favor, selecione a unidade para aplicar o demérito."); return;
+                }
+                if (isNaN(points) || points <= 0) {
+                    showMessage("Por favor, insira um valor de pontos válido (maior que zero)."); return;
+                }
+                if (!reason) {
+                    showMessage("Por favor, forneça uma razão para o demérito."); return;
                 }
 
-                showMessage(`Confirmar aplicação de ${points} deméritos à unidade "${currentUnits.find(u => u.id === unitId)?.name}" por "${reason}"?`, async (confirmed) => {
+                const unitName = currentUnits.find(u => u.id === unitId)?.name || 'Unidade Desconhecida';
+                showMessage(`Confirmar aplicação de ${points} deméritos à unidade "${unitName}" por "${reason}"?`, async (confirmed) => {
                     if (confirmed) {
                         try {
-                            // 1. Adicionar o demérito na coleção 'demerits'
                             const demeritsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'demerits');
                             await addDoc(demeritsColRef, {
                                 unitId: unitId,
-                                unitName: currentUnits.find(u => u.id === unitId)?.name || 'Unidade Desconhecida',
-                                points: points, // Armazenar como positivo e subtrair ao aplicar
+                                unitName: unitName,
+                                points: points,
                                 reason: reason,
                                 appliedBy: currentUser.uid,
                                 appliedAt: serverTimestamp(),
                             });
 
-                            // 2. Atualizar a pontuação da unidade na coleção 'units'
                             const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
                             const unitSnap = await getDoc(unitDocRef);
                             if (unitSnap.exists()) {
                                 const currentScore = unitSnap.data().score || 0;
                                 await updateDoc(unitDocRef, {
-                                    score: currentScore - points, // Subtrair os pontos do demérito
+                                    score: currentScore - points,
                                 });
                             }
                             showMessage(`Demérito de ${points} pontos aplicado à unidade!`);
@@ -1019,33 +1165,6 @@
                 }, true);
             });
 
-            // Real-time update for Demerits table
-            const unsubscribeDemerits = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), (snapshot) => {
-                currentDemerits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                currentDemerits.sort((a, b) => b.appliedAt?.toDate() - a.appliedAt?.toDate());
-                updateDemeritsTable();
-            }, (error) => console.error("Erro ao carregar deméritos:", error));
-
-            function updateDemeritsTable() {
-                const tbody = document.getElementById('demerits-table-body');
-                if (!tbody) return;
-                if (currentDemerits.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-slate-600">Nenhum demérito registrado.</td></tr>';
-                } else {
-                    tbody.innerHTML = currentDemerits.map(demerit => `
-                        <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
-                            <td class="py-3 px-4 text-sm">${demerit.unitName}</td>
-                            <td class="py-3 px-4 text-sm font-bold text-red-600">-${demerit.points}</td>
-                            <td class="py-3 px-4 text-sm max-w-xs truncate">${demerit.reason}</td>
-                            <td class="py-3 px-4 text-sm">
-                                ${demerit.appliedAt ? new Date(demerit.appliedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-            }
-
-            // Resto da lógica do Secretary Dashboard (já existente)
             // Unit Management
             document.getElementById('add-unit-btn').addEventListener('click', async () => {
                 const newUnitName = document.getElementById('new-unit-name').value.trim();
@@ -1064,54 +1183,6 @@
                 }
             });
 
-            const unsubscribeUnits = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'), (snapshot) => {
-                currentUnits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                currentUnits.sort((a, b) => (b.score || 0) - (a.score || 0));
-                updateUnitsTable();
-                renderDashboard();
-                // Atualizar select de unidades no gerenciamento de deméritos
-                if (demeritUnitSelect) { // Verifica se o elemento existe antes de manipular
-                    demeritUnitSelect.innerHTML = '<option value="">Selecione a unidade</option>' + currentUnits.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
-                }
-            }, (error) => console.error("Erro ao carregar unidades (Secretário):", error));
-
-
-            function updateUnitsTable() {
-                const tbody = document.getElementById('units-table-body');
-                if (!tbody) return;
-                if (currentUnits.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" class="py-4 px-4 text-center text-slate-600">Nenhuma unidade cadastrada.</td></tr>';
-                } else {
-                    tbody.innerHTML = currentUnits.map(unit => `
-                        <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
-                            <td class="py-3 px-4 text-sm">${unit.name}</td>
-                            <td class="py-3 px-4 text-sm font-bold">${unit.score || 0}</td>
-                            <td class="py-3 px-4 text-sm">
-                                <button data-id="${unit.id}" data-name="${unit.name}" class="delete-unit-btn bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg text-xs transition duration-300 ease-in-out transform hover:scale-105">Excluir</button>
-                            </td>
-                        </tr>
-                    `).join('');
-                    tbody.querySelectorAll('.delete-unit-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => handleDeleteUnit(e.target.dataset.id, e.target.dataset.name));
-                    });
-                }
-            }
-
-            async function handleDeleteUnit(unitId, unitName) {
-                showMessage(`Tem certeza que deseja excluir a unidade "${unitName}"? Isso removerá todos os seus dados.`, async (confirmed) => {
-                    if (confirmed) {
-                        try {
-                            const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
-                            await deleteDoc(unitDocRef);
-                            showMessage(`Unidade "${unitName}" excluída com sucesso!`);
-                        } catch (error) {
-                            console.error("Erro ao excluir unidade:", error);
-                            showMessage("Erro ao excluir unidade. Tente novamente.");
-                        }
-                    }
-                }, true);
-            }
-
             // Activity Management
             document.getElementById('add-activity-btn').addEventListener('click', async () => {
                 const name = document.getElementById('new-activity-name').value.trim();
@@ -1119,7 +1190,7 @@
                 const maxPoints = parseInt(document.getElementById('new-activity-max-points').value);
 
                 if (!name || !type || isNaN(maxPoints) || maxPoints < 0) {
-                    showMessage("Por favor, preencha todos os campos da atividade corretamente.");
+                    showMessage("Por favor, preencha todos os campos da atividade corretamente (Nome, Tipo, Pontos Máx. >= 0).");
                     return;
                 }
                 try {
@@ -1135,63 +1206,119 @@
                 }
             });
 
-            const unsubscribeActivities = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), (snapshot) => {
-                currentActivities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                updateActivitiesTable();
-            }, (error) => console.error("Erro ao carregar atividades (Secretário):", error));
+            // Funções de atualização de tabelas (chamadas pelos listeners onSnapshot e após renderização inicial)
+            updateUnitsTable();
+            updateActivitiesTable();
+            updateDemeritsTable();
+            updateSubmissionsTables();
+        }
 
-            function updateActivitiesTable() {
-                const tbody = document.getElementById('activities-table-body');
-                if (!tbody) return;
-                if (currentActivities.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-slate-600">Nenhuma atividade cadastrada.</td></tr>';
-                } else {
-                    tbody.innerHTML = currentActivities.map(activity => `
-                        <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
-                            <td class="py-3 px-4 text-sm">${activity.name}</td>
-                            <td class="py-3 px-4 text-sm">${activity.type}</td>
-                            <td class="py-3 px-4 text-sm font-bold">${activity.maxPoints}</td>
-                            <td class="py-3 px-4 text-sm">
-                                <button data-id="${activity.id}" data-name="${activity.name}" class="delete-activity-btn bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg text-xs transition duration-300 ease-in-out transform hover:scale-105">Excluir</button>
-                            </td>
-                        </tr>
-                    `).join('');
-                    tbody.querySelectorAll('.delete-activity-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => handleDeleteActivity(e.target.dataset.id, e.target.dataset.name));
-                    });
-                }
+
+        function updateUnitsTable() {
+            const tbody = document.getElementById('units-table-body');
+            if (!tbody) return; // Seção de gestão pode não estar ativa
+            if (currentUnits.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="py-4 px-4 text-center text-slate-600">Nenhuma unidade cadastrada.</td></tr>';
+            } else {
+                tbody.innerHTML = currentUnits.map(unit => `
+                    <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
+                        <td class="py-3 px-4 text-sm">${unit.name}</td>
+                        <td class="py-3 px-4 text-sm font-bold">${unit.score || 0}</td>
+                        <td class="py-3 px-4 text-sm">
+                            <button data-id="${unit.id}" data-name="${unit.name}" class="delete-unit-btn bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg text-xs transition duration-300 ease-in-out transform hover:scale-105">Excluir</button>
+                        </td>
+                    </tr>
+                `).join('');
+                tbody.querySelectorAll('.delete-unit-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => handleDeleteUnit(e.target.dataset.id, e.target.dataset.name));
+                });
             }
+        }
 
-            async function handleDeleteActivity(activityId, activityName) {
-                showMessage(`Tem certeza que deseja excluir a atividade "${activityName}"?`, async (confirmed) => {
-                    if (confirmed) {
-                        try {
-                            const activityDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'activities', activityId);
-                            await deleteDoc(activityDocRef);
-                            showMessage(`Atividade "${activityName}" excluída com sucesso!`);
-                        } catch (error) {
-                            console.error("Erro ao excluir atividade:", error);
-                            showMessage("Erro ao excluir atividade. Tente novamente.");
-                        }
+        async function handleDeleteUnit(unitId, unitName) {
+            showMessage(`Tem certeza que deseja excluir a unidade "${unitName}"? Isso removerá todos os seus dados.`, async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        // TODO: Considerar excluir submissões e deméritos associados a esta unidade também.
+                        const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
+                        await deleteDoc(unitDocRef);
+                        showMessage(`Unidade "${unitName}" excluída com sucesso!`);
+                    } catch (error) {
+                        console.error("Erro ao excluir unidade:", error);
+                        showMessage("Erro ao excluir unidade. Tente novamente.");
                     }
-                }, true);
+                }
+            }, true);
+        }
+
+        function updateActivitiesTable() {
+            const tbody = document.getElementById('activities-table-body');
+            if (!tbody) return;
+            if (currentActivities.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-slate-600">Nenhuma atividade cadastrada.</td></tr>';
+            } else {
+                tbody.innerHTML = currentActivities.map(activity => `
+                    <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
+                        <td class="py-3 px-4 text-sm">${activity.name}</td>
+                        <td class="py-3 px-4 text-sm">${activity.type}</td>
+                        <td class="py-3 px-4 text-sm font-bold">${activity.maxPoints}</td>
+                        <td class="py-3 px-4 text-sm">
+                            <button data-id="${activity.id}" data-name="${activity.name}" class="delete-activity-btn bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg text-xs transition duration-300 ease-in-out transform hover:scale-105">Excluir</button>
+                        </td>
+                    </tr>
+                `).join('');
+                tbody.querySelectorAll('.delete-activity-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => handleDeleteActivity(e.target.dataset.id, e.target.dataset.name));
+                });
+            }
+        }
+        async function handleDeleteActivity(activityId, activityName) {
+            showMessage(`Tem certeza que deseja excluir a atividade "${activityName}"?`, async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        // TODO: Considerar o que fazer com submissões associadas a esta atividade.
+                        const activityDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'activities', activityId);
+                        await deleteDoc(activityDocRef);
+                        showMessage(`Atividade "${activityName}" excluída com sucesso!`);
+                    } catch (error) {
+                        console.error("Erro ao excluir atividade:", error);
+                        showMessage("Erro ao excluir atividade. Tente novamente.");
+                    }
+                }
+            }, true);
+        }
+
+        function updateDemeritsTable() {
+            const tbody = document.getElementById('demerits-table-body');
+            if (!tbody) return;
+            if (currentDemerits.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-slate-600">Nenhum demérito registrado.</td></tr>';
+            } else {
+                tbody.innerHTML = currentDemerits.map(demerit => `
+                    <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
+                        <td class="py-3 px-4 text-sm">${demerit.unitName}</td>
+                        <td class="py-3 px-4 text-sm font-bold text-red-600">-${demerit.points}</td>
+                        <td class="py-3 px-4 text-sm max-w-xs truncate" title="${demerit.reason}">${demerit.reason}</td>
+                        <td class="py-3 px-4 text-sm">
+                            ${demerit.appliedAt ? new Date(demerit.appliedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}
+                        </td>
+                        <!-- Opcional: Botão para excluir demérito -->
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function updateSubmissionsTables() {
+            const pendingSubmissions = currentSubmissions.filter(sub => sub.status === 'pending');
+            const allSubmissions = [...currentSubmissions]; // Criar uma cópia para não modificar a original se for ordenar diferente depois
+
+            const pendingCountEl = document.getElementById('pending-submissions-count');
+            if (pendingCountEl) {
+                pendingCountEl.textContent = pendingSubmissions.length;
             }
 
-            const unsubscribeSubmissions = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), (snapshot) => {
-                currentSubmissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                currentSubmissions.sort((a, b) => b.submittedAt?.toDate() - a.submittedAt?.toDate());
-                updateSubmissionsTables();
-                renderDashboard();
-            }, (error) => console.error("Erro ao carregar envios (Secretário):", error));
-
-            function updateSubmissionsTables() {
-                const pendingSubmissions = currentSubmissions.filter(sub => sub.status === 'pending');
-                const allSubmissions = currentSubmissions;
-
-                document.getElementById('pending-submissions-count').textContent = pendingSubmissions.length;
-
-                const pendingListDiv = document.getElementById('pending-submissions-list');
-                if (!pendingListDiv) return;
+            const pendingListDiv = document.getElementById('pending-submissions-list');
+            if (pendingListDiv) {
                 if (pendingSubmissions.length === 0) {
                     pendingListDiv.innerHTML = '<p class="text-slate-600">Nenhum envio pendente no momento.</p>';
                 } else {
@@ -1205,18 +1332,19 @@
                                         <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Detalhes</th>
                                         <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Evidência</th>
                                         <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos a Atribuir</th>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Ações</th>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                     `;
                     pendingSubmissions.forEach(sub => {
-                        const activityMaxPoints = currentActivities.find(act => act.id === sub.activityId)?.maxPoints || 0;
+                        const activityRelated = currentActivities.find(act => act.id === sub.activityId);
+                        const activityMaxPoints = activityRelated?.maxPoints || 0;
                         tableHtml += `
                             <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
                                 <td class="py-3 px-4 text-sm">${sub.unitName}</td>
                                 <td class="py-3 px-4 text-sm">${sub.activityName}</td>
-                                <td class="py-3 px-4 text-sm max-w-xs truncate">${sub.details}</td>
+                                <td class="py-3 px-4 text-sm max-w-xs truncate" title="${sub.details}">${sub.details}</td>
                                 <td class="py-3 px-4 text-sm">
                                     ${sub.photoUrl ? `<a href="${sub.photoUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Ver Foto</a>` : 'N/A'}
                                 </td>
@@ -1251,9 +1379,10 @@
                         btn.addEventListener('click', (e) => handleRejectSubmission(e.target.dataset.id));
                     });
                 }
+            }
 
-                const allSubmissionsListDiv = document.getElementById('all-submissions-list');
-                if (!allSubmissionsListDiv) return;
+            const allSubmissionsListDiv = document.getElementById('all-submissions-list');
+            if (allSubmissionsListDiv) {
                 if (allSubmissions.length === 0) {
                     allSubmissionsListDiv.innerHTML = '<p class="text-slate-600">Nenhum envio registrado ainda.</p>';
                 } else {
@@ -1267,7 +1396,7 @@
                                         <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Status</th>
                                         <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos</th>
                                         <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Data Envio</th>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Data Validação</th>
+                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Data Validação</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1279,11 +1408,11 @@
                                 <td class="py-3 px-4 text-sm">${sub.unitName}</td>
                                 <td class="py-3 px-4 text-sm">${sub.activityName}</td>
                                 <td class="py-3 px-4 text-sm">
-                                    <span class="px-2 py-1 rounded-full text-xs font-semibold status-badge ${statusClass}">
+                                    <span class="status-badge ${statusClass}">
                                         ${sub.status === 'pending' ? 'Pendente' : (sub.status === 'approved' ? 'Aprovado' : 'Rejeitado')}
                                     </span>
                                 </td>
-                                <td class="py-3 px-4 text-sm font-bold">${sub.pointsAwarded || 'N/A'}</td>
+                                <td class="py-3 px-4 text-sm font-bold">${sub.pointsAwarded !== undefined ? sub.pointsAwarded : 'N/A'}</td>
                                 <td class="py-3 px-4 text-sm">
                                     ${sub.submittedAt ? new Date(sub.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}
                                 </td>
@@ -1301,59 +1430,89 @@
                     allSubmissionsListDiv.innerHTML = tableHtml;
                 }
             }
+        }
 
-            async function handleApproveSubmission(submissionId, unitId, points) {
-                if (points === null || points < 0) {
-                    showMessage("Por favor, insira uma pontuação válida.");
-                    return;
-                }
+        async function handleApproveSubmission(submissionId, unitId, points) {
+            const submission = currentSubmissions.find(s => s.id === submissionId);
+            if (!submission) {
+                showMessage("Erro: Submissão não encontrada."); return;
+            }
+            const activityRelated = currentActivities.find(act => act.id === submission.activityId);
+            const activityMaxPoints = activityRelated?.maxPoints || 0;
 
-                showMessage(`Confirmar aprovação do envio com ${points} pontos?`, async (confirmed) => {
-                    if (confirmed) {
-                        try {
-                            const submissionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
-                            await updateDoc(submissionDocRef, {
-                                status: 'approved',
-                                pointsAwarded: parseInt(points),
-                                validatedAt: serverTimestamp(),
+            if (points === null || isNaN(points) || points < 0 || points > activityMaxPoints) {
+                showMessage(`Por favor, insira uma pontuação válida (entre 0 e ${activityMaxPoints}).`);
+                return;
+            }
+
+            showMessage(`Confirmar aprovação do envio com ${points} pontos?`, async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        const submissionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
+                        await updateDoc(submissionDocRef, {
+                            status: 'approved',
+                            pointsAwarded: parseInt(points),
+                            validatedAt: serverTimestamp(),
+                        });
+
+                        const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
+                        const unitSnap = await getDoc(unitDocRef);
+                        if (unitSnap.exists()) {
+                            const currentScore = unitSnap.data().score || 0;
+                            // Se a submissão já foi aprovada antes e estamos re-aprovando (editando pontos),
+                            // precisamos subtrair os pontos antigos antes de adicionar os novos.
+                            // Para simplificar, vamos assumir que uma vez aprovado, não se re-aprova para adicionar pontos,
+                            // mas sim se edita a pontuação. Se a lógica for de adicionar incrementalmente, isso precisa mudar.
+                            // Aqui, a lógica é que 'pointsAwarded' é o total para esta submissão.
+                            // Se a submissão já tinha pontos, precisamos ajustar a diferença.
+                            // Mas como o status muda de 'pending', não há pontos anteriores.
+                            await updateDoc(unitDocRef, {
+                                score: currentScore + parseInt(points),
                             });
+                        }
+                        showMessage(`Envio aprovado e pontuação da unidade atualizada!`);
+                    } catch (error) {
+                        console.error("Erro ao aprovar envio:", error);
+                        showMessage("Erro ao aprovar envio. Tente novamente.");
+                    }
+                }
+            }, true);
+        }
 
-                            const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
+        async function handleRejectSubmission(submissionId) {
+            showMessage("Tem certeza que deseja rejeitar este envio?", async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        const submissionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
+                        // Se a submissão já foi aprovada e tinha pontos, esses pontos precisam ser revertidos da unidade.
+                        // Esta lógica assume que a rejeição acontece de 'pending' ou se já foi 'approved', os pontos são zerados.
+                        const subSnap = await getDoc(submissionDocRef);
+                        if (subSnap.exists() && subSnap.data().status === 'approved' && subSnap.data().pointsAwarded > 0) {
+                            const unitIdToAdjust = subSnap.data().unitId;
+                            const pointsToRevert = subSnap.data().pointsAwarded;
+                            const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitIdToAdjust);
                             const unitSnap = await getDoc(unitDocRef);
                             if (unitSnap.exists()) {
-                                const currentScore = unitSnap.data().score || 0;
                                 await updateDoc(unitDocRef, {
-                                    score: currentScore + parseInt(points),
+                                    score: (unitSnap.data().score || 0) - pointsToRevert
                                 });
                             }
-                            showMessage(`Envio aprovado e pontuação da unidade atualizada!`);
-                        } catch (error) {
-                            console.error("Erro ao aprovar envio:", error);
-                            showMessage("Erro ao aprovar envio. Tente novamente.");
                         }
-                    }
-                }, true);
-            }
 
-            async function handleRejectSubmission(submissionId) {
-                showMessage("Tem certeza que deseja rejeitar este envio?", async (confirmed) => {
-                    if (confirmed) {
-                        try {
-                            const submissionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
-                            await updateDoc(submissionDocRef, {
-                                status: 'rejected',
-                                pointsAwarded: 0,
-                                validatedAt: serverTimestamp(),
-                            });
-                            showMessage("Envio rejeitado com sucesso!");
-                        } catch (error) {
-                            console.error("Erro ao rejeitar envio:", error);
-                            showMessage("Erro ao rejeitar envio. Tente novamente.");
-                        }
+                        await updateDoc(submissionDocRef, {
+                            status: 'rejected',
+                            pointsAwarded: 0,
+                            validatedAt: serverTimestamp(),
+                        });
+                        showMessage("Envio rejeitado com sucesso!");
+                    } catch (error) {
+                        console.error("Erro ao rejeitar envio:", error);
+                        showMessage("Erro ao rejeitar envio. Tente novamente.");
                     }
-                }, true);
-            }
+                }
+            }, true);
         }
+
 
         function setupAuthFormListeners() {
             const authForm = document.getElementById('auth-form');
@@ -1368,11 +1527,21 @@
                     e.preventDefault();
                     const email = emailInput.value;
                     const password = passwordInput.value;
+                    if (!email || !password) {
+                        showMessage("Por favor, preencha o email e a palavra-passe."); return;
+                    }
                     try {
                         await signInWithEmailAndPassword(auth, email, password);
+                        // onAuthStateChanged tratará da UI
                     } catch (error) {
                         console.error("Erro ao iniciar sessão:", error);
-                        showMessage(`Erro ao iniciar sessão: ${error.message}`);
+                        let friendlyMessage = "Erro ao iniciar sessão. Verifique suas credenciais.";
+                        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                            friendlyMessage = "Email ou palavra-passe incorretos.";
+                        } else if (error.code === 'auth/invalid-email') {
+                            friendlyMessage = "O formato do email é inválido.";
+                        }
+                        showMessage(friendlyMessage);
                     }
                 };
 
@@ -1380,12 +1549,28 @@
                     e.preventDefault();
                     const email = emailInput.value;
                     const password = passwordInput.value;
+                    if (!email || !password) {
+                        showMessage("Por favor, preencha o email e a palavra-passe para registar."); return;
+                    }
+                    if (password.length < 6) {
+                        showMessage("A palavra-passe deve ter pelo menos 6 caracteres."); return;
+                    }
                     try {
-                        await createUserWithEmailAndPassword(auth, email, password);
+                        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                        // O papel será definido como 'leader' por defeito em onAuthStateChanged se não existir
                         showMessage("Registo bem-sucedido! A iniciar sessão...");
+                        // onAuthStateChanged tratará da UI
                     } catch (error) {
                         console.error("Erro ao registar:", error);
-                        showMessage(`Erro ao registar: ${error.message}`);
+                        let friendlyMessage = "Erro ao registar.";
+                        if (error.code === 'auth/email-already-in-use') {
+                            friendlyMessage = "Este email já está registado. Tente iniciar sessão.";
+                        } else if (error.code === 'auth/invalid-email') {
+                            friendlyMessage = "O formato do email é inválido.";
+                        } else if (error.code === 'auth/weak-password') {
+                            friendlyMessage = "A palavra-passe é muito fraca. Use pelo menos 6 caracteres.";
+                        }
+                        showMessage(friendlyMessage);
                     }
                 };
             }
@@ -1394,6 +1579,7 @@
                 logoutBtn.onclick = async () => {
                     try {
                         await signOut(auth);
+                        // onAuthStateChanged tratará da UI
                         showMessage("Sessão terminada com sucesso!");
                     } catch (error) {
                         console.error("Erro ao terminar sessão:", error);
@@ -1405,11 +1591,10 @@
 
 
         // --- INICIALIZAÇÃO PRINCIPAL DA APLICAÇÃO ---
-        // Esta função é chamada quando o DOM está pronto e o Firebase é inicializado.
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("DOMContentLoaded: Iniciando...");
+            const loadingOverlay = document.getElementById('loading-overlay');
 
-            // Tenta inicializar o Firebase
             try {
                 if (!firebaseConfig.apiKey || !firebaseConfig.projectId || !firebaseConfig.authDomain) {
                     throw new Error("As credenciais do Firebase (apiKey, projectId, authDomain) não foram preenchidas ou estão incompletas.");
@@ -1419,93 +1604,182 @@
                 auth = getAuth(firebaseApp);
                 console.log("Firebase initialized.");
 
-                // Oculta o overlay de carregamento
-                const loadingOverlay = document.getElementById('loading-overlay');
-                if (loadingOverlay) {
-                    loadingOverlay.classList.add('hidden');
-                    console.log("Loading overlay hidden.");
-                }
+                if (loadingOverlay) loadingOverlay.classList.add('hidden');
 
-                // Configura os listeners de autenticação
                 setupAuthFormListeners();
 
-                // Observa o estado de autenticação para exibir a UI correta
                 onAuthStateChanged(auth, async (user) => {
                     console.log("onAuthStateChanged: Estado do usuário alterado. User:", user);
+                    const authSection = document.getElementById('auth-section');
+                    const mainAppContent = document.getElementById('main-app-content');
+                    const userInfoP = document.getElementById('user-info');
+                    const logoutBtn = document.getElementById('logout-btn');
+
                     if (user) {
                         currentUser = user;
-                        // Tenta buscar o papel do utilizador no Firestore
-                        const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
+                        const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid); // Caminho privado
                         const userDocSnap = await getDoc(userDocRef);
 
                         if (userDocSnap.exists()) {
                             userRole = userDocSnap.data().role;
                             console.log("User role from Firestore:", userRole);
                         } else {
-                            // Se o utilizador não tiver um papel, define como líder por padrão
-                            await setDoc(userDocRef, { role: 'leader', uid: user.uid, email: user.email || 'N/A' });
+                            // Se o utilizador não tiver um papel, define como líder por padrão e cria o documento
+                            // Papéis válidos: 'leader', 'secretary'
+                            // Poderia ter um admin para atribuir papéis, mas para este exemplo, 'leader' é o default.
+                            // Para um sistema real, um administrador deveria definir o papel 'secretary'.
+                            // Por agora, qualquer novo utilizador será 'leader'.
+                            await setDoc(userDocRef, { role: 'leader', uid: user.uid, email: user.email || 'N/A', createdAt: serverTimestamp() });
                             userRole = 'leader';
-                            console.log("User role set to default 'leader'.");
+                            console.log("User role set to default 'leader' and document created.");
                         }
-                        // Esconde o formulário de login e mostra o conteúdo principal
-                        document.getElementById('auth-section').classList.add('hidden');
-                        document.getElementById('main-app-content').classList.remove('hidden');
-                        initAppContent(); // Inicializa o conteúdo principal da aplicação
+
+                        if (userInfoP) userInfoP.textContent = `Olá, ${userRole === 'secretary' ? 'Secretário(a)' : 'Líder de Unidade'} (${user.email})`;
+                        if (logoutBtn) logoutBtn.classList.remove('hidden');
+                        if (authSection) authSection.classList.add('hidden');
+                        if (mainAppContent) mainAppContent.classList.remove('hidden');
+
+                        initAppContent();
                     } else {
                         currentUser = null;
                         userRole = null;
-                        // Mostra o formulário de login e esconde o conteúdo principal
-                        document.getElementById('auth-section').classList.remove('hidden');
-                        document.getElementById('main-app-content').classList.add('hidden');
+                        if (userInfoP) userInfoP.textContent = 'Carregando informações do utilizador...';
+                        if (logoutBtn) logoutBtn.classList.add('hidden');
+                        if (authSection) authSection.classList.remove('hidden');
+                        if (mainAppContent) mainAppContent.classList.add('hidden');
                         console.log("User not authenticated. Showing auth section.");
+                        // Limpar listeners de onSnapshot se o utilizador fizer logout para evitar erros de permissão
+                        if (unsubscribeUnits) unsubscribeUnits();
+                        if (unsubscribeActivities) unsubscribeActivities();
+                        if (unsubscribeSubmissions) unsubscribeSubmissions();
+                        if (unsubscribeDemerits) unsubscribeDemerits();
                     }
                 });
 
             } catch (error) {
                 console.error("Erro crítico na inicialização do Firebase:", error);
                 showMessage(`Erro crítico na inicialização do Firebase: ${error.message}. Por favor, verifique a sua consola e as configurações do Firebase.`);
-                // Garante que o overlay é escondido mesmo em caso de erro crítico de inicialização
-                const loadingOverlay = document.getElementById('loading-overlay');
-                if (loadingOverlay) {
-                    loadingOverlay.classList.add('hidden');
-                }
+                if (loadingOverlay) loadingOverlay.classList.add('hidden');
             }
         });
 
-        // Função para inicializar o conteúdo da aplicação (chamada após autenticação)
+        let unsubscribeUnits = () => { };
+        let unsubscribeActivities = () => { };
+        let unsubscribeSubmissions = () => { };
+        let unsubscribeDemerits = () => { };
+
+
         async function initAppContent() {
             console.log("initAppContent: Iniciando conteúdo da aplicação.");
-            // Atualiza informações do utilizador no cabeçalho
-            document.getElementById('user-info').textContent = `Olá, ${userRole === 'secretary' ? 'Secretário(a)' : 'Líder de Unidade'} (ID: ${currentUser.uid})`;
-            document.getElementById('logout-btn').classList.remove('hidden');
 
-            // Mostra/esconde a aba 'Gestão' com base no papel
-            if (userRole === 'leader' || userRole === 'secretary') {
-                document.querySelector('button[data-tab="gestao"]').classList.remove('hidden');
-            } else {
-                document.querySelector('button[data-tab="gestao"]').classList.add('hidden');
+            const gestaoTabButton = document.querySelector('button[data-tab="gestao"]');
+            if (gestaoTabButton) {
+                if (userRole === 'leader' || userRole === 'secretary') {
+                    gestaoTabButton.classList.remove('hidden');
+                } else {
+                    gestaoTabButton.classList.add('hidden');
+                }
             }
 
-            // Busca dados iniciais para todas as secções
-            try {
-                await Promise.all([getUnits(), getActivities(), getSubmissions(), getDemerits()]);
-                console.log("initAppContent: Dados Firebase carregados com sucesso.");
-            } catch (error) {
-                console.error("initAppContent: Erro ao buscar dados Firebase:", error);
-                showMessage("Erro ao carregar dados. Por favor, verifique as regras de segurança do Firestore.");
-            }
+            // Limpa listeners antigos antes de criar novos
+            if (unsubscribeUnits) unsubscribeUnits();
+            if (unsubscribeActivities) unsubscribeActivities();
+            if (unsubscribeSubmissions) unsubscribeSubmissions();
+            if (unsubscribeDemerits) unsubscribeDemerits();
+
+            // Configura listeners onSnapshot para dados dinâmicos
+            unsubscribeUnits = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'),
+                (snapshot) => {
+                    currentUnits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    currentUnits.sort((a, b) => (b.score || 0) - (a.score || 0));
+                    renderDashboard(); // Atualiza o dashboard geral
+                    if (document.getElementById('gestao').classList.contains('active') && userRole === 'secretary') {
+                        updateUnitsTable(); // Atualiza a tabela de unidades se o secretário estiver na aba de gestão
+                        // Atualizar select de unidades no gerenciamento de deméritos
+                        const demeritUnitSelect = document.getElementById('demerit-unit-select');
+                        if (demeritUnitSelect) {
+                            demeritUnitSelect.innerHTML = '<option value="">Selecione a unidade</option>' + currentUnits.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
+                        }
+                    }
+                    if (document.getElementById('gestao').classList.contains('active') && userRole === 'leader') {
+                        const unitSelectLeader = document.getElementById('unit-select-leader');
+                        if (unitSelectLeader) {
+                            unitSelectLeader.innerHTML = '<option value="">Selecione sua unidade</option>' + currentUnits.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
+                        }
+                    }
+                },
+                (error) => console.error("Erro ao carregar unidades:", error)
+            );
+
+            unsubscribeActivities = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'activities'),
+                (snapshot) => {
+                    currentActivities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    currentActivities.sort((a, b) => a.name.localeCompare(b.name));
+                    if (document.getElementById('gestao').classList.contains('active') && userRole === 'secretary') {
+                        updateActivitiesTable();
+                    }
+                    if (document.getElementById('gestao').classList.contains('active') && userRole === 'leader') {
+                        const activitySelectLeader = document.getElementById('activity-select-leader');
+                        const noActivitiesMessageLeader = document.getElementById('no-activities-message-leader');
+                        if (activitySelectLeader && noActivitiesMessageLeader) {
+                            if (currentActivities.length > 0) {
+                                activitySelectLeader.innerHTML = '<option value="">Selecione uma atividade</option>' + currentActivities.map(activity => `<option value="${activity.id}">${activity.name} (${activity.type})</option>`).join('');
+                                noActivitiesMessageLeader.classList.add('hidden');
+                            } else {
+                                activitySelectLeader.innerHTML = '<option value="">Nenhuma atividade cadastrada</option>';
+                                noActivitiesMessageLeader.classList.remove('hidden');
+                            }
+                        }
+                    }
+                },
+                (error) => console.error("Erro ao carregar atividades:", error)
+            );
+
+            unsubscribeSubmissions = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'),
+                (snapshot) => {
+                    currentSubmissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    currentSubmissions.sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0));
+                    renderDashboard(); // Atualiza contagem de atividades no dashboard
+                    if (document.getElementById('gestao').classList.contains('active')) {
+                        if (userRole === 'secretary') updateSubmissionsTables();
+                        if (userRole === 'leader') {
+                            const unitSelectLeader = document.getElementById('unit-select-leader');
+                            if (unitSelectLeader && typeof updateLeaderSubmissionsList === 'function') { // Verifica se a função existe no escopo
+                                updateLeaderSubmissionsList(unitSelectLeader.value);
+                            }
+                        }
+                    }
+                },
+                (error) => console.error("Erro ao carregar submissões:", error)
+            );
+
+            unsubscribeDemerits = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'),
+                (snapshot) => {
+                    currentDemerits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    currentDemerits.sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0));
+                    if (document.getElementById('gestao').classList.contains('active') && userRole === 'secretary') {
+                        updateDemeritsTable();
+                    }
+                },
+                (error) => console.error("Erro ao carregar deméritos:", error)
+            );
+
 
             // Renderiza conteúdo estático
             renderCalendar();
             renderAbout();
             console.log("initAppContent: Conteúdo estático renderizado.");
 
-            // Configura a exibição inicial da aba
             const tabs = document.querySelectorAll('.tab-button');
             const contentSections = document.querySelectorAll('.content-section');
 
-            function switchTab(e) {
-                const targetTab = e.currentTarget.dataset.tab;
+            function switchTab(eOrTabId) {
+                let targetTab;
+                if (typeof eOrTabId === 'string') {
+                    targetTab = eOrTabId;
+                } else {
+                    targetTab = eOrTabId.currentTarget.dataset.tab;
+                }
 
                 tabs.forEach(tab => {
                     tab.classList.toggle('active', tab.dataset.tab === targetTab);
@@ -1518,25 +1792,34 @@
                 if (targetTab === 'inicio') {
                     renderDashboard();
                 } else if (targetTab === 'gestao') {
-                    // Renderiza o dashboard de gestão apenas quando a aba é ativada
                     if (userRole === 'secretary') {
                         renderSecretaryDashboard();
                     } else if (userRole === 'leader') {
                         renderUnitLeaderDashboard();
                     } else {
                         showMessage("Você não tem permissão para aceder a esta seção.");
-                        document.querySelector('.tab-button[data-tab="inicio"]').click();
+                        // Volta para a aba início se não tiver permissão
+                        const inicioButton = document.querySelector('.tab-button[data-tab="inicio"]');
+                        if (inicioButton) inicioButton.click();
                     }
                 }
             }
 
-            tabs.forEach(tab => tab.addEventListener('click', switchTab));
+            tabs.forEach(tab => {
+                // Remove listener antigo para evitar duplicação se initAppContent for chamado múltiplas vezes
+                const newTab = tab.cloneNode(true);
+                tab.parentNode.replaceChild(newTab, tab);
+                newTab.addEventListener('click', switchTab);
+            });
 
+            // Acordeões
             document.body.addEventListener('click', function (event) {
                 if (event.target.matches('.accordion-button') || event.target.closest('.accordion-button')) {
                     const button = event.target.matches('.accordion-button') ? event.target : event.target.closest('.accordion-button');
                     const content = button.nextElementSibling;
                     const icon = button.querySelector('span:last-child');
+
+                    if (!content || !icon) return; // Elementos não encontrados
 
                     button.classList.toggle('open');
                     icon.classList.toggle('rotate-180');
@@ -1549,9 +1832,8 @@
                 }
             });
 
-            document.querySelector('.tab-button[data-tab="inicio"]').classList.add('active');
-            document.getElementById('inicio').classList.add('active');
-            renderDashboard();
+            // Ativa a aba 'inicio' por padrão
+            switchTab('inicio');
             console.log("initAppContent: Inicialização completa da UI.");
         }
     </script>
