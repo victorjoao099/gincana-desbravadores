@@ -59,6 +59,12 @@
                 height: 60vh;
                 /* Taller on mobile for better readability */
             }
+
+            /* Specific for mobile nav to ensure scroll works well */
+            nav.overflow-x-auto {
+                justify-content: flex-start;
+                /* Align tabs to the start for better scroll */
+            }
         }
 
         .list-disc-custom li::marker {
@@ -141,8 +147,8 @@
                         required>
                 </div>
                 <div>
-                    <label for="password" class="sr-only">Senha</label>
-                    <input type="password" id="password" placeholder="Senha"
+                    <label for="password" class="sr-only">Palavra-passe</label>
+                    <input type="password" id="password" placeholder="Palavra-passe"
                         class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                         required>
                 </div>
@@ -173,7 +179,8 @@
         </header>
 
         <!-- Navigation Tabs -->
-        <nav class="flex justify-center border-b-2 border-slate-200 mb-8 overflow-x-auto">
+        <!-- MODIFICAÇÃO: Removido justify-center para melhorar o scroll em mobile, adicionado md:justify-center para telas maiores -->
+        <nav class="flex md:justify-center border-b-2 border-slate-200 mb-8 overflow-x-auto">
             <button data-tab="inicio"
                 class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏁
                 Início</button>
@@ -373,7 +380,6 @@
 
             <!-- Gestão Section -->
             <section id="gestao" class="content-section">
-                <!-- *** CORREÇÃO PRINCIPAL: Adicionar h2#gestao-title e div#gestao-content aqui *** -->
                 <h2 id="gestao-title" class="text-3xl font-bold text-center mb-8 text-slate-700">
                     Carregando informações de gestão...
                 </h2>
@@ -386,7 +392,7 @@
 
     <!-- Firebase SDKs e lógica principal da aplicação (como um módulo) -->
     <script type="module">
-        console.log("Script de módulo a ser executado - Versão: 2024-06-04_16:00_FIXED");
+        console.log("Script de módulo a ser executado - Versão: 2024-06-04_16:30_MOBILE_FIX");
 
         // Importações do Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
@@ -403,15 +409,15 @@
         // =====================================================================================================
         // === ATENÇÃO: CONFIGURAÇÃO DO FIREBASE ===
         // =====================================================================================================
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'gincana-de-unidade'; // Usar __app_id se disponível
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'gincana-de-unidade';
 
         const firebaseConfigFromGlobal = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
 
         const firebaseConfig = firebaseConfigFromGlobal || {
-            apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8", // Substitua se necessário, ou deixe para __firebase_config
+            apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8",
             authDomain: "gincana-de-unidade.firebaseapp.com",
             projectId: "gincana-de-unidade",
-            storageBucket: "gincana-de-unidade.appspot.com", // Corrigido: .appspot.com é comum para storageBucket
+            storageBucket: "gincana-de-unidade.appspot.com",
             messagingSenderId: "497226153394",
             appId: "1:497226153394:web:35d484f3737e3a3b4938ab"
         };
@@ -432,8 +438,6 @@
 
             if (!messageBox || !messageText || !confirmBtn || !cancelBtn) {
                 console.error("Erro: Elementos da caixa de mensagem não encontrados. Não é possível exibir a mensagem.");
-                // Fallback para alert se a caixa de mensagem não estiver pronta (NÃO RECOMENDADO PARA PRODUÇÃO FINAL)
-                // window.alert(msg); 
                 console.warn("Fallback para console.log:", msg);
                 if (callback) callback(true);
                 return;
@@ -442,7 +446,6 @@
             messageText.textContent = msg;
             messageBox.classList.remove('hidden');
 
-            // Remove event listeners antigos para evitar múltiplas execuções
             const newConfirmBtn = confirmBtn.cloneNode(true);
             confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
             const newCancelBtn = cancelBtn.cloneNode(true);
@@ -465,18 +468,19 @@
             }
         };
 
-        // Variáveis de estado da aplicação (dados dinâmicos do Firestore)
+        // Variáveis de estado da aplicação
         let chartInstance = null;
         let currentUnits = [];
         let currentActivities = [];
         let currentSubmissions = [];
         let currentDemerits = [];
 
-        // --- DEFINIÇÃO DE DADOS ESTÁTICOS DA APLICAÇÃO ---
+        // Dados estáticos da aplicação
         const staticData = {
             calendar: {
                 "Junho: Mês do Pioneirismo e da Natureza": [
-                    { date: "15/06/2025", title: "Melhor em Nós e Amarras", desc: "Um mini campeonato de quem consegue realizar mais nós e amarras corretamente, a unidade que no total, conseguir o maior número de nós e amarras, vence. (Pioneirismo)" },
+                    { date: "08/06/2025", title: "Construção de Abrigo Improvisado", desc: "Cada unidade deve construir um abrigo simples e funcional usando materiais naturais ou lona/corda, capaz de proteger minimamente de intempéries. (Pioneirismo)" },
+                    { date: "15/06/2025", title: "Trilha de Observação e Registro", desc: "Caminhada em trilha segura com uma lista de itens da natureza para encontrar, identificar e registrar (fotos, desenhos ou anotações). (Natureza)" },
                     { date: "22/06/2025", title: "Cozinha Mateira Criativa", desc: "Preparar um lanche simples e saboroso ao ar livre utilizando técnicas de fogueira segura. Criatividade na receita e segurança no manuseio do fogo serão avaliadas. (Culinária/Pioneirismo)" },
                     { date: "29/06/2025", title: "Caça ao Tesouro da Orientação", desc: "Utilizando bússola e um mapa simples, as unidades devem seguir pistas para encontrar um tesouro escondido. (Orientação)" }
                 ],
@@ -542,93 +546,65 @@
                 ]
             }
         };
-        // Funções de operação de dados do Firebase
+
+        // Funções de busca de dados do Firebase
         async function getUnits() {
-            console.log("getUnits: Fetching units...");
             const unitsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'units');
-            const q = query(unitsColRef); // Não precisa de orderBy aqui, ordenamos no cliente
             return new Promise((resolve, reject) => {
-                onSnapshot(q, (snapshot) => {
+                onSnapshot(query(unitsColRef), (snapshot) => {
                     currentUnits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentUnits.sort((a, b) => (b.score || 0) - (a.score || 0)); // Ordenar por pontuação descendente
-                    console.log(`getUnits: Snapshot received for units: ${currentUnits.length} documents`);
+                    currentUnits.sort((a, b) => (b.score || 0) - (a.score || 0));
                     resolve(currentUnits);
-                }, (error) => {
-                    console.error("getUnits: Error fetching units:", error);
-                    reject(error);
-                });
+                }, reject);
             });
         }
 
         async function getActivities() {
-            console.log("getActivities: Fetching activities...");
             const activitiesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'activities');
-            const q = query(activitiesColRef); // Ordenar por nome ou data de criação se necessário, no cliente ou com índice
             return new Promise((resolve, reject) => {
-                onSnapshot(q, (snapshot) => {
+                onSnapshot(query(activitiesColRef), (snapshot) => {
                     currentActivities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    // Opcional: ordenar atividades, por exemplo, por nome
                     currentActivities.sort((a, b) => a.name.localeCompare(b.name));
-                    console.log(`getActivities: Snapshot received for activities: ${currentActivities.length} documents`);
                     resolve(currentActivities);
-                }, (error) => {
-                    console.error("getActivities: Error fetching activities:", error);
-                    reject(error);
-                });
+                }, reject);
             });
         }
 
         async function getSubmissions() {
-            console.log("getSubmissions: Fetching submissions...");
             const submissionsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'submissions');
-            const q = query(submissionsColRef); // Ordenar por data de submissão
             return new Promise((resolve, reject) => {
-                onSnapshot(q, (snapshot) => {
+                onSnapshot(query(submissionsColRef), (snapshot) => {
                     currentSubmissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentSubmissions.sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0)); // Mais recente primeiro
-                    console.log(`getSubmissions: Snapshot received for submissions: ${currentSubmissions.length} documents`);
+                    currentSubmissions.sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0));
                     resolve(currentSubmissions);
-                }, (error) => {
-                    console.error("getSubmissions: Error fetching submissions:", error);
-                    reject(error);
-                });
+                }, reject);
             });
         }
 
         async function getDemerits() {
-            console.log("getDemerits: Fetching demerits...");
             const demeritsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'demerits');
-            const q = query(demeritsColRef); // Ordenar por data de aplicação
             return new Promise((resolve, reject) => {
-                onSnapshot(q, (snapshot) => {
+                onSnapshot(query(demeritsColRef), (snapshot) => {
                     currentDemerits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentDemerits.sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0)); // Mais recente primeiro
-                    console.log(`getDemerits: Snapshot received for demerits: ${currentDemerits.length} documents`);
+                    currentDemerits.sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0));
                     resolve(currentDemerits);
-                }, (error) => {
-                    console.error("getDemerits: Error fetching demerits:", error);
-                    reject(error);
-                });
+                }, reject);
             });
         }
 
-
+        // Funções de renderização da UI
         function wrapLabel(label, maxLen) {
             if (!label) return '';
             if (label.length <= maxLen) return label;
-
             const lines = [];
             let currentLine = '';
             const words = label.split(' ');
-
             for (const word of words) {
                 if ((currentLine + (currentLine ? ' ' : '') + word).length <= maxLen) {
                     currentLine += (currentLine ? ' ' : '') + word;
                 } else {
                     if (currentLine) lines.push(currentLine);
                     currentLine = word;
-                    // Se uma única palavra for maior que maxLen, ela ficará sozinha em uma linha (e pode estourar)
-                    // Para um tratamento mais robusto, poderia quebrar a palavra, mas para Chart.js, múltiplas linhas é o objetivo.
                     while (currentLine.length > maxLen) {
                         lines.push(currentLine.substring(0, maxLen));
                         currentLine = currentLine.substring(maxLen);
@@ -636,19 +612,15 @@
                 }
             }
             if (currentLine) lines.push(currentLine);
-            return lines; // Chart.js aceita array de strings para múltiplas linhas
+            return lines;
         }
 
         function renderDashboard() {
-            console.log("renderDashboard: Rendering dashboard...");
             const unidadeDestaqueEl = document.getElementById('unidade-destaque');
             const totalPontosEl = document.getElementById('total-pontos');
             const atividadesRealizadasEl = document.getElementById('atividades-realizadas');
 
-            if (!unidadeDestaqueEl || !totalPontosEl || !atividadesRealizadasEl) {
-                console.error("Elementos do dashboard não encontrados.");
-                return;
-            }
+            if (!unidadeDestaqueEl || !totalPontosEl || !atividadesRealizadasEl) return;
 
             const totalScore = currentUnits.reduce((sum, item) => sum + (item.score || 0), 0);
             const totalActivitiesDefined = Object.values(staticData.calendar).flat().length;
@@ -657,27 +629,18 @@
             unidadeDestaqueEl.textContent = currentUnits.length > 0 && currentUnits[0].name ? currentUnits[0].name : 'N/A';
             totalPontosEl.textContent = totalScore;
             atividadesRealizadasEl.textContent = `${approvedSubmissionsCount} / ${totalActivitiesDefined}`;
-
             renderScoreChart(currentUnits);
-            console.log("renderDashboard: Dashboard rendered.");
         }
 
         function renderScoreChart(unitsData) {
-            console.log("renderScoreChart: Rendering score chart...");
             const scoreChartEl = document.getElementById('scoreChart');
-            if (!scoreChartEl) {
-                console.error("Elemento canvas 'scoreChart' não encontrado.");
-                return;
-            }
+            if (!scoreChartEl) return;
             const ctx = scoreChartEl.getContext('2d');
-
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
+            if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: unitsData.map(item => wrapLabel(item.name, 15)), // Ajuste maxLen conforme necessário
+                    labels: unitsData.map(item => wrapLabel(item.name, 15)),
                     datasets: [{
                         label: 'Pontuação da Unidade',
                         data: unitsData.map(item => item.score || 0),
@@ -691,1150 +654,429 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    return `${context.dataset.label}: ${context.raw} pontos`;
-                                }
-                            }
-                        },
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            grid: {
-                                display: true,
-                                color: 'rgba(203, 213, 225, 0.5)'
-                            }
-                        },
-                        y: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                // A quebra de linha já é tratada pela função wrapLabel retornando um array
-                                autoSkip: false, // Garante que todos os rótulos sejam mostrados se possível
-                            }
-                        }
-                    }
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} pontos` } } },
+                    scales: { x: { beginAtZero: true, grid: { display: true, color: 'rgba(203, 213, 225, 0.5)' } }, y: { grid: { display: false }, ticks: { autoSkip: false } } }
                 }
             });
-            console.log("renderScoreChart: Score chart rendered.");
         }
 
         function renderCalendar() {
-            console.log("renderCalendar: Rendering calendar...");
             const container = document.getElementById('calendario-container');
-            if (!container) {
-                console.error("Elemento 'calendario-container' não encontrado.");
-                return;
-            }
+            if (!container) return;
             container.innerHTML = '';
             Object.entries(staticData.calendar).forEach(([month, activities]) => {
                 const monthDiv = document.createElement('div');
                 monthDiv.className = 'bg-white rounded-xl shadow-md';
-
                 const button = document.createElement('button');
                 button.className = 'accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center';
                 button.innerHTML = `<span>${month}</span><span class="transform transition-transform duration-300">▼</span>`;
-
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'accordion-content px-6 pb-6 text-slate-600 space-y-4';
-
                 activities.forEach(activity => {
-                    contentDiv.innerHTML += `
-                        <div class="pt-4 border-t first:border-t-0 border-slate-200">
-                            <p class="font-semibold text-slate-700">${activity.date} - ${activity.title}</p>
-                            <p class="text-sm">${activity.desc}</p>
-                        </div>
-                    `;
+                    contentDiv.innerHTML += `<div class="pt-4 border-t first:border-t-0 border-slate-200"><p class="font-semibold text-slate-700">${activity.date} - ${activity.title}</p><p class="text-sm">${activity.desc}</p></div>`;
                 });
-
                 monthDiv.appendChild(button);
                 monthDiv.appendChild(contentDiv);
                 container.appendChild(monthDiv);
             });
-            console.log("renderCalendar: Calendar rendered.");
         }
 
         function renderAbout() {
-            console.log("renderAbout: Rendering about section...");
             const basesContainer = document.getElementById('bases-content');
             const funcoesContainer = document.getElementById('funcoes-content');
-
-            if (!basesContainer || !funcoesContainer) {
-                console.error("Elementos 'bases-content' ou 'funcoes-content' não encontrados.");
-                return;
-            }
-
+            if (!basesContainer || !funcoesContainer) return;
             basesContainer.innerHTML = staticData.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join('');
-
             funcoesContainer.innerHTML = '';
             Object.entries(staticData.funcoes).forEach(([category, roles]) => {
-                let categoryHtml = `<h4 class="font-bold text-lg text-slate-700 pt-4 border-t first:border-t-0 border-slate-200">${category}</h4><ul class="list-disc list-inside list-disc-custom space-y-2">`;
-                roles.forEach(role => {
-                    categoryHtml += `<li><strong>${role.title}:</strong> ${role.content}</li>`;
-                });
-                categoryHtml += `</ul>`;
-                funcoesContainer.innerHTML += categoryHtml;
+                let catHtml = `<h4 class="font-bold text-lg text-slate-700 pt-4 border-t first:border-t-0 border-slate-200">${category}</h4><ul class="list-disc list-inside list-disc-custom space-y-2">`;
+                roles.forEach(role => { catHtml += `<li><strong>${role.title}:</strong> ${role.content}</li>`; });
+                catHtml += `</ul>`;
+                funcoesContainer.innerHTML += catHtml;
             });
-            console.log("renderAbout: About section rendered.");
         }
 
         function renderUnitLeaderDashboard() {
-            console.log("renderUnitLeaderDashboard: Rendering Unit Leader Dashboard...");
             const gestaoTitleEl = document.getElementById('gestao-title');
-            if (gestaoTitleEl) {
-                gestaoTitleEl.textContent = 'Dashboard do Líder de Unidade';
-            } else {
-                console.error("Elemento 'gestao-title' não encontrado ao renderizar dashboard do líder.");
-                return;
-            }
-
+            if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Líder de Unidade'; else return;
             const gestaoContent = document.getElementById('gestao-content');
-            if (!gestaoContent) {
-                console.error("Elemento 'gestao-content' não encontrado ao renderizar dashboard do líder.");
-                return;
-            }
+            if (!gestaoContent) return;
 
             gestaoContent.innerHTML = `
                 <div class="bg-white p-6 rounded-xl shadow-md mb-8">
                     <h3 class="text-xl font-semibold text-blue-600 mb-4">Enviar Atividade Concluída</h3>
                     <form id="submit-activity-form" class="space-y-4 mb-8">
-                        <div>
-                            <label for="unit-select-leader" class="block text-sm font-medium text-slate-700">Sua Unidade:</label>
-                            <select id="unit-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                                <option value="">Selecione sua unidade</option>
-                            </select>
-                            <p id="no-units-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma unidade encontrada. Peça ao secretário para cadastrar as unidades.</p>
-                        </div>
-                        <div>
-                            <label for="activity-select-leader" class="block text-sm font-medium text-slate-700">Atividade:</label>
-                            <select id="activity-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                                <option value="">Selecione uma atividade</option>
-                            </select>
-                            <p id="no-activities-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma atividade cadastrada. Peça ao secretário para cadastrar as atividades.</p>
-                        </div>
-                        <div>
-                            <label for="details-leader" class="block text-sm font-medium text-slate-700">Detalhes da Conclusão:</label>
-                            <textarea id="details-leader" rows="3" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required placeholder="Descreva como a atividade foi realizada, quem participou, etc."></textarea>
-                        </div>
-                        <div>
-                            <label for="photo-url-leader" class="block text-sm font-medium text-slate-700">URL da Foto (Opcional):</label>
-                            <input type="url" id="photo-url-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="https://exemplo.com/foto.jpg">
-                        </div>
-                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Enviar para Validação</button>
+                        <div><label for="unit-select-leader" class="block text-sm font-medium text-slate-700">Sua Unidade:</label><select id="unit-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione sua unidade</option></select><p id="no-units-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma unidade.</p></div>
+                        <div><label for="activity-select-leader" class="block text-sm font-medium text-slate-700">Atividade:</label><select id="activity-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione uma atividade</option></select><p id="no-activities-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma atividade.</p></div>
+                        <div><label for="details-leader" class="block text-sm font-medium text-slate-700">Detalhes da Conclusão:</label><textarea id="details-leader" rows="3" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required placeholder="Descreva..."></textarea></div>
+                        <div><label for="photo-url-leader" class="block text-sm font-medium text-slate-700">URL da Foto (Opcional):</label><input type="url" id="photo-url-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="https://..."></div>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">Enviar</button>
                     </form>
                 </div>
+                <div class="bg-white p-6 rounded-xl shadow-md"><h3 class="text-xl font-semibold text-blue-600 mb-4">Meus Envios Recentes</h3><div id="leader-submissions-list"><p class="text-slate-600">Selecione uma unidade.</p></div></div>`;
 
-                <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h3 class="text-xl font-semibold text-blue-600 mb-4">Meus Envios Recentes</h3>
-                    <div id="leader-submissions-list">
-                        <p class="text-slate-600">Nenhum envio feito ainda para esta unidade.</p>
-                    </div>
-                </div>
-            `;
+            const unitSL = document.getElementById('unit-select-leader');
+            const actSL = document.getElementById('activity-select-leader');
+            const noUnitsMsgL = document.getElementById('no-units-message-leader');
+            const noActsMsgL = document.getElementById('no-activities-message-leader');
 
-            const unitSelectLeader = document.getElementById('unit-select-leader');
-            const activitySelectLeader = document.getElementById('activity-select-leader');
-            const noUnitsMessageLeader = document.getElementById('no-units-message-leader');
-            const noActivitiesMessageLeader = document.getElementById('no-activities-message-leader');
+            unitSL.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
+            if (noUnitsMsgL) noUnitsMsgL.classList.toggle('hidden', currentUnits.length > 0);
 
-            if (currentUnits.length > 0) {
-                unitSelectLeader.innerHTML = '<option value="">Selecione sua unidade</option>' + currentUnits.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
-                // Não selecionar a primeira unidade por defeito aqui, deixar o utilizador escolher
-                if (noUnitsMessageLeader) noUnitsMessageLeader.classList.add('hidden');
-            } else {
-                unitSelectLeader.innerHTML = '<option value="">Nenhuma unidade cadastrada</option>';
-                if (noUnitsMessageLeader) noUnitsMessageLeader.classList.remove('hidden');
-            }
-
-            if (currentActivities.length > 0) {
-                activitySelectLeader.innerHTML = '<option value="">Selecione uma atividade</option>' + currentActivities.map(activity => `<option value="${activity.id}">${activity.name} (${activity.type})</option>`).join('');
-                if (noActivitiesMessageLeader) noActivitiesMessageLeader.classList.add('hidden');
-            } else {
-                activitySelectLeader.innerHTML = '<option value="">Nenhuma atividade cadastrada</option>';
-                if (noActivitiesMessageLeader) noActivitiesMessageLeader.classList.remove('hidden');
-            }
+            actSL.innerHTML = currentActivities.length > 0 ? '<option value="">Selecione</option>' + currentActivities.map(a => `<option value="${a.id}">${a.name} (${a.type})</option>`).join('') : '<option value="">Nenhuma atividade</option>';
+            if (noActsMsgL) noActsMsgL.classList.toggle('hidden', currentActivities.length > 0);
 
             document.getElementById('submit-activity-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const selectedUnitId = unitSelectLeader.value;
-                const activityId = activitySelectLeader.value;
-                const details = document.getElementById('details-leader').value;
-                const photoUrl = document.getElementById('photo-url-leader').value;
-
-                if (!selectedUnitId) {
-                    showMessage("Por favor, selecione sua unidade.");
-                    return;
-                }
-                if (!activityId) {
-                    showMessage("Por favor, selecione uma atividade.");
-                    return;
-                }
-                if (!details.trim()) {
-                    showMessage("Por favor, preencha os detalhes da conclusão.");
-                    return;
-                }
-
-
-                const activity = currentActivities.find(act => act.id === activityId);
-                if (!activity) {
-                    showMessage("Atividade selecionada inválida.");
-                    return;
-                }
-
+                const unitId = unitSL.value, actId = actSL.value, details = document.getElementById('details-leader').value, photoUrl = document.getElementById('photo-url-leader').value;
+                if (!unitId || !actId || !details.trim()) { showMessage("Preencha todos os campos obrigatórios."); return; }
+                const activity = currentActivities.find(a => a.id === actId);
+                if (!activity) { showMessage("Atividade inválida."); return; }
                 try {
-                    const submissionsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'submissions');
-                    await addDoc(submissionsColRef, {
-                        unitId: selectedUnitId,
-                        unitName: currentUnits.find(u => u.id === selectedUnitId)?.name || 'Unidade Desconhecida',
-                        activityId: activityId,
-                        activityName: activity.name,
-                        details: details,
-                        photoUrl: photoUrl,
-                        status: 'pending',
-                        submittedBy: currentUser.uid,
-                        submittedAt: serverTimestamp(),
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), {
+                        unitId, unitName: currentUnits.find(u => u.id === unitId)?.name || '?', activityId: actId, activityName: activity.name, details, photoUrl, status: 'pending', submittedBy: currentUser.uid, submittedAt: serverTimestamp()
                     });
-                    showMessage("Atividade enviada para validação com sucesso!");
-                    document.getElementById('submit-activity-form').reset();
-                    // Resetar selects para o placeholder
-                    unitSelectLeader.value = "";
-                    activitySelectLeader.value = "";
-
-                } catch (error) {
-                    console.error("Erro ao enviar atividade:", error);
-                    showMessage("Erro ao enviar atividade. Tente novamente.");
-                }
+                    showMessage("Enviado com sucesso!");
+                    e.target.reset(); unitSL.value = ""; actSL.value = ""; updateLeaderSubmissionsList(""); // Clear list or show placeholder
+                } catch (err) { console.error("Erro envio:", err); showMessage("Erro ao enviar."); }
             });
 
-            function updateLeaderSubmissionsList(selectedUnitId) {
-                const leaderSubmissionsList = document.getElementById('leader-submissions-list');
-                if (!leaderSubmissionsList) return;
+            unitSL.addEventListener('change', (e) => updateLeaderSubmissionsList(e.target.value));
+            updateLeaderSubmissionsList(unitSL.value); // Initial call
+        }
 
-                if (!selectedUnitId) { // Se nenhuma unidade estiver selecionada, mostrar mensagem
-                    leaderSubmissionsList.innerHTML = '<p class="text-slate-600">Selecione uma unidade para ver os envios.</p>';
-                    return;
-                }
-
-                const unitSubmissions = currentSubmissions.filter(sub => sub.unitId === selectedUnitId);
-
-                if (unitSubmissions.length === 0) {
-                    leaderSubmissionsList.innerHTML = '<p class="text-slate-600">Nenhum envio feito ainda para esta unidade.</p>';
-                    return;
-                }
-
-                let tableHtml = `
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full bg-white rounded-lg shadow-md">
-                            <thead class="bg-blue-100">
-                                <tr>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tl-lg">Atividade</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Detalhes</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Status</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Data</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
-                unitSubmissions.forEach(sub => {
-                    const statusClass = sub.status === 'pending' ? 'pending' : (sub.status === 'approved' ? 'approved' : 'rejected');
-                    tableHtml += `
-                        <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
-                            <td class="py-3 px-4 text-sm">${sub.activityName || 'N/A'}</td>
-                            <td class="py-3 px-4 text-sm max-w-xs truncate" title="${sub.details}">${sub.details || 'N/A'}</td>
-                            <td class="py-3 px-4 text-sm">
-                                <span class="status-badge ${statusClass}">
-                                    ${sub.status === 'pending' ? 'Pendente' : (sub.status === 'approved' ? 'Aprovado' : 'Rejeitado')}
-                                </span>
-                            </td>
-                            <td class="py-3 px-4 text-sm font-bold">${sub.pointsAwarded !== undefined ? sub.pointsAwarded : 'N/A'}</td>
-                            <td class="py-3 px-4 text-sm">
-                                ${sub.submittedAt ? new Date(sub.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}
-                            </td>
-                        </tr>
-                    `;
-                });
-                tableHtml += `
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-                leaderSubmissionsList.innerHTML = tableHtml;
-            }
-
-            unitSelectLeader.addEventListener('change', (e) => {
-                updateLeaderSubmissionsList(e.target.value);
-            });
-
-            // Inicializa a lista de submissões (pode estar vazia se nenhuma unidade for selecionada por padrão)
-            updateLeaderSubmissionsList(unitSelectLeader.value);
+        function updateLeaderSubmissionsList(selectedUnitId) {
+            const listEl = document.getElementById('leader-submissions-list');
+            if (!listEl) return;
+            if (!selectedUnitId) { listEl.innerHTML = '<p class="text-slate-600">Selecione uma unidade para ver os envios.</p>'; return; }
+            const unitSubs = currentSubmissions.filter(s => s.unitId === selectedUnitId);
+            if (unitSubs.length === 0) { listEl.innerHTML = '<p class="text-slate-600">Nenhum envio para esta unidade.</p>'; return; }
+            listEl.innerHTML = `<div class="overflow-x-auto"><table class="min-w-full bg-white rounded-lg shadow-md"><thead class="bg-blue-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Detalhes</th><th class="th-cell">Status</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody>${unitSubs.map(s => `<tr><td class="td-cell">${s.activityName || '?'}</td><td class="td-cell truncate" title="${s.details}">${s.details || '?'}</td><td class="td-cell"><span class="status-badge ${s.status}">${s.status}</span></td><td class="td-cell font-bold">${s.pointsAwarded != null ? s.pointsAwarded : 'N/A'}</td><td class="td-cell">${s.submittedAt ? new Date(s.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
+            // Helper for table cell classes (can be defined in style or added directly)
+            listEl.querySelectorAll('.th-cell').forEach(th => th.classList.add('py-3', 'px-4', 'text-left', 'text-sm', 'font-semibold', 'text-slate-700'));
+            listEl.querySelectorAll('.td-cell').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm', 'border-b', 'border-slate-200'));
         }
 
 
         function renderSecretaryDashboard() {
-            console.log("renderSecretaryDashboard: Rendering Secretary Dashboard...");
             const gestaoTitleEl = document.getElementById('gestao-title');
-            if (gestaoTitleEl) {
-                gestaoTitleEl.textContent = 'Dashboard do Secretário do Clube';
-            } else {
-                console.error("Elemento 'gestao-title' não encontrado ao renderizar dashboard do secretário.");
-                return;
-            }
-
+            if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Secretário'; else return;
             const gestaoContent = document.getElementById('gestao-content');
-            if (!gestaoContent) {
-                console.error("Elemento 'gestao-content' não encontrado ao renderizar dashboard do secretário.");
-                return;
-            }
+            if (!gestaoContent) return;
+
             gestaoContent.innerHTML = `
-                <section class="mb-8 p-4 bg-blue-50 rounded-xl shadow-inner">
-                    <h3 class="text-xl font-semibold text-blue-600 mb-4">Gerenciar Unidades</h3>
-                    <div class="flex flex-col sm:flex-row gap-4 mb-4">
-                        <input type="text" id="new-unit-name" placeholder="Nome da nova unidade" class="flex-grow p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                        <button id="add-unit-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Adicionar Unidade</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full bg-white rounded-lg shadow-md">
-                            <thead class="bg-blue-100">
-                                <tr>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tl-lg">Unidade</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontuação</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="units-table-body">
-                                <tr><td colspan="3" class="py-4 px-4 text-center text-slate-600">Nenhuma unidade cadastrada.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                <section class="admin-section"><h3 class="admin-h3 text-blue-600">Gerenciar Unidades</h3><div class="flex flex-col sm:flex-row gap-4 mb-4"><input type="text" id="new-unit-name" placeholder="Nome da unidade" class="admin-input"><button id="add-unit-btn" class="admin-btn bg-blue-600 hover:bg-blue-700">Adicionar</button></div><div class="table-container"><table class="admin-table"><thead class="bg-blue-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="units-table-body"></tbody></table></div></section>
+                <section class="admin-section"><h3 class="admin-h3 text-green-600">Gerenciar Atividades</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"><input type="text" id="new-activity-name" placeholder="Nome" class="admin-input"><select id="new-activity-type" class="admin-input"><option value="">Tipo</option><option>Físico</option><option>Mental</option><option>Espiritual</option><option>Social</option><option>Pioneirismo</option><option>Natureza</option><option>Serviço</option><option>Culinária</option><option>Geral</option></select><input type="number" id="new-activity-max-points" placeholder="Pontos Máx." class="admin-input" min="0"></div><button id="add-activity-btn" class="admin-btn bg-green-600 hover:bg-green-700 w-full">Adicionar</button><div class="table-container mt-6"><table class="admin-table"><thead class="bg-green-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Tipo</th><th class="th-cell">Pontos Máx.</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="activities-table-body"></tbody></table></div></section>
+                <section class="admin-section"><h3 class="admin-h3 text-red-700">Gerenciar Deméritos</h3><div class="space-y-4 mb-4"><div><label for="demerit-unit-select" class="admin-label">Unidade:</label><select id="demerit-unit-select" class="admin-input" required><option value="">Selecione</option></select></div><div><label for="demerit-points" class="admin-label">Pontos a Deduzir:</label><input type="number" id="demerit-points" min="1" class="admin-input" required placeholder="Ex: 10"></div><div><label for="demerit-reason" class="admin-label">Razão:</label><textarea id="demerit-reason" rows="3" class="admin-input" required placeholder="Motivo..."></textarea></div><button id="apply-demerit-btn" class="admin-btn bg-red-600 hover:bg-red-700 w-full">Aplicar</button></div><div class="table-container mt-6"><table class="admin-table"><thead class="bg-red-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell">Razão</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody id="demerits-table-body"></tbody></table></div></section>
+                <section class="admin-section"><h3 class="admin-h3 text-yellow-800">Envios Pendentes (<span id="pending-submissions-count">0</span>)</h3><div id="pending-submissions-list" class="table-container"><p>Nenhum pendente.</p></div></section>
+                <section class="admin-section !mb-0"><h3 class="admin-h3 text-slate-700">Histórico de Envios</h3><div id="all-submissions-list" class="table-container"><p>Nenhum registro.</p></div></section>`;
 
-                <section class="mb-8 p-4 bg-green-50 rounded-xl shadow-inner">
-                    <h3 class="text-xl font-semibold text-green-600 mb-4">Gerenciar Atividades</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <input type="text" id="new-activity-name" placeholder="Nome da atividade" class="p-3 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                        <select id="new-activity-type" class="p-3 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                            <option value="">Tipo (Físico, Mental, Espiritual, etc.)</option>
-                            <option value="Físico">Físico</option>
-                            <option value="Mental">Mental</option>
-                            <option value="Espiritual">Espiritual</option>
-                            <option value="Social">Social</option>
-                            <option value="Pioneirismo">Pioneirismo</option>
-                            <option value="Natureza">Natureza</option>
-                            <option value="Serviço">Serviço Comunitário</option>
-                            <option value="Culinária">Culinária</option>
-                            <option value="Geral">Geral</option>
-                        </select>
-                        <input type="number" id="new-activity-max-points" placeholder="Pontuação Máxima" class="p-3 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" min="0">
-                    </div>
-                    <button id="add-activity-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Adicionar Atividade</button>
-                    <div class="overflow-x-auto mt-6">
-                        <table class="min-w-full bg-white rounded-lg shadow-md">
-                            <thead class="bg-green-100">
-                                <tr>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tl-lg">Atividade</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Tipo</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos Máx.</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="activities-table-body">
-                                <tr><td colspan="4" class="py-4 px-4 text-center text-slate-600">Nenhuma atividade cadastrada.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+            // Aplicar classes comuns para simplificar o HTML injetado
+            gestaoContent.querySelectorAll('.admin-section').forEach(el => el.classList.add('mb-8', 'p-4', 'rounded-xl', 'shadow-inner'));
+            gestaoContent.querySelectorAll('.admin-h3').forEach(el => el.classList.add('text-xl', 'font-semibold', 'mb-4'));
+            gestaoContent.querySelectorAll('.admin-input').forEach(el => el.classList.add('block', 'w-full', 'p-3', 'border', 'border-slate-300', 'rounded-lg', 'focus:ring-2'));
+            gestaoContent.querySelectorAll('.admin-btn').forEach(el => el.classList.add('text-white', 'font-bold', 'py-3', 'px-4', 'rounded-lg', 'transition', 'duration-300', 'ease-in-out', 'transform', 'hover:scale-105', 'shadow-md'));
+            gestaoContent.querySelectorAll('.admin-label').forEach(el => el.classList.add('block', 'text-sm', 'font-medium', 'text-slate-700', 'mb-1'));
+            gestaoContent.querySelectorAll('.table-container').forEach(el => el.classList.add('overflow-x-auto'));
+            gestaoContent.querySelectorAll('.admin-table').forEach(el => el.classList.add('min-w-full', 'bg-white', 'rounded-lg', 'shadow-md'));
+            gestaoContent.querySelectorAll('.th-cell').forEach(th => th.classList.add('py-3', 'px-4', 'text-left', 'text-sm', 'font-semibold', 'text-slate-700'));
+            // Note: td-cell classes will be applied dynamically in their respective update functions
 
-                <section class="mb-8 p-4 bg-red-50 rounded-xl shadow-inner">
-                    <h3 class="text-xl font-semibold text-red-700 mb-4">Gerenciar Deméritos</h3>
-                    <div class="space-y-4 mb-4">
-                        <div>
-                            <label for="demerit-unit-select" class="block text-sm font-medium text-slate-700">Unidade:</label>
-                            <select id="demerit-unit-select" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-red-500 focus:border-red-500" required>
-                                <option value="">Selecione a unidade</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="demerit-points" class="block text-sm font-medium text-slate-700">Pontos a Deduzir:</label>
-                            <input type="number" id="demerit-points" min="1" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-red-500 focus:border-red-500" required placeholder="Ex: 10">
-                        </div>
-                        <div>
-                            <label for="demerit-reason" class="block text-sm font-medium text-slate-700">Razão do Demérito:</label>
-                            <textarea id="demerit-reason" rows="3" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-red-500 focus:border-red-500" required placeholder="Descreva o motivo do demérito"></textarea>
-                        </div>
-                        <button id="apply-demerit-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Aplicar Demérito</button>
-                    </div>
-                    <div class="overflow-x-auto mt-6">
-                        <table class="min-w-full bg-white rounded-lg shadow-md">
-                            <thead class="bg-red-100">
-                                <tr>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tl-lg">Unidade</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Razão</th>
-                                    <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Data</th>
-                                </tr>
-                            </thead>
-                            <tbody id="demerits-table-body">
-                                <tr><td colspan="4" class="py-4 px-4 text-center text-slate-600">Nenhum demérito registrado.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <section class="mb-8 p-4 bg-yellow-50 rounded-xl shadow-inner">
-                    <h3 class="text-xl font-semibold text-yellow-800 mb-4">Envios Pendentes para Validação (<span id="pending-submissions-count">0</span>)</h3>
-                    <div id="pending-submissions-list">
-                        <p class="text-slate-600">Nenhum envio pendente no momento.</p>
-                    </div>
-                </section>
-
-                <section class="p-4 bg-slate-100 rounded-xl shadow-inner"> <!-- Removido mb-8 da última seção -->
-                    <h3 class="text-xl font-semibold text-slate-700 mb-4">Histórico de Todos os Envios</h3>
-                    <div id="all-submissions-list">
-                        <p class="text-slate-600">Nenhum envio registrado ainda.</p>
-                    </div>
-                </section>
-            `;
-
-            // Demerit Management
             const demeritUnitSelect = document.getElementById('demerit-unit-select');
-            const demeritPointsInput = document.getElementById('demerit-points');
-            const demeritReasonTextarea = document.getElementById('demerit-reason');
-            const applyDemeritBtn = document.getElementById('apply-demerit-btn');
+            demeritUnitSelect.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
 
-            if (currentUnits.length > 0) {
-                demeritUnitSelect.innerHTML = '<option value="">Selecione a unidade</option>' + currentUnits.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
-            } else {
-                demeritUnitSelect.innerHTML = '<option value="">Nenhuma unidade cadastrada.</option>';
-            }
-
-            applyDemeritBtn.addEventListener('click', async () => {
-                const unitId = demeritUnitSelect.value;
-                const points = parseInt(demeritPointsInput.value);
-                const reason = demeritReasonTextarea.value.trim();
-
-                if (!unitId) {
-                    showMessage("Por favor, selecione a unidade para aplicar o demérito."); return;
-                }
-                if (isNaN(points) || points <= 0) {
-                    showMessage("Por favor, insira um valor de pontos válido (maior que zero)."); return;
-                }
-                if (!reason) {
-                    showMessage("Por favor, forneça uma razão para o demérito."); return;
-                }
-
-                const unitName = currentUnits.find(u => u.id === unitId)?.name || 'Unidade Desconhecida';
-                showMessage(`Confirmar aplicação de ${points} deméritos à unidade "${unitName}" por "${reason}"?`, async (confirmed) => {
-                    if (confirmed) {
-                        try {
-                            const demeritsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'demerits');
-                            await addDoc(demeritsColRef, {
-                                unitId: unitId,
-                                unitName: unitName,
-                                points: points,
-                                reason: reason,
-                                appliedBy: currentUser.uid,
-                                appliedAt: serverTimestamp(),
-                            });
-
-                            const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
-                            const unitSnap = await getDoc(unitDocRef);
-                            if (unitSnap.exists()) {
-                                const currentScore = unitSnap.data().score || 0;
-                                await updateDoc(unitDocRef, {
-                                    score: currentScore - points,
-                                });
-                            }
-                            showMessage(`Demérito de ${points} pontos aplicado à unidade!`);
-                            demeritUnitSelect.value = '';
-                            demeritPointsInput.value = '';
-                            demeritReasonTextarea.value = '';
-                        } catch (error) {
-                            console.error("Erro ao aplicar demérito:", error);
-                            showMessage("Erro ao aplicar demérito. Tente novamente.");
-                        }
-                    }
+            document.getElementById('apply-demerit-btn').addEventListener('click', async () => {
+                const unitId = demeritUnitSelect.value, points = parseInt(document.getElementById('demerit-points').value), reason = document.getElementById('demerit-reason').value.trim();
+                if (!unitId || isNaN(points) || points <= 0 || !reason) { showMessage("Preencha os campos do demérito."); return; }
+                const unitName = currentUnits.find(u => u.id === unitId)?.name || '?';
+                showMessage(`Aplicar ${points} deméritos a "${unitName}" por "${reason}"?`, async (confirmed) => {
+                    if (!confirmed) return;
+                    try {
+                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), { unitId, unitName, points, reason, appliedBy: currentUser.uid, appliedAt: serverTimestamp() });
+                        const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
+                        const unitSnap = await getDoc(unitDocRef);
+                        if (unitSnap.exists()) await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - points });
+                        showMessage("Demérito aplicado!");
+                        demeritUnitSelect.value = ""; document.getElementById('demerit-points').value = ""; document.getElementById('demerit-reason').value = "";
+                    } catch (err) { console.error("Erro demérito:", err); showMessage("Erro ao aplicar demérito."); }
                 }, true);
             });
 
-            // Unit Management
             document.getElementById('add-unit-btn').addEventListener('click', async () => {
-                const newUnitName = document.getElementById('new-unit-name').value.trim();
-                if (!newUnitName) {
-                    showMessage("O nome da unidade não pode ser vazio.");
-                    return;
-                }
+                const name = document.getElementById('new-unit-name').value.trim();
+                if (!name) { showMessage("Nome da unidade vazio."); return; }
                 try {
-                    const unitsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'units');
-                    await addDoc(unitsColRef, { name: newUnitName, score: 0, createdAt: serverTimestamp() });
-                    showMessage(`Unidade "${newUnitName}" adicionada com sucesso!`);
-                    document.getElementById('new-unit-name').value = '';
-                } catch (error) {
-                    console.error("Erro ao adicionar unidade:", error);
-                    showMessage("Erro ao adicionar unidade. Tente novamente.");
-                }
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'units'), { name, score: 0, createdAt: serverTimestamp() });
+                    showMessage(`Unidade "${name}" adicionada!`); document.getElementById('new-unit-name').value = '';
+                } catch (err) { console.error("Erro unidade:", err); showMessage("Erro ao adicionar unidade."); }
             });
 
-            // Activity Management
             document.getElementById('add-activity-btn').addEventListener('click', async () => {
-                const name = document.getElementById('new-activity-name').value.trim();
-                const type = document.getElementById('new-activity-type').value;
-                const maxPoints = parseInt(document.getElementById('new-activity-max-points').value);
-
-                if (!name || !type || isNaN(maxPoints) || maxPoints < 0) {
-                    showMessage("Por favor, preencha todos os campos da atividade corretamente (Nome, Tipo, Pontos Máx. >= 0).");
-                    return;
-                }
+                const name = document.getElementById('new-activity-name').value.trim(), type = document.getElementById('new-activity-type').value, maxPoints = parseInt(document.getElementById('new-activity-max-points').value);
+                if (!name || !type || isNaN(maxPoints) || maxPoints < 0) { showMessage("Preencha os campos da atividade."); return; }
                 try {
-                    const activitiesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'activities');
-                    await addDoc(activitiesColRef, { name, type, maxPoints, createdAt: serverTimestamp() });
-                    showMessage(`Atividade "${name}" adicionada com sucesso!`);
-                    document.getElementById('new-activity-name').value = '';
-                    document.getElementById('new-activity-type').value = '';
-                    document.getElementById('new-activity-max-points').value = '';
-                } catch (error) {
-                    console.error("Erro ao adicionar atividade:", error);
-                    showMessage("Erro ao adicionar atividade. Tente novamente.");
-                }
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), { name, type, maxPoints, createdAt: serverTimestamp() });
+                    showMessage(`Atividade "${name}" adicionada!`);
+                    document.getElementById('new-activity-name').value = ''; document.getElementById('new-activity-type').value = ''; document.getElementById('new-activity-max-points').value = '';
+                } catch (err) { console.error("Erro atividade:", err); showMessage("Erro ao adicionar atividade."); }
             });
 
-            // Funções de atualização de tabelas (chamadas pelos listeners onSnapshot e após renderização inicial)
-            updateUnitsTable();
-            updateActivitiesTable();
-            updateDemeritsTable();
-            updateSubmissionsTables();
+            updateUnitsTable(); updateActivitiesTable(); updateDemeritsTable(); updateSubmissionsTables();
         }
 
+        function applyTableStyles(tableBodyElement) {
+            tableBodyElement.querySelectorAll('tr').forEach(tr => tr.classList.add('border-b', 'border-slate-200', 'last:border-b-0', 'hover:bg-slate-50'));
+            tableBodyElement.querySelectorAll('td').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm'));
+        }
 
         function updateUnitsTable() {
             const tbody = document.getElementById('units-table-body');
-            if (!tbody) return; // Seção de gestão pode não estar ativa
-            if (currentUnits.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="py-4 px-4 text-center text-slate-600">Nenhuma unidade cadastrada.</td></tr>';
-            } else {
-                tbody.innerHTML = currentUnits.map(unit => `
-                    <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
-                        <td class="py-3 px-4 text-sm">${unit.name}</td>
-                        <td class="py-3 px-4 text-sm font-bold">${unit.score || 0}</td>
-                        <td class="py-3 px-4 text-sm">
-                            <button data-id="${unit.id}" data-name="${unit.name}" class="delete-unit-btn bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg text-xs transition duration-300 ease-in-out transform hover:scale-105">Excluir</button>
-                        </td>
-                    </tr>
-                `).join('');
-                tbody.querySelectorAll('.delete-unit-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => handleDeleteUnit(e.target.dataset.id, e.target.dataset.name));
-                });
-            }
+            if (!tbody) return;
+            tbody.innerHTML = currentUnits.length === 0 ? '<tr><td colspan="3" class="text-center p-4">Nenhuma unidade.</td></tr>' :
+                currentUnits.map(u => `<tr><td>${u.name}</td><td class="font-bold">${u.score || 0}</td><td><button data-id="${u.id}" data-name="${u.name}" class="delete-unit-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
+            applyTableStyles(tbody);
+            tbody.querySelectorAll('.delete-unit-btn').forEach(btn => btn.addEventListener('click', (e) => handleDeleteUnit(e.target.dataset.id, e.target.dataset.name)));
+            tbody.querySelectorAll('.admin-btn-xs').forEach(btn => btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'));
         }
 
         async function handleDeleteUnit(unitId, unitName) {
-            showMessage(`Tem certeza que deseja excluir a unidade "${unitName}"? Isso removerá todos os seus dados.`, async (confirmed) => {
-                if (confirmed) {
-                    try {
-                        // TODO: Considerar excluir submissões e deméritos associados a esta unidade também.
-                        const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
-                        await deleteDoc(unitDocRef);
-                        showMessage(`Unidade "${unitName}" excluída com sucesso!`);
-                    } catch (error) {
-                        console.error("Erro ao excluir unidade:", error);
-                        showMessage("Erro ao excluir unidade. Tente novamente.");
-                    }
-                }
+            showMessage(`Excluir "${unitName}"?`, async (confirmed) => {
+                if (!confirmed) return;
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId));
+                    showMessage(`"${unitName}" excluída!`);
+                } catch (err) { console.error("Erro excluir unidade:", err); showMessage("Erro ao excluir."); }
             }, true);
         }
 
         function updateActivitiesTable() {
             const tbody = document.getElementById('activities-table-body');
             if (!tbody) return;
-            if (currentActivities.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-slate-600">Nenhuma atividade cadastrada.</td></tr>';
-            } else {
-                tbody.innerHTML = currentActivities.map(activity => `
-                    <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
-                        <td class="py-3 px-4 text-sm">${activity.name}</td>
-                        <td class="py-3 px-4 text-sm">${activity.type}</td>
-                        <td class="py-3 px-4 text-sm font-bold">${activity.maxPoints}</td>
-                        <td class="py-3 px-4 text-sm">
-                            <button data-id="${activity.id}" data-name="${activity.name}" class="delete-activity-btn bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg text-xs transition duration-300 ease-in-out transform hover:scale-105">Excluir</button>
-                        </td>
-                    </tr>
-                `).join('');
-                tbody.querySelectorAll('.delete-activity-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => handleDeleteActivity(e.target.dataset.id, e.target.dataset.name));
-                });
-            }
+            tbody.innerHTML = currentActivities.length === 0 ? '<tr><td colspan="4" class="text-center p-4">Nenhuma atividade.</td></tr>' :
+                currentActivities.map(a => `<tr><td>${a.name}</td><td>${a.type}</td><td class="font-bold">${a.maxPoints}</td><td><button data-id="${a.id}" data-name="${a.name}" class="delete-activity-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
+            applyTableStyles(tbody);
+            tbody.querySelectorAll('.delete-activity-btn').forEach(btn => btn.addEventListener('click', (e) => handleDeleteActivity(e.target.dataset.id, e.target.dataset.name)));
+            tbody.querySelectorAll('.admin-btn-xs').forEach(btn => btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'));
         }
+
         async function handleDeleteActivity(activityId, activityName) {
-            showMessage(`Tem certeza que deseja excluir a atividade "${activityName}"?`, async (confirmed) => {
-                if (confirmed) {
-                    try {
-                        // TODO: Considerar o que fazer com submissões associadas a esta atividade.
-                        const activityDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'activities', activityId);
-                        await deleteDoc(activityDocRef);
-                        showMessage(`Atividade "${activityName}" excluída com sucesso!`);
-                    } catch (error) {
-                        console.error("Erro ao excluir atividade:", error);
-                        showMessage("Erro ao excluir atividade. Tente novamente.");
-                    }
-                }
+            showMessage(`Excluir "${activityName}"?`, async (confirmed) => {
+                if (!confirmed) return;
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'activities', activityId));
+                    showMessage(`"${activityName}" excluída!`);
+                } catch (err) { console.error("Erro excluir atividade:", err); showMessage("Erro ao excluir."); }
             }, true);
         }
 
         function updateDemeritsTable() {
             const tbody = document.getElementById('demerits-table-body');
             if (!tbody) return;
-            if (currentDemerits.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-slate-600">Nenhum demérito registrado.</td></tr>';
-            } else {
-                tbody.innerHTML = currentDemerits.map(demerit => `
-                    <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
-                        <td class="py-3 px-4 text-sm">${demerit.unitName}</td>
-                        <td class="py-3 px-4 text-sm font-bold text-red-600">-${demerit.points}</td>
-                        <td class="py-3 px-4 text-sm max-w-xs truncate" title="${demerit.reason}">${demerit.reason}</td>
-                        <td class="py-3 px-4 text-sm">
-                            ${demerit.appliedAt ? new Date(demerit.appliedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}
-                        </td>
-                        <!-- Opcional: Botão para excluir demérito -->
-                    </tr>
-                `).join('');
-            }
+            tbody.innerHTML = currentDemerits.length === 0 ? '<tr><td colspan="4" class="text-center p-4">Nenhum demérito.</td></tr>' :
+                currentDemerits.map(d => `<tr><td>${d.unitName}</td><td class="font-bold text-red-600">-${d.points}</td><td class="truncate max-w-xs" title="${d.reason}">${d.reason}</td><td>${d.appliedAt ? new Date(d.appliedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('');
+            applyTableStyles(tbody);
         }
 
         function updateSubmissionsTables() {
-            const pendingSubmissions = currentSubmissions.filter(sub => sub.status === 'pending');
-            const allSubmissions = [...currentSubmissions]; // Criar uma cópia para não modificar a original se for ordenar diferente depois
-
+            const pendingSubs = currentSubmissions.filter(s => s.status === 'pending');
             const pendingCountEl = document.getElementById('pending-submissions-count');
-            if (pendingCountEl) {
-                pendingCountEl.textContent = pendingSubmissions.length;
-            }
+            if (pendingCountEl) pendingCountEl.textContent = pendingSubs.length;
 
             const pendingListDiv = document.getElementById('pending-submissions-list');
             if (pendingListDiv) {
-                if (pendingSubmissions.length === 0) {
-                    pendingListDiv.innerHTML = '<p class="text-slate-600">Nenhum envio pendente no momento.</p>';
-                } else {
-                    let tableHtml = `
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full bg-white rounded-lg shadow-md">
-                                <thead class="bg-yellow-100">
-                                    <tr>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tl-lg">Unidade</th>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Atividade</th>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Detalhes</th>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Evidência</th>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos a Atribuir</th>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-                    pendingSubmissions.forEach(sub => {
-                        const activityRelated = currentActivities.find(act => act.id === sub.activityId);
-                        const activityMaxPoints = activityRelated?.maxPoints || 0;
-                        tableHtml += `
-                            <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
-                                <td class="py-3 px-4 text-sm">${sub.unitName}</td>
-                                <td class="py-3 px-4 text-sm">${sub.activityName}</td>
-                                <td class="py-3 px-4 text-sm max-w-xs truncate" title="${sub.details}">${sub.details}</td>
-                                <td class="py-3 px-4 text-sm">
-                                    ${sub.photoUrl ? `<a href="${sub.photoUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Ver Foto</a>` : 'N/A'}
-                                </td>
-                                <td class="py-3 px-4 text-sm">
-                                    <input type="number" value="${activityMaxPoints}" min="0" max="${activityMaxPoints}" data-submission-id="${sub.id}" class="points-input w-20 p-1 border border-slate-300 rounded-md text-center">
-                                    <span class="ml-1 text-xs text-slate-500">/${activityMaxPoints}</span>
-                                </td>
-                                <td class="py-3 px-4 text-sm flex flex-col sm:flex-row gap-2">
-                                    <button data-id="${sub.id}" data-unit-id="${sub.unitId}" class="approve-btn bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded-lg text-xs transition duration-300 ease-in-out transform hover:scale-105">Aprovar</button>
-                                    <button data-id="${sub.id}" class="reject-btn bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg text-xs transition duration-300 ease-in-out transform hover:scale-105">Rejeitar</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    tableHtml += `
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                    pendingListDiv.innerHTML = tableHtml;
-
-                    pendingListDiv.querySelectorAll('.approve-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const submissionId = e.target.dataset.id;
-                            const unitId = e.target.dataset.unitId;
-                            const pointsInput = e.target.closest('tr').querySelector('.points-input');
-                            const points = parseInt(pointsInput.value);
-                            handleApproveSubmission(submissionId, unitId, points);
-                        });
-                    });
-                    pendingListDiv.querySelectorAll('.reject-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => handleRejectSubmission(e.target.dataset.id));
-                    });
+                pendingListDiv.innerHTML = pendingSubs.length === 0 ? '<p class="text-slate-600 p-4">Nenhum envio pendente.</p>' :
+                    `<table class="admin-table"><thead class="bg-yellow-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Atividade</th><th class="th-cell">Detalhes</th><th class="th-cell">Evidência</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody>${pendingSubs.map(s => {
+                        const act = currentActivities.find(a => a.id === s.activityId);
+                        const maxPts = act?.maxPoints || 0;
+                        return `<tr><td>${s.unitName}</td><td>${s.activityName}</td><td class="truncate max-w-xs" title="${s.details}">${s.details}</td><td>${s.photoUrl ? `<a href="${s.photoUrl}" target="_blank" class="link">Ver</a>` : 'N/A'}</td><td><input type="number" value="${maxPts}" min="0" max="${maxPts}" class="points-input w-20"><span class="text-xs">/${maxPts}</span></td><td class="flex gap-1"><button data-id="${s.id}" data-unit-id="${s.unitId}" class="approve-btn admin-btn-xs bg-green-500">Aprovar</button><button data-id="${s.id}" class="reject-btn admin-btn-xs bg-red-500">Rejeitar</button></td></tr>`;
+                    }).join('')}</tbody></table>`;
+                if (pendingSubs.length > 0) {
+                    applyTableStyles(pendingListDiv.querySelector('tbody'));
+                    pendingListDiv.querySelectorAll('.admin-btn-xs').forEach(btn => btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'));
+                    pendingListDiv.querySelectorAll('.link').forEach(a => a.classList.add('text-blue-600', 'hover:underline'));
+                    pendingListDiv.querySelectorAll('.points-input').forEach(input => input.classList.add('p-1', 'border', 'border-slate-300', 'rounded-md', 'text-center'));
+                    pendingListDiv.querySelectorAll('.approve-btn').forEach(btn => btn.addEventListener('click', e => handleApproveSubmission(e.target.dataset.id, e.target.dataset.unitId, parseInt(e.target.closest('tr').querySelector('.points-input').value))));
+                    pendingListDiv.querySelectorAll('.reject-btn').forEach(btn => btn.addEventListener('click', e => handleRejectSubmission(e.target.dataset.id)));
                 }
             }
 
-            const allSubmissionsListDiv = document.getElementById('all-submissions-list');
-            if (allSubmissionsListDiv) {
-                if (allSubmissions.length === 0) {
-                    allSubmissionsListDiv.innerHTML = '<p class="text-slate-600">Nenhum envio registrado ainda.</p>';
-                } else {
-                    let tableHtml = `
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full bg-white rounded-lg shadow-md">
-                                <thead class="bg-slate-200">
-                                    <tr>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tl-lg">Unidade</th>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Atividade</th>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Status</th>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Pontos</th>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700">Data Envio</th>
-                                        <th class="py-3 px-4 text-left text-sm font-semibold text-slate-700 rounded-tr-lg">Data Validação</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-                    allSubmissions.forEach(sub => {
-                        const statusClass = sub.status === 'pending' ? 'pending' : (sub.status === 'approved' ? 'approved' : 'rejected');
-                        tableHtml += `
-                            <tr class="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
-                                <td class="py-3 px-4 text-sm">${sub.unitName}</td>
-                                <td class="py-3 px-4 text-sm">${sub.activityName}</td>
-                                <td class="py-3 px-4 text-sm">
-                                    <span class="status-badge ${statusClass}">
-                                        ${sub.status === 'pending' ? 'Pendente' : (sub.status === 'approved' ? 'Aprovado' : 'Rejeitado')}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-4 text-sm font-bold">${sub.pointsAwarded !== undefined ? sub.pointsAwarded : 'N/A'}</td>
-                                <td class="py-3 px-4 text-sm">
-                                    ${sub.submittedAt ? new Date(sub.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}
-                                </td>
-                                <td class="py-3 px-4 text-sm">
-                                    ${sub.validatedAt ? new Date(sub.validatedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    tableHtml += `
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                    allSubmissionsListDiv.innerHTML = tableHtml;
-                }
+            const allSubsListDiv = document.getElementById('all-submissions-list');
+            if (allSubsListDiv) {
+                allSubsListDiv.innerHTML = currentSubmissions.length === 0 ? '<p class="text-slate-600 p-4">Nenhum envio.</p>' :
+                    `<table class="admin-table"><thead class="bg-slate-200"><tr><th class="th-cell">Unidade</th><th class="th-cell">Atividade</th><th class="th-cell">Status</th><th class="th-cell">Pontos</th><th class="th-cell">Envio</th><th class="th-cell rounded-tr-lg">Validação</th></tr></thead><tbody>${currentSubmissions.map(s => `<tr><td>${s.unitName}</td><td>${s.activityName}</td><td><span class="status-badge ${s.status}">${s.status}</span></td><td class="font-bold">${s.pointsAwarded != null ? s.pointsAwarded : 'N/A'}</td><td>${s.submittedAt ? new Date(s.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td><td>${s.validatedAt ? new Date(s.validatedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('')}</tbody></table>`;
+                if (currentSubmissions.length > 0) applyTableStyles(allSubsListDiv.querySelector('tbody'));
             }
         }
 
         async function handleApproveSubmission(submissionId, unitId, points) {
-            const submission = currentSubmissions.find(s => s.id === submissionId);
-            if (!submission) {
-                showMessage("Erro: Submissão não encontrada."); return;
-            }
-            const activityRelated = currentActivities.find(act => act.id === submission.activityId);
-            const activityMaxPoints = activityRelated?.maxPoints || 0;
-
-            if (points === null || isNaN(points) || points < 0 || points > activityMaxPoints) {
-                showMessage(`Por favor, insira uma pontuação válida (entre 0 e ${activityMaxPoints}).`);
-                return;
-            }
-
-            showMessage(`Confirmar aprovação do envio com ${points} pontos?`, async (confirmed) => {
-                if (confirmed) {
-                    try {
-                        const submissionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
-                        await updateDoc(submissionDocRef, {
-                            status: 'approved',
-                            pointsAwarded: parseInt(points),
-                            validatedAt: serverTimestamp(),
-                        });
-
-                        const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
-                        const unitSnap = await getDoc(unitDocRef);
-                        if (unitSnap.exists()) {
-                            const currentScore = unitSnap.data().score || 0;
-                            // Se a submissão já foi aprovada antes e estamos re-aprovando (editando pontos),
-                            // precisamos subtrair os pontos antigos antes de adicionar os novos.
-                            // Para simplificar, vamos assumir que uma vez aprovado, não se re-aprova para adicionar pontos,
-                            // mas sim se edita a pontuação. Se a lógica for de adicionar incrementalmente, isso precisa mudar.
-                            // Aqui, a lógica é que 'pointsAwarded' é o total para esta submissão.
-                            // Se a submissão já tinha pontos, precisamos ajustar a diferença.
-                            // Mas como o status muda de 'pending', não há pontos anteriores.
-                            await updateDoc(unitDocRef, {
-                                score: currentScore + parseInt(points),
-                            });
-                        }
-                        showMessage(`Envio aprovado e pontuação da unidade atualizada!`);
-                    } catch (error) {
-                        console.error("Erro ao aprovar envio:", error);
-                        showMessage("Erro ao aprovar envio. Tente novamente.");
-                    }
-                }
+            const sub = currentSubmissions.find(s => s.id === submissionId);
+            if (!sub) { showMessage("Submissão não encontrada."); return; }
+            const act = currentActivities.find(a => a.id === sub.activityId);
+            const maxPts = act?.maxPoints || 0;
+            if (isNaN(points) || points < 0 || points > maxPts) { showMessage(`Pontos inválidos (0-${maxPts}).`); return; }
+            showMessage(`Aprovar com ${points} pontos?`, async (confirmed) => {
+                if (!confirmed) return;
+                try {
+                    const subDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
+                    await updateDoc(subDocRef, { status: 'approved', pointsAwarded: points, validatedAt: serverTimestamp() });
+                    const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
+                    const unitSnap = await getDoc(unitDocRef);
+                    if (unitSnap.exists()) await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) + points });
+                    showMessage("Aprovado e pontuado!");
+                } catch (err) { console.error("Erro aprovar:", err); showMessage("Erro ao aprovar."); }
             }, true);
         }
 
         async function handleRejectSubmission(submissionId) {
-            showMessage("Tem certeza que deseja rejeitar este envio?", async (confirmed) => {
-                if (confirmed) {
-                    try {
-                        const submissionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
-                        // Se a submissão já foi aprovada e tinha pontos, esses pontos precisam ser revertidos da unidade.
-                        // Esta lógica assume que a rejeição acontece de 'pending' ou se já foi 'approved', os pontos são zerados.
-                        const subSnap = await getDoc(submissionDocRef);
-                        if (subSnap.exists() && subSnap.data().status === 'approved' && subSnap.data().pointsAwarded > 0) {
-                            const unitIdToAdjust = subSnap.data().unitId;
-                            const pointsToRevert = subSnap.data().pointsAwarded;
-                            const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitIdToAdjust);
-                            const unitSnap = await getDoc(unitDocRef);
-                            if (unitSnap.exists()) {
-                                await updateDoc(unitDocRef, {
-                                    score: (unitSnap.data().score || 0) - pointsToRevert
-                                });
-                            }
-                        }
-
-                        await updateDoc(submissionDocRef, {
-                            status: 'rejected',
-                            pointsAwarded: 0,
-                            validatedAt: serverTimestamp(),
-                        });
-                        showMessage("Envio rejeitado com sucesso!");
-                    } catch (error) {
-                        console.error("Erro ao rejeitar envio:", error);
-                        showMessage("Erro ao rejeitar envio. Tente novamente.");
+            showMessage("Rejeitar este envio?", async (confirmed) => {
+                if (!confirmed) return;
+                try {
+                    const subDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
+                    const subSnap = await getDoc(subDocRef);
+                    if (subSnap.exists() && subSnap.data().status === 'approved' && subSnap.data().pointsAwarded > 0) {
+                        const unitIdAdj = subSnap.data().unitId, ptsRev = subSnap.data().pointsAwarded;
+                        const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitIdAdj);
+                        const unitSnap = await getDoc(unitDocRef);
+                        if (unitSnap.exists()) await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - ptsRev });
                     }
-                }
+                    await updateDoc(subDocRef, { status: 'rejected', pointsAwarded: 0, validatedAt: serverTimestamp() });
+                    showMessage("Envio rejeitado!");
+                } catch (err) { console.error("Erro rejeitar:", err); showMessage("Erro ao rejeitar."); }
             }, true);
         }
 
-
+        // Autenticação e Inicialização
         function setupAuthFormListeners() {
-            const authForm = document.getElementById('auth-form');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            const loginBtn = document.getElementById('login-btn');
-            const registerBtn = document.getElementById('register-btn');
-            const logoutBtn = document.getElementById('logout-btn');
-
-            if (authForm && loginBtn && registerBtn) {
+            const authForm = document.getElementById('auth-form'), emailIn = document.getElementById('email'), passIn = document.getElementById('password'), loginBtn = document.getElementById('login-btn'), regBtn = document.getElementById('register-btn'), logoutBtn = document.getElementById('logout-btn');
+            if (authForm && loginBtn && regBtn) {
                 loginBtn.onclick = async (e) => {
-                    e.preventDefault();
-                    const email = emailInput.value;
-                    const password = passwordInput.value;
-                    if (!email || !password) {
-                        showMessage("Por favor, preencha o email e a palavra-passe."); return;
-                    }
-                    try {
-                        await signInWithEmailAndPassword(auth, email, password);
-                        // onAuthStateChanged tratará da UI
-                    } catch (error) {
-                        console.error("Erro ao iniciar sessão:", error);
-                        let friendlyMessage = "Erro ao iniciar sessão. Verifique suas credenciais.";
-                        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                            friendlyMessage = "Email ou palavra-passe incorretos.";
-                        } else if (error.code === 'auth/invalid-email') {
-                            friendlyMessage = "O formato do email é inválido.";
-                        }
-                        showMessage(friendlyMessage);
-                    }
+                    e.preventDefault(); const email = emailIn.value, pass = passIn.value;
+                    if (!email || !pass) { showMessage("Preencha email e palavra-passe."); return; }
+                    try { await signInWithEmailAndPassword(auth, email, pass); }
+                    catch (err) { console.error("Login erro:", err); showMessage(err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential' ? "Email/passe incorretos." : "Erro ao iniciar sessão."); }
                 };
-
-                registerBtn.onclick = async (e) => {
-                    e.preventDefault();
-                    const email = emailInput.value;
-                    const password = passwordInput.value;
-                    if (!email || !password) {
-                        showMessage("Por favor, preencha o email e a palavra-passe para registar."); return;
-                    }
-                    if (password.length < 6) {
-                        showMessage("A palavra-passe deve ter pelo menos 6 caracteres."); return;
-                    }
-                    try {
-                        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                        // O papel será definido como 'leader' por defeito em onAuthStateChanged se não existir
-                        showMessage("Registo bem-sucedido! A iniciar sessão...");
-                        // onAuthStateChanged tratará da UI
-                    } catch (error) {
-                        console.error("Erro ao registar:", error);
-                        let friendlyMessage = "Erro ao registar.";
-                        if (error.code === 'auth/email-already-in-use') {
-                            friendlyMessage = "Este email já está registado. Tente iniciar sessão.";
-                        } else if (error.code === 'auth/invalid-email') {
-                            friendlyMessage = "O formato do email é inválido.";
-                        } else if (error.code === 'auth/weak-password') {
-                            friendlyMessage = "A palavra-passe é muito fraca. Use pelo menos 6 caracteres.";
-                        }
-                        showMessage(friendlyMessage);
-                    }
+                regBtn.onclick = async (e) => {
+                    e.preventDefault(); const email = emailIn.value, pass = passIn.value;
+                    if (!email || !pass) { showMessage("Preencha email e passe para registar."); return; }
+                    if (pass.length < 6) { showMessage("Passe deve ter >= 6 caracteres."); return; }
+                    try { await createUserWithEmailAndPassword(auth, email, pass); showMessage("Registo OK! A iniciar sessão..."); }
+                    catch (err) { console.error("Registo erro:", err); showMessage(err.code === 'auth/email-already-in-use' ? "Email já registado." : err.code === 'auth/weak-password' ? "Passe fraca." : "Erro ao registar."); }
                 };
             }
-
-            if (logoutBtn) {
-                logoutBtn.onclick = async () => {
-                    try {
-                        await signOut(auth);
-                        // onAuthStateChanged tratará da UI
-                        showMessage("Sessão terminada com sucesso!");
-                    } catch (error) {
-                        console.error("Erro ao terminar sessão:", error);
-                        showMessage(`Erro ao terminar sessão: ${error.message}`);
-                    }
-                };
-            }
+            if (logoutBtn) logoutBtn.onclick = async () => { try { await signOut(auth); showMessage("Sessão terminada!"); } catch (err) { console.error("Logout erro:", err); showMessage("Erro ao sair."); } };
         }
 
+        let unsubscribers = [];
+        function cleanupListeners() {
+            unsubscribers.forEach(unsub => unsub());
+            unsubscribers = [];
+        }
 
-        // --- INICIALIZAÇÃO PRINCIPAL DA APLICAÇÃO ---
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log("DOMContentLoaded: Iniciando...");
             const loadingOverlay = document.getElementById('loading-overlay');
-
             try {
-                if (!firebaseConfig.apiKey || !firebaseConfig.projectId || !firebaseConfig.authDomain) {
-                    throw new Error("As credenciais do Firebase (apiKey, projectId, authDomain) não foram preenchidas ou estão incompletas.");
-                }
+                if (!firebaseConfig.apiKey || !firebaseConfig.projectId) throw new Error("Credenciais Firebase incompletas.");
                 firebaseApp = initializeApp(firebaseConfig);
                 db = getFirestore(firebaseApp);
                 auth = getAuth(firebaseApp);
-                console.log("Firebase initialized.");
-
                 if (loadingOverlay) loadingOverlay.classList.add('hidden');
-
                 setupAuthFormListeners();
 
                 onAuthStateChanged(auth, async (user) => {
-                    console.log("onAuthStateChanged: Estado do usuário alterado. User:", user);
-                    const authSection = document.getElementById('auth-section');
-                    const mainAppContent = document.getElementById('main-app-content');
-                    const userInfoP = document.getElementById('user-info');
-                    const logoutBtn = document.getElementById('logout-btn');
-
+                    const authSect = document.getElementById('auth-section'), mainContent = document.getElementById('main-app-content'), userP = document.getElementById('user-info'), logoutB = document.getElementById('logout-btn');
+                    cleanupListeners(); // Limpa listeners antigos antes de reconfigurar
                     if (user) {
                         currentUser = user;
-                        const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid); // Caminho privado
+                        const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
                         const userDocSnap = await getDoc(userDocRef);
+                        userRole = userDocSnap.exists() ? userDocSnap.data().role : 'leader';
+                        if (!userDocSnap.exists()) await setDoc(userDocRef, { role: 'leader', uid: user.uid, email: user.email || '', createdAt: serverTimestamp() });
 
-                        if (userDocSnap.exists()) {
-                            userRole = userDocSnap.data().role;
-                            console.log("User role from Firestore:", userRole);
-                        } else {
-                            // Se o utilizador não tiver um papel, define como líder por padrão e cria o documento
-                            // Papéis válidos: 'leader', 'secretary'
-                            // Poderia ter um admin para atribuir papéis, mas para este exemplo, 'leader' é o default.
-                            // Para um sistema real, um administrador deveria definir o papel 'secretary'.
-                            // Por agora, qualquer novo utilizador será 'leader'.
-                            await setDoc(userDocRef, { role: 'leader', uid: user.uid, email: user.email || 'N/A', createdAt: serverTimestamp() });
-                            userRole = 'leader';
-                            console.log("User role set to default 'leader' and document created.");
-                        }
-
-                        if (userInfoP) userInfoP.textContent = `Olá, ${userRole === 'secretary' ? 'Secretário(a)' : 'Líder de Unidade'} (${user.email})`;
-                        if (logoutBtn) logoutBtn.classList.remove('hidden');
-                        if (authSection) authSection.classList.add('hidden');
-                        if (mainAppContent) mainAppContent.classList.remove('hidden');
-
+                        if (userP) userP.textContent = `Olá, ${userRole === 'secretary' ? 'Secretário(a)' : 'Líder'} (${user.email || '?'})`;
+                        if (logoutB) logoutB.classList.remove('hidden');
+                        if (authSect) authSect.classList.add('hidden');
+                        if (mainContent) mainContent.classList.remove('hidden');
                         initAppContent();
                     } else {
-                        currentUser = null;
-                        userRole = null;
-                        if (userInfoP) userInfoP.textContent = 'Carregando informações do utilizador...';
-                        if (logoutBtn) logoutBtn.classList.add('hidden');
-                        if (authSection) authSection.classList.remove('hidden');
-                        if (mainAppContent) mainAppContent.classList.add('hidden');
-                        console.log("User not authenticated. Showing auth section.");
-                        // Limpar listeners de onSnapshot se o utilizador fizer logout para evitar erros de permissão
-                        if (unsubscribeUnits) unsubscribeUnits();
-                        if (unsubscribeActivities) unsubscribeActivities();
-                        if (unsubscribeSubmissions) unsubscribeSubmissions();
-                        if (unsubscribeDemerits) unsubscribeDemerits();
+                        currentUser = null; userRole = null;
+                        if (userP) userP.textContent = 'Carregando...';
+                        if (logoutB) logoutB.classList.add('hidden');
+                        if (authSect) authSect.classList.remove('hidden');
+                        if (mainContent) mainContent.classList.add('hidden');
                     }
                 });
-
-            } catch (error) {
-                console.error("Erro crítico na inicialização do Firebase:", error);
-                showMessage(`Erro crítico na inicialização do Firebase: ${error.message}. Por favor, verifique a sua consola e as configurações do Firebase.`);
+            } catch (err) {
+                console.error("Init Firebase erro:", err);
+                showMessage(`Erro Firebase: ${err.message}. Verifique consola/config.`);
                 if (loadingOverlay) loadingOverlay.classList.add('hidden');
             }
         });
 
-        let unsubscribeUnits = () => { };
-        let unsubscribeActivities = () => { };
-        let unsubscribeSubmissions = () => { };
-        let unsubscribeDemerits = () => { };
-
-
         async function initAppContent() {
-            console.log("initAppContent: Iniciando conteúdo da aplicação.");
+            const gestaoTabBtn = document.querySelector('button[data-tab="gestao"]');
+            if (gestaoTabBtn) gestaoTabBtn.classList.toggle('hidden', !(userRole === 'leader' || userRole === 'secretary'));
 
-            const gestaoTabButton = document.querySelector('button[data-tab="gestao"]');
-            if (gestaoTabButton) {
-                if (userRole === 'leader' || userRole === 'secretary') {
-                    gestaoTabButton.classList.remove('hidden');
-                } else {
-                    gestaoTabButton.classList.add('hidden');
-                }
-            }
+            // Configura listeners onSnapshot e guarda as funções de unsubscribe
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'), s => { currentUnits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0)); renderDashboard(); if (isActiveTabSecretary()) updateUnitsTable(); if (isActiveTabLeader()) populateLeaderUnitSelect(); }));
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), s => { currentActivities = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) updateActivitiesTable(); if (isActiveTabLeader()) populateLeaderActivitySelect(); }));
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), s => { currentSubmissions = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0)); renderDashboard(); if (isActiveTabSecretary()) updateSubmissionsTables(); if (isActiveTabLeader()) updateLeaderSubmissionsList(document.getElementById('unit-select-leader')?.value); }));
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), s => { currentDemerits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0)); if (isActiveTabSecretary()) updateDemeritsTable(); }));
 
-            // Limpa listeners antigos antes de criar novos
-            if (unsubscribeUnits) unsubscribeUnits();
-            if (unsubscribeActivities) unsubscribeActivities();
-            if (unsubscribeSubmissions) unsubscribeSubmissions();
-            if (unsubscribeDemerits) unsubscribeDemerits();
-
-            // Configura listeners onSnapshot para dados dinâmicos
-            unsubscribeUnits = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'),
-                (snapshot) => {
-                    currentUnits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentUnits.sort((a, b) => (b.score || 0) - (a.score || 0));
-                    renderDashboard(); // Atualiza o dashboard geral
-                    if (document.getElementById('gestao').classList.contains('active') && userRole === 'secretary') {
-                        updateUnitsTable(); // Atualiza a tabela de unidades se o secretário estiver na aba de gestão
-                        // Atualizar select de unidades no gerenciamento de deméritos
-                        const demeritUnitSelect = document.getElementById('demerit-unit-select');
-                        if (demeritUnitSelect) {
-                            demeritUnitSelect.innerHTML = '<option value="">Selecione a unidade</option>' + currentUnits.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
-                        }
-                    }
-                    if (document.getElementById('gestao').classList.contains('active') && userRole === 'leader') {
-                        const unitSelectLeader = document.getElementById('unit-select-leader');
-                        if (unitSelectLeader) {
-                            unitSelectLeader.innerHTML = '<option value="">Selecione sua unidade</option>' + currentUnits.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
-                        }
-                    }
-                },
-                (error) => console.error("Erro ao carregar unidades:", error)
-            );
-
-            unsubscribeActivities = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'activities'),
-                (snapshot) => {
-                    currentActivities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentActivities.sort((a, b) => a.name.localeCompare(b.name));
-                    if (document.getElementById('gestao').classList.contains('active') && userRole === 'secretary') {
-                        updateActivitiesTable();
-                    }
-                    if (document.getElementById('gestao').classList.contains('active') && userRole === 'leader') {
-                        const activitySelectLeader = document.getElementById('activity-select-leader');
-                        const noActivitiesMessageLeader = document.getElementById('no-activities-message-leader');
-                        if (activitySelectLeader && noActivitiesMessageLeader) {
-                            if (currentActivities.length > 0) {
-                                activitySelectLeader.innerHTML = '<option value="">Selecione uma atividade</option>' + currentActivities.map(activity => `<option value="${activity.id}">${activity.name} (${activity.type})</option>`).join('');
-                                noActivitiesMessageLeader.classList.add('hidden');
-                            } else {
-                                activitySelectLeader.innerHTML = '<option value="">Nenhuma atividade cadastrada</option>';
-                                noActivitiesMessageLeader.classList.remove('hidden');
-                            }
-                        }
-                    }
-                },
-                (error) => console.error("Erro ao carregar atividades:", error)
-            );
-
-            unsubscribeSubmissions = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'),
-                (snapshot) => {
-                    currentSubmissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentSubmissions.sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0));
-                    renderDashboard(); // Atualiza contagem de atividades no dashboard
-                    if (document.getElementById('gestao').classList.contains('active')) {
-                        if (userRole === 'secretary') updateSubmissionsTables();
-                        if (userRole === 'leader') {
-                            const unitSelectLeader = document.getElementById('unit-select-leader');
-                            if (unitSelectLeader && typeof updateLeaderSubmissionsList === 'function') { // Verifica se a função existe no escopo
-                                updateLeaderSubmissionsList(unitSelectLeader.value);
-                            }
-                        }
-                    }
-                },
-                (error) => console.error("Erro ao carregar submissões:", error)
-            );
-
-            unsubscribeDemerits = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'),
-                (snapshot) => {
-                    currentDemerits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentDemerits.sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0));
-                    if (document.getElementById('gestao').classList.contains('active') && userRole === 'secretary') {
-                        updateDemeritsTable();
-                    }
-                },
-                (error) => console.error("Erro ao carregar deméritos:", error)
-            );
-
-
-            // Renderiza conteúdo estático
-            renderCalendar();
-            renderAbout();
-            console.log("initAppContent: Conteúdo estático renderizado.");
+            renderCalendar(); renderAbout();
 
             const tabs = document.querySelectorAll('.tab-button');
             const contentSections = document.querySelectorAll('.content-section');
 
-            function switchTab(eOrTabId) {
-                let targetTab;
-                if (typeof eOrTabId === 'string') {
-                    targetTab = eOrTabId;
-                } else {
-                    targetTab = eOrTabId.currentTarget.dataset.tab;
-                }
-
-                tabs.forEach(tab => {
-                    tab.classList.toggle('active', tab.dataset.tab === targetTab);
-                });
-
-                contentSections.forEach(section => {
-                    section.classList.toggle('active', section.id === targetTab);
-                });
-
-                if (targetTab === 'inicio') {
-                    renderDashboard();
-                } else if (targetTab === 'gestao') {
-                    if (userRole === 'secretary') {
-                        renderSecretaryDashboard();
-                    } else if (userRole === 'leader') {
-                        renderUnitLeaderDashboard();
-                    } else {
-                        showMessage("Você não tem permissão para aceder a esta seção.");
-                        // Volta para a aba início se não tiver permissão
-                        const inicioButton = document.querySelector('.tab-button[data-tab="inicio"]');
-                        if (inicioButton) inicioButton.click();
-                    }
+            function switchTab(targetTabId) {
+                tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === targetTabId));
+                contentSections.forEach(s => s.classList.toggle('active', s.id === targetTabId));
+                if (targetTabId === 'inicio') renderDashboard();
+                else if (targetTabId === 'gestao') {
+                    if (userRole === 'secretary') renderSecretaryDashboard();
+                    else if (userRole === 'leader') renderUnitLeaderDashboard();
+                    else { showMessage("Sem permissão."); switchTab('inicio'); }
                 }
             }
 
             tabs.forEach(tab => {
-                // Remove listener antigo para evitar duplicação se initAppContent for chamado múltiplas vezes
-                const newTab = tab.cloneNode(true);
+                const newTab = tab.cloneNode(true); // Para limpar listeners antigos
                 tab.parentNode.replaceChild(newTab, tab);
-                newTab.addEventListener('click', switchTab);
+                newTab.addEventListener('click', () => switchTab(newTab.dataset.tab));
             });
 
-            // Acordeões
-            document.body.addEventListener('click', function (event) {
-                if (event.target.matches('.accordion-button') || event.target.closest('.accordion-button')) {
-                    const button = event.target.matches('.accordion-button') ? event.target : event.target.closest('.accordion-button');
-                    const content = button.nextElementSibling;
-                    const icon = button.querySelector('span:last-child');
-
-                    if (!content || !icon) return; // Elementos não encontrados
-
-                    button.classList.toggle('open');
-                    icon.classList.toggle('rotate-180');
-
-                    if (button.classList.contains('open')) {
-                        content.style.maxHeight = content.scrollHeight + 'px';
-                    } else {
-                        content.style.maxHeight = null;
-                    }
+            document.body.addEventListener('click', (event) => { // Delegação de eventos para acordeões
+                const button = event.target.closest('.accordion-button');
+                if (button) {
+                    const content = button.nextElementSibling, icon = button.querySelector('span:last-child');
+                    if (!content || !icon) return;
+                    button.classList.toggle('open'); icon.classList.toggle('rotate-180');
+                    content.style.maxHeight = button.classList.contains('open') ? content.scrollHeight + 'px' : null;
                 }
             });
 
-            // Ativa a aba 'inicio' por padrão
-            switchTab('inicio');
-            console.log("initAppContent: Inicialização completa da UI.");
+            switchTab('inicio'); // Ativa a aba inicial
         }
+
+        // Funções auxiliares para verificar abas ativas na gestão
+        function isActiveTabSecretary() { return document.getElementById('gestao')?.classList.contains('active') && userRole === 'secretary'; }
+        function isActiveTabLeader() { return document.getElementById('gestao')?.classList.contains('active') && userRole === 'leader'; }
+
+        function populateLeaderUnitSelect() {
+            const unitSL = document.getElementById('unit-select-leader');
+            const noUnitsMsgL = document.getElementById('no-units-message-leader');
+            if (unitSL) {
+                unitSL.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione sua unidade</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade cadastrada</option>';
+                if (noUnitsMsgL) noUnitsMsgL.classList.toggle('hidden', currentUnits.length > 0);
+            }
+        }
+        function populateLeaderActivitySelect() {
+            const actSL = document.getElementById('activity-select-leader');
+            const noActsMsgL = document.getElementById('no-activities-message-leader');
+            if (actSL) {
+                actSL.innerHTML = currentActivities.length > 0 ? '<option value="">Selecione uma atividade</option>' + currentActivities.map(a => `<option value="${a.id}">${a.name} (${a.type})</option>`).join('') : '<option value="">Nenhuma atividade cadastrada</option>';
+                if (noActsMsgL) noActsMsgL.classList.toggle('hidden', currentActivities.length > 0);
+            }
+        }
+
     </script>
 </body>
 
