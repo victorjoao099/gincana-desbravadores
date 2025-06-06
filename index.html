@@ -179,7 +179,6 @@
         </header>
 
         <!-- Navigation Tabs -->
-        <!-- MODIFICAÇÃO: Removido justify-center para melhorar o scroll em mobile, adicionado md:justify-center para telas maiores -->
         <nav class="flex md:justify-center border-b-2 border-slate-200 mb-8 overflow-x-auto">
             <button data-tab="inicio"
                 class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏁
@@ -392,27 +391,25 @@
 
     <!-- Firebase SDKs e lógica principal da aplicação (como um módulo) -->
     <script type="module">
-        console.log("Script de módulo a ser executado - Versão: 2024-06-04_16:30_MOBILE_FIX");
+        console.log("Script de módulo a ser executado - Versão: 2024-06-07_FINAL_COMPLETO");
 
         // Importações do Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-storage.js";
 
-        // Variáveis de estado do Firebase e da aplicação (dentro do escopo do módulo)
+        // Variáveis de estado do Firebase e da aplicação
         let firebaseApp = null;
         let db = null;
         let auth = null;
+        let storage = null; 
         let currentUser = null;
         let userRole = null;
 
-        // =====================================================================================================
-        // === ATENÇÃO: CONFIGURAÇÃO DO FIREBASE ===
-        // =====================================================================================================
+        // Configuração do Firebase
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'gincana-de-unidade';
-
         const firebaseConfigFromGlobal = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-
         const firebaseConfig = firebaseConfigFromGlobal || {
             apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8",
             authDomain: "gincana-de-unidade.firebaseapp.com",
@@ -421,13 +418,7 @@
             messagingSenderId: "497226153394",
             appId: "1:497226153394:web:35d484f3737e3a3b4938ab"
         };
-        // =====================================================================================================
-        // === FIM DA CONFIGURAÇÃO DO FIREBASE ===
-        // =====================================================================================================
-
-        console.log("firebaseConfig a ser usado:", firebaseConfig);
-        console.log("appId a ser usado:", appId);
-
+        console.log("AppId a ser usado:", appId);
 
         // MessageBox function
         const showMessage = (msg, callback, showCancel = false) => {
@@ -435,28 +426,17 @@
             const messageText = document.getElementById('messageText');
             const confirmBtn = document.getElementById('messageConfirmBtn');
             const cancelBtn = document.getElementById('messageCancelBtn');
-
-            if (!messageBox || !messageText || !confirmBtn || !cancelBtn) {
-                console.error("Erro: Elementos da caixa de mensagem não encontrados. Não é possível exibir a mensagem.");
-                console.warn("Fallback para console.log:", msg);
-                if (callback) callback(true);
-                return;
-            }
-
+            if (!messageBox || !messageText || !confirmBtn || !cancelBtn) return;
             messageText.textContent = msg;
             messageBox.classList.remove('hidden');
-
             const newConfirmBtn = confirmBtn.cloneNode(true);
             confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
             const newCancelBtn = cancelBtn.cloneNode(true);
             cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-
-
             newConfirmBtn.onclick = () => {
                 messageBox.classList.add('hidden');
                 if (callback) callback(true);
             };
-
             if (showCancel) {
                 newCancelBtn.classList.remove('hidden');
                 newCancelBtn.onclick = () => {
@@ -475,139 +455,33 @@
         let currentSubmissions = [];
         let currentDemerits = [];
 
-        // Dados estáticos da aplicação
+        // Dados estáticos da aplicação (Calendário, Sobre, etc.)
         const staticData = {
             calendar: {
-                "Junho: Mês do Pioneirismo e da Natureza": [
-                    { date: "15/06/2025", title: "Construção de Abrigo Improvisado", desc: "Cada unidade deve construir um abrigo simples e funcional usando materiais naturais ou lona/corda, capaz de proteger minimamente de intempéries. (Pioneirismo)" },
-                    { date: "22/06/2025", title: "Bom em Nós e Amarras", desc: "Um mini campeonato de quem consegue realizar mais nós e amarras corretamente, a unidade que no total, conseguir o maior número de nós e amarras, vence. (Pioneirismo)" },
-                    { date: "29/06/2025", title: "Caça ao Tesouro da Orientação", desc: "Utilizando bússola e um mapa simples, as unidades devem seguir pistas para encontrar um tesouro escondido. (Orientação)" }
-                ],
-                "Julho: Mês da Saúde e Bem-Estar": [
-                    { date: "06/07/2025", title: "Circuito de Habilidades Físicas", desc: "Montagem de um circuito com 5 a 7 estações que envolvam corrida, salto, agachamento, flexão, polichinelos (adaptadas à idade e capacidade). As unidades competem para completar o circuito no menor tempo, com boa execução. (Físico)" },
-                    { date: "13/07/2025", title: "Oficina de Primeiros Socorros Básicos", desc: "Simulação de situações de emergência comuns (pequenos cortes, entorses, picadas de inseto). As unidades devem demonstrar como fazer curativos simples, imobilizar um braço, estancar sangramento e acionar ajuda. (Primeiros Socorros)" },
-                    { date: "20/07/2025", title: "Gincana Esportiva Lúdica", desc: "Competições de jogos populares e cooperativos como cabo de guerra, corrida de saco, queimada (com regras adaptadas para segurança e inclusão). O espírito esportivo e a diversão serão valorizados. (Físico/Integração)" },
-                    { date: "27/07/2025", title: "Culinária Saudável Desbravador", desc: "Cada unidade prepara uma receita saudável e saborosa (ex: salada de frutas criativa, sanduíches naturais, sucos detox). A apresentação, o sabor e a explicação dos benefícios nutricionais serão avaliadas. (Culinária/Saúde)" }
-                ],
-                "Agosto: Mês da Comunicação e Expressão": [
-                    { date: "03/08/2025", title: "Teatro de Fantoches/Mímica com Mensagem", desc: "Cada unidade cria e apresenta uma pequena peça de teatro de fantoches ou uma esquete de mímica com uma mensagem positiva ou um ensinamento moral (ex: sobre honestidade, amizade, respeito). (Criatividade/Expressão)" },
-                    { date: "10/08/2025", title: "Campanha de Conscientização Criativa", desc: "As unidades devem desenvolver uma pequena campanha de conscientização sobre um tema relevante para a comunidade (ex: reciclagem, combate ao bullying, importância da leitura). Podem ser cartazes, vídeos curtos (para exibição interna), jingles ou pequenas apresentações. (Serviço/Comunicação)" },
-                    { date: "17/08/2025", title: "Roda de Conversa: Meus Sonhos e Talentos", desc: "Em um ambiente acolhedor, cada Desbravador compartilha um sonho pessoal ou um talento que possui/gostaria de desenvolver. A escuta ativa e o apoio mútuo são incentivados. (Espiritual/Social)" },
-                    { date: "24/08/2025", title: "Visita e Ação de Doação a uma Instituição", desc: "A unidade organiza e realiza uma visita a um asilo, orfanato ou instituição de caridade (com permissão e acompanhamento da diretoria), levando doações (arrecadadas previamente) e, se possível, realizando uma pequena apresentação ou atividade interativa. (Serviço Comunitário)" },
-                    { date: "31/08/2025", title: "Descanso/Preparação para Setembro", desc: "Dia livre para atividades de autocuidado e reflexão individual." }
-                ],
-                "Setembro: Mês do Conhecimento e da História": [
-                    { date: "07/09/2025", title: "Gincana do Conhecimento Desbravador", desc: "Uma competição de perguntas e respostas sobre a história do clube, seus ideais (Voto e Lei), classes, especialidades e regulamentos básicos. (Mental)" },
-                    { date: "14/09/2025", title: "Estudo Bíblico Aprofundado e Apresentação", desc: "Cada unidade escolhe um tema bíblico (ex: a criação, a história de José, os milagres de Jesus) e prepara um pequeno estudo para apresentar de forma criativa (com slides, desenhos, encenação) para as outras unidades. (Espiritual/Mental)" },
-                    { date: "21/09/2025", title: "Projeto de Civismo 'Minha Pátria, Minha História'", desc: "Pesquisar sobre um herói nacional, um símbolo do país (bandeira, hino) ou um evento histórico importante. As unidades devem apresentar suas descobertas de forma criativa (mural, jogral, vídeo). (Cívico/Mental)" },
-                    { date: "28/09/2025", title: "Criação de um 'Museu' do Clube", desc: "Cada unidade monta um pequeno painel ou 'exposição' com fotos, objetos, distintivos e histórias que representem a trajetória da sua unidade e do clube. (História/Criatividade)" }
-                ],
-                "Outubro: Mês da Aventura e da Superação": [
-                    { date: "05/10/2025", title: "Circuito de Aventura 'Desbravador Radical'", desc: "Montar um circuito com obstáculos (rastejar sob cordas, pular pneus, passar por túneis improvisados, escalar baixo em estruturas seguras) que exija coordenação, agilidade e trabalho em equipe. (Físico/Mental)" },
-                    { date: "12/10/2025", title: "Desafio de Sobrevivência (Teórico e Prático)", desc: "Simulação de situações de sobrevivência. As unidades devem demonstrar habilidades como purificar água (teórico), fazer um sinal de socorro, montar uma pequena armadilha (segura e não-letal), identificar plantas seguras para consumo (teórico). (Pioneirismo/Mental)" },
-                    { date: "19/10/2025", title: "Jogo Noturno 'Mistério da Mata'", desc: "Um jogo de estratégia ou caça ao tesouro em ambiente escuro (com lanternas e supervisão rigorosa), onde as unidades precisam usar a audição, tato e trabalho em equipe para cumprir objetivos. (Mental/Físico)" },
-                    { date: "26/10/2025", title: "Desafio de Resolução de Problemas 'A Ponte da Unidade'", desc: "Apresentar um problema complexo para as unidades, como 'construir uma ponte que suporte um peso X usando apenas materiais Y e Z'. A criatividade e a eficácia da solução serão avaliadas. (Mental/Engenharia)" }
-                ],
-                "Novembro: Mês da Gratidão e da Celebração": [
-                    { date: "02/11/2025", title: "Preparação da Cápsula do Tempo da Gincana", desc: "Cada unidade reúne objetos simbólicos, fotos, mensagens e relatos sobre suas experiências na gincana. A cápsula será lacrada e aberta em uma data futura (ex: daqui a 1 ano), para relembrar as conquistas. (Criatividade/Reflexão)" },
-                    { date: "09/11/2025", title: "Dia da Gratidão e Serviço Comunitário", desc: "Ações de serviço focadas em expressar gratidão à comunidade ou à igreja. Exemplos: limpeza e organização do local do clube, ajuda em eventos da igreja, preparação de cestas básicas para doação. (Serviço/Espiritual)" },
-                    { date: "16/11/2025", title: "Ensaio Geral para a Celebração Final", desc: "As unidades praticam quaisquer apresentações, cantos, jograis ou números de Ordem Unida que desejam apresentar no evento de encerramento. Este é um momento de integração e aprimoramento. (Integração)" },
-                    { date: "23/11/2025", title: "Grande Jogo Final 'A Jornada do Desbravador'", desc: "Uma atividade abrangente que combina elementos de todos os meses, testando diversas habilidades (físicas, mentais, de pioneirismo, etc.) e o espírito de equipe. Pode ser um circuito de estações, um jogo de tabuleiro gigante ou uma grande caça ao tesouro com desafios variados. (Revisão/Integração)" },
-                    { date: "30/11/2025", title: "Última revisão e preparação para a Celebração Final", desc: "Dia dedicado aos últimos preparativos para o grande evento de encerramento da gincana." }
-                ],
-                "Dezembro: Grande Celebração e Encerramento": [
-                    { date: "01/12/2025", title: "Grande Celebração e Encerramento da Gincana", desc: "Um evento especial com a presença dos pais, familiares e da comunidade, para celebrar as conquistas da gincana. Incluirá apresentações das unidades, reconhecimento, a revelação do placar final e premiação, uma mensagem final inspiradora dos líderes e confraternização." }
-                ]
+                "Junho: Mês do Pioneirismo e da Natureza": [{ date: "15/06/2025", title: "Construção de Abrigo Improvisado", desc: "Cada unidade deve construir um abrigo simples e funcional usando materiais naturais ou lona/corda, capaz de proteger minimamente de intempéries. (Pioneirismo)" }, { date: "22/06/2025", title: "Bom em Nós e Amarras", desc: "Um mini campeonato de quem consegue realizar mais nós e amarras corretamente, a unidade que no total, conseguir o maior número de nós e amarras, vence. (Pioneirismo)" }, { date: "29/06/2025", title: "Caça ao Tesouro da Orientação", desc: "Utilizando bússola e um mapa simples, as unidades devem seguir pistas para encontrar um tesouro escondido. (Orientação)" }],
+                "Julho: Mês da Saúde e Bem-Estar": [{ date: "06/07/2025", title: "Circuito de Habilidades Físicas", desc: "Montagem de um circuito com 5 a 7 estações que envolvam corrida, salto, agachamento, flexão, polichinelos (adaptadas à idade e capacidade). As unidades competem para completar o circuito no menor tempo, com boa execução. (Físico)" }, { date: "13/07/2025", title: "Oficina de Primeiros Socorros Básicos", desc: "Simulação de situações de emergência comuns (pequenos cortes, entorses, picadas de inseto). As unidades devem demonstrar como fazer curativos simples, imobilizar um braço, estancar sangramento e acionar ajuda. (Primeiros Socorros)" }, { date: "20/07/2025", title: "Gincana Esportiva Lúdica", desc: "Competições de jogos populares e cooperativos como cabo de guerra, corrida de saco, queimada (com regras adaptadas para segurança e inclusão). O espírito esportivo e a diversão serão valorizados. (Físico/Integração)" }, { date: "27/07/2025", title: "Culinária Saudável Desbravador", desc: "Cada unidade prepara uma receita saudável e saborosa (ex: salada de frutas criativa, sanduíches naturais, sucos detox). A apresentação, o sabor e a explicação dos benefícios nutricionais serão avaliadas. (Culinária/Saúde)" }],
+                "Agosto: Mês da Comunicação e Expressão": [{ date: "03/08/2025", title: "Teatro de Fantoches/Mímica com Mensagem", desc: "Cada unidade cria e apresenta uma pequena peça de teatro de fantoches ou uma esquete de mímica com uma mensagem positiva ou um ensinamento moral (ex: sobre honestidade, amizade, respeito). (Criatividade/Expressão)" }, { date: "10/08/2025", title: "Campanha de Conscientização Criativa", desc: "As unidades devem desenvolver uma pequena campanha de conscientização sobre um tema relevante para a comunidade (ex: reciclagem, combate ao bullying, importância da leitura). Podem ser cartazes, vídeos curtos (para exibição interna), jingles ou pequenas apresentações. (Serviço/Comunicação)" }, { date: "17/08/2025", title: "Roda de Conversa: Meus Sonhos e Talentos", desc: "Em um ambiente acolhedor, cada Desbravador compartilha um sonho pessoal ou um talento que possui/gostaria de desenvolver. A escuta ativa e o apoio mútuo são incentivados. (Espiritual/Social)" }, { date: "24/08/2025", title: "Visita e Ação de Doação a uma Instituição", desc: "A unidade organiza e realiza uma visita a um asilo, orfanato ou instituição de caridade (com permissão e acompanhamento da diretoria), levando doações (arrecadadas previamente) e, se possível, realizando uma pequena apresentação ou atividade interativa. (Serviço Comunitário)" }, { date: "31/08/2025", title: "Descanso/Preparação para Setembro", desc: "Dia livre para atividades de autocuidado e reflexão individual." }],
+                "Setembro: Mês do Conhecimento e da História": [{ date: "07/09/2025", title: "Gincana do Conhecimento Desbravador", desc: "Uma competição de perguntas e respostas sobre a história do clube, seus ideais (Voto e Lei), classes, especialidades e regulamentos básicos. (Mental)" }, { date: "14/09/2025", title: "Estudo Bíblico Aprofundado e Apresentação", desc: "Cada unidade escolhe um tema bíblico (ex: a criação, a história de José, os milagres de Jesus) e prepara um pequeno estudo para apresentar de forma criativa (com slides, desenhos, encenação) para as outras unidades. (Espiritual/Mental)" }, { date: "21/09/2025", title: "Projeto de Civismo 'Minha Pátria, Minha História'", desc: "Pesquisar sobre um herói nacional, um símbolo do país (bandeira, hino) ou um evento histórico importante. As unidades devem apresentar suas descobertas de forma criativa (mural, jogral, vídeo). (Cívico/Mental)" }, { date: "28/09/2025", title: "Criação de um 'Museu' do Clube", desc: "Cada unidade monta um pequeno painel ou 'exposição' com fotos, objetos, distintivos e histórias que representem a trajetória da sua unidade e do clube. (História/Criatividade)" }],
+                "Outubro: Mês da Aventura e da Superação": [{ date: "05/10/2025", title: "Circuito de Aventura 'Desbravador Radical'", desc: "Montar um circuito com obstáculos (rastejar sob cordas, pular pneus, passar por túneis improvisados, escalar baixo em estruturas seguras) que exija coordenação, agilidade e trabalho em equipe. (Físico/Mental)" }, { date: "12/10/2025", title: "Desafio de Sobrevivência (Teórico e Prático)", desc: "Simulação de situações de sobrevivência. As unidades devem demonstrar habilidades como purificar água (teórico), fazer um sinal de socorro, montar uma pequena armadilha (segura e não-letal), identificar plantas seguras para consumo (teórico). (Pioneirismo/Mental)" }, { date: "19/10/2025", title: "Jogo Noturno 'Mistério da Mata'", desc: "Um jogo de estratégia ou caça ao tesouro em ambiente escuro (com lanternas e supervisão rigorosa), onde as unidades precisam usar a audição, tato e trabalho em equipe para cumprir objetivos. (Mental/Físico)" }, { date: "26/10/2025", title: "Desafio de Resolução de Problemas 'A Ponte da Unidade'", desc: "Apresentar um problema complexo para as unidades, como 'construir uma ponte que suporte um peso X usando apenas materiais Y e Z'. A criatividade e a eficácia da solução serão avaliadas. (Mental/Engenharia)" }],
+                "Novembro: Mês da Gratidão e da Celebração": [{ date: "02/11/2025", title: "Preparação da Cápsula do Tempo da Gincana", desc: "Cada unidade reúne objetos simbólicos, fotos, mensagens e relatos sobre suas experiências na gincana. A cápsula será lacrada e aberta em uma data futura (ex: daqui a 1 ano), para relembrar as conquistas. (Criatividade/Reflexão)" }, { date: "09/11/2025", title: "Dia da Gratidão e Serviço Comunitário", desc: "Ações de serviço focadas em expressar gratidão à comunidade ou à igreja. Exemplos: limpeza e organização do local do clube, ajuda em eventos da igreja, preparação de cestas básicas para doação. (Serviço/Espiritual)" }, { date: "16/11/2025", title: "Ensaio Geral para a Celebração Final", desc: "As unidades praticam quaisquer apresentações, cantos, jograis ou números de Ordem Unida que desejam apresentar no evento de encerramento. Este é um momento de integração e aprimoramento. (Integração)" }, { date: "23/11/2025", title: "Grande Jogo Final 'A Jornada do Desbravador'", desc: "Uma atividade abrangente que combina elementos de todos os meses, testando diversas habilidades (físicas, mentais, de pioneirismo, etc.) e o espírito de equipe. Pode ser um circuito de estações, um jogo de tabuleiro gigante ou uma grande caça ao tesouro com desafios variados. (Revisão/Integração)" }, { date: "30/11/2025", title: "Última revisão e preparação para a Celebração Final", desc: "Dia dedicado aos últimos preparativos para o grande evento de encerramento da gincana." }],
+                "Dezembro: Grande Celebração e Encerramento": [{ date: "01/12/2025", title: "Grande Celebração e Encerramento da Gincana", desc: "Um evento especial com a presença dos pais, familiares e da comunidade, para celebrar as conquistas da gincana. Incluirá apresentações das unidades, reconhecimento, a revelação do placar final e premiação, uma mensagem final inspiradora dos líderes e confraternização." }]
             },
-            bases: [
-                { title: "Origem Histórica", content: "O Clube de Desbravadores foi oficializado em nível mundial no ano de 1950 pela Associação Geral da Igreja Adventista do Sétimo Dia, nos Estados Unidos. Suas raízes, no entanto, remontam a iniciativas anteriores de clubes missionários e de jovens que buscavam o desenvolvimento integral." },
-                { title: "Filosofia", content: "A filosofia do Clube de Desbravadores baseia-se no desenvolvimento harmonioso das forças físicas, mentais e espirituais dos juvenis e adolescentes. O programa busca preparar os jovens para a cidadania útil, o serviço à comunidade e o compromisso com Deus. Tudo o que o Desbravador faz tem um sentido, uma base, um alicerce de valores cristãos e princípios de vida." },
-                { title: "Objetivos Prioritários", content: "Os objetivos do Clube são amplos e visam o crescimento completo do indivíduo: Desenvolvimento Físico, Mental, Espiritual e Social." },
-                { title: "Símbolos do Clube", content: "Os símbolos do Desbravador são elementos visuais e conceituais que representam seus princípios: Ideais (Voto e Lei), Hino, Emblemas, Bandeira, Bandeirim e o Uniforme." }
-            ],
+            bases: [{ title: "Origem Histórica", content: "O Clube de Desbravadores foi oficializado em nível mundial no ano de 1950 pela Associação Geral da Igreja Adventista do Sétimo Dia, nos Estados Unidos. Suas raízes, no entanto, remontam a iniciativas anteriores de clubes missionários e de jovens que buscavam o desenvolvimento integral." }, { title: "Filosofia", content: "A filosofia do Clube de Desbravadores baseia-se no desenvolvimento harmonioso das forças físicas, mentais e espirituais dos juvenis e adolescentes. O programa busca preparar os jovens para a cidadania útil, o serviço à comunidade e o compromisso com Deus. Tudo o que o Desbravador faz tem um sentido, uma base, um alicerce de valores cristãos e princípios de vida." }, { title: "Objetivos Prioritários", content: "Os objetivos do Clube são amplos e visam o crescimento completo do indivíduo: Desenvolvimento Físico, Mental, Espiritual e Social." }, { title: "Símbolos do Clube", content: "Os símbolos do Desbravador são elementos visuais e conceituais que representam seus princípios: Ideais (Voto e Lei), Hino, Emblemas, Bandeira, Bandeirim e o Uniforme." }],
             funcoes: {
-                "Cargos da Unidade": [
-                    { title: "Conselheiro(a)", content: "É a autoridade máxima dentro da unidade, responsável pela ordem e andamento geral. Atua como elo entre a unidade e a direção do clube. Geralmente, deve ser batizado e ter mais de 18 anos (ou 16+ com supervisão de um diretor maior de idade em atividades externas)." },
-                    { title: "Capitão(ã)", content: "Membro da unidade (10 a 15 anos) responsável por animar o grupo a cumprir o programa, por meio do exemplo e influência pessoal. Lidera a unidade em formações de Ordem Unida e a representa perante a direção. Deve ser organizado, ter liderança, disciplina, honestidade, fidelidade e humildade." },
-                    { title: "Secretário(a) de Unidade", content: "Responsável por manter os registos da unidade atualizados, incluindo chamada de presença, pontualidade, assiduidade, uso do uniforme e higiene pessoal. Idade entre 10 e 15 anos." },
-                    { title: "Tesoureiro(a) de Unidade", content: "Gerencia os pequenos recursos financeiros da unidade, mantendo registos precisos de despesas e receitas. Idade entre 10 e 15 anos." },
-                    { title: "Padioleiro(a) de Unidade", content: "Atua como o 'enfermeiro' da unidade, responsável por auxiliar em pequenos acidentes e aplicar primeiros socorros básicos, sob supervisão. Idade entre 10 e 15 anos." },
-                    { title: "Almoxarife de Unidade", content: "Responsável pela guarda e organização dos materiais e equipamentos da unidade. Idade entre 10 e 15 anos." },
-                    { title: "Capelão(ã) de Unidade", content: "Mantém a ordem e harmonia espiritual da unidade, juntamente com o conselheiro, promovendo momentos de reflexão e estudo bíblico. Idade entre 10 e 15 anos, deve ser de boa índole e respeitador." }
-                ],
-                "Cargos da Direção do Clube": [
-                    { title: "Diretor(a) do Clube", content: "É a autoridade máxima do clube. Responsável por planejar, organizar e supervisionar todas as atividades, manter a ligação com o Pastor e a Associação, presidir as reuniões da comissão executiva e docente, e assegurar um programa completo para o clube. Deve ser um líder maduro, com boa reputação na Igreja e ter o treinamento para oficiais. Deve ser um exemplo de espiritualidade, prontidão, amabilidade, temperança, pontualidade e asseio pessoal, incluindo o uso adequado do uniforme." },
-                    { title: "Diretores(as) Associados(as)", content: "São o braço direito do diretor, responsáveis pelo cumprimento do programa do clube. Coordenam as Classes, Especialidades e Unidades, gerenciando o trabalho dos instrutores e conselheiros. Geralmente há um diretor associado para a ala feminina e outro para a ala masculina. Não há limite para o número de diretores associados, dependendo do tamanho do clube." },
-                    { title: "Secretário(a) do Clube", content: "Assume a responsabilidade pela documentação e registo das atividades do clube. Isso abrange a manutenção de registos de membros, elaboração de relatórios de eventos e comunicação de informações cruciais aos membros e suas famílias. Essencial para a organização administrativa do clube." },
-                    { title: "Tesoureiro(a) do Clube", content: "Gerencia as finanças do clube, mantendo um registo preciso das despesas e receitas, elaborando orçamentos e assegurando o uso responsável dos recursos financeiros disponíveis. Responsável pela saúde financeira do clube." },
-                    { title: "Capelão(ã) do Clube", content: "Encarregado da dimensão espiritual do clube, liderando estudos bíblicos, momentos de oração e promovendo os valores e princípios inerentes à crença Adventista do Sétimo Dia. Essencial para o desenvolvimento espiritual dos Desbravadores." },
-                    { title: "Conselheiros(as) (Gerais) e Instrutores(as)", content: "Os conselheiros supervisionam as unidades, enquanto os instrutores são responsáveis por ensinar as classes e especialidades. Ambos trabalham em estreita colaboração com os diretores associados para garantir a execução do programa educativo do clube. A função de conselheiro é considerada uma das mais importantes, devido ao contato direto com os juvenis." }
-                ]
+                "Cargos da Unidade": [{ title: "Conselheiro(a)", content: "É a autoridade máxima dentro da unidade, responsável pela ordem e andamento geral. Atua como elo entre a unidade e a direção do clube. Geralmente, deve ser batizado e ter mais de 18 anos (ou 16+ com supervisão de um diretor maior de idade em atividades externas)." }, { title: "Capitão(ã)", content: "Membro da unidade (10 a 15 anos) responsável por animar o grupo a cumprir o programa, por meio do exemplo e influência pessoal. Lidera a unidade em formações de Ordem Unida e a representa perante a direção. Deve ser organizado, ter liderança, disciplina, honestidade, fidelidade e humildade." }, { title: "Secretário(a) de Unidade", content: "Responsável por manter os registos da unidade atualizados, incluindo chamada de presença, pontualidade, assiduidade, uso do uniforme e higiene pessoal. Idade entre 10 e 15 anos." }, { title: "Tesoureiro(a) de Unidade", content: "Gerencia os pequenos recursos financeiros da unidade, mantendo registos precisos de despesas e receitas. Idade entre 10 e 15 anos." }, { title: "Padioleiro(a) de Unidade", content: "Atua como o 'enfermeiro' da unidade, responsável por auxiliar em pequenos acidentes e aplicar primeiros socorros básicos, sob supervisão. Idade entre 10 e 15 anos." }, { title: "Almoxarife de Unidade", content: "Responsável pela guarda e organização dos materiais e equipamentos da unidade. Idade entre 10 e 15 anos." }, { title: "Capelão(ã) de Unidade", content: "Mantém a ordem e harmonia espiritual da unidade, juntamente com o conselheiro, promovendo momentos de reflexão e estudo bíblico. Idade entre 10 e 15 anos, deve ser de boa índole e respeitador." }],
+                "Cargos da Direção do Clube": [{ title: "Diretor(a) do Clube", content: "É a autoridade máxima do clube. Responsável por planejar, organizar e supervisionar todas as atividades, manter a ligação com o Pastor e a Associação, presidir as reuniões da comissão executiva e docente, e assegurar um programa completo para o clube. Deve ser um líder maduro, com boa reputação na Igreja e ter o treinamento para oficiais. Deve ser um exemplo de espiritualidade, prontidão, amabilidade, temperança, pontualidade e asseio pessoal, incluindo o uso adequado do uniforme." }, { title: "Diretores(as) Associados(as)", content: "São o braço direito do diretor, responsáveis pelo cumprimento do programa do clube. Coordenam as Classes, Especialidades e Unidades, gerenciando o trabalho dos instrutores e conselheiros. Geralmente há um diretor associado para a ala feminina e outro para a ala masculina. Não há limite para o número de diretores associados, dependendo do tamanho do clube." }, { title: "Secretário(a) do Clube", content: "Assume a responsabilidade pela documentação e registo das atividades do clube. Isso abrange a manutenção de registos de membros, elaboração de relatórios de eventos e comunicação de informações cruciais aos membros e suas famílias. Essencial para a organização administrativa do clube." }, { title: "Tesoureiro(a) do Clube", content: "Gerencia as finanças do clube, mantendo um registo preciso das despesas e receitas, elaborando orçamentos e assegurando o uso responsável dos recursos financeiros disponíveis. Responsável pela saúde financeira do clube." }, { title: "Capelão(ã) do Clube", content: "Encarregado da dimensão espiritual do clube, liderando estudos bíblicos, momentos de oração e promovendo os valores e princípios inerentes à crença Adventista do Sétimo Dia. Essencial para o desenvolvimento espiritual dos Desbravadores." }, { title: "Conselheiros(as) (Gerais) e Instrutores(as)", content: "Os conselheiros supervisionam as unidades, enquanto os instrutores são responsáveis por ensinar as classes e especialidades. Ambos trabalham em estreita colaboração com os diretores associados para garantir a execução do programa educativo do clube. A função de conselheiro é considerada uma das mais importantes, devido ao contato direto com os juvenis." }]
             }
         };
 
-        // Funções de busca de dados do Firebase
-        async function getUnits() {
-            const unitsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'units');
-            return new Promise((resolve, reject) => {
-                onSnapshot(query(unitsColRef), (snapshot) => {
-                    currentUnits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentUnits.sort((a, b) => (b.score || 0) - (a.score || 0));
-                    resolve(currentUnits);
-                }, reject);
-            });
-        }
-
-        async function getActivities() {
-            const activitiesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'activities');
-            return new Promise((resolve, reject) => {
-                onSnapshot(query(activitiesColRef), (snapshot) => {
-                    currentActivities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentActivities.sort((a, b) => a.name.localeCompare(b.name));
-                    resolve(currentActivities);
-                }, reject);
-            });
-        }
-
-        async function getSubmissions() {
-            const submissionsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'submissions');
-            return new Promise((resolve, reject) => {
-                onSnapshot(query(submissionsColRef), (snapshot) => {
-                    currentSubmissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentSubmissions.sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0));
-                    resolve(currentSubmissions);
-                }, reject);
-            });
-        }
-
-        async function getDemerits() {
-            const demeritsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'demerits');
-            return new Promise((resolve, reject) => {
-                onSnapshot(query(demeritsColRef), (snapshot) => {
-                    currentDemerits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    currentDemerits.sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0));
-                    resolve(currentDemerits);
-                }, reject);
-            });
-        }
-
-        // Funções de renderização da UI
+        // Funções de Renderização da UI
         function wrapLabel(label, maxLen) {
-            if (!label) return '';
-            if (label.length <= maxLen) return label;
-            const lines = [];
-            let currentLine = '';
-            const words = label.split(' ');
+            if (!label || label.length <= maxLen) return label;
+            const lines = []; let currentLine = ''; const words = label.split(' ');
             for (const word of words) {
-                if ((currentLine + (currentLine ? ' ' : '') + word).length <= maxLen) {
-                    currentLine += (currentLine ? ' ' : '') + word;
-                } else {
+                if ((currentLine + (currentLine ? ' ' : '') + word).length <= maxLen) { currentLine += (currentLine ? ' ' : '') + word; } else {
                     if (currentLine) lines.push(currentLine);
                     currentLine = word;
-                    while (currentLine.length > maxLen) {
-                        lines.push(currentLine.substring(0, maxLen));
-                        currentLine = currentLine.substring(maxLen);
-                    }
+                    while (currentLine.length > maxLen) { lines.push(currentLine.substring(0, maxLen)); currentLine = currentLine.substring(maxLen); }
                 }
             }
             if (currentLine) lines.push(currentLine);
@@ -615,16 +489,11 @@
         }
 
         function renderDashboard() {
-            const unidadeDestaqueEl = document.getElementById('unidade-destaque');
-            const totalPontosEl = document.getElementById('total-pontos');
-            const atividadesRealizadasEl = document.getElementById('atividades-realizadas');
-
+            const unidadeDestaqueEl = document.getElementById('unidade-destaque'), totalPontosEl = document.getElementById('total-pontos'), atividadesRealizadasEl = document.getElementById('atividades-realizadas');
             if (!unidadeDestaqueEl || !totalPontosEl || !atividadesRealizadasEl) return;
-
             const totalScore = currentUnits.reduce((sum, item) => sum + (item.score || 0), 0);
             const totalActivitiesDefined = Object.values(staticData.calendar).flat().length;
             const approvedSubmissionsCount = currentSubmissions.filter(sub => sub.status === 'approved').length;
-
             unidadeDestaqueEl.textContent = currentUnits.length > 0 && currentUnits[0].name ? currentUnits[0].name : 'N/A';
             totalPontosEl.textContent = totalScore;
             atividadesRealizadasEl.textContent = `${approvedSubmissionsCount} / ${totalActivitiesDefined}`;
@@ -638,24 +507,8 @@
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: unitsData.map(item => wrapLabel(item.name, 15)),
-                    datasets: [{
-                        label: 'Pontuação da Unidade',
-                        data: unitsData.map(item => item.score || 0),
-                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                        borderColor: 'rgba(59, 130, 246, 1)',
-                        borderWidth: 1,
-                        borderRadius: 5,
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} pontos` } } },
-                    scales: { x: { beginAtZero: true, grid: { display: true, color: 'rgba(203, 213, 225, 0.5)' } }, y: { grid: { display: false }, ticks: { autoSkip: false } } }
-                }
+                data: { labels: unitsData.map(item => wrapLabel(item.name, 15)), datasets: [{ label: 'Pontuação da Unidade', data: unitsData.map(item => item.score || 0), backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 5, }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} pontos` } } }, scales: { x: { beginAtZero: true, grid: { display: true, color: 'rgba(203, 213, 225, 0.5)' } }, y: { grid: { display: false }, ticks: { autoSkip: false } } } }
             });
         }
 
@@ -664,42 +517,29 @@
             if (!container) return;
             container.innerHTML = '';
             Object.entries(staticData.calendar).forEach(([month, activities]) => {
-                const monthDiv = document.createElement('div');
-                monthDiv.className = 'bg-white rounded-xl shadow-md';
-                const button = document.createElement('button');
-                button.className = 'accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center';
-                button.innerHTML = `<span>${month}</span><span class="transform transition-transform duration-300">▼</span>`;
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'accordion-content px-6 pb-6 text-slate-600 space-y-4';
-                activities.forEach(activity => {
-                    contentDiv.innerHTML += `<div class="pt-4 border-t first:border-t-0 border-slate-200"><p class="font-semibold text-slate-700">${activity.date} - ${activity.title}</p><p class="text-sm">${activity.desc}</p></div>`;
-                });
-                monthDiv.appendChild(button);
-                monthDiv.appendChild(contentDiv);
-                container.appendChild(monthDiv);
+                const monthDiv = document.createElement('div'); monthDiv.className = 'bg-white rounded-xl shadow-md';
+                const button = document.createElement('button'); button.className = 'accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center'; button.innerHTML = `<span>${month}</span><span class="transform transition-transform duration-300">▼</span>`;
+                const contentDiv = document.createElement('div'); contentDiv.className = 'accordion-content px-6 pb-6 text-slate-600 space-y-4';
+                activities.forEach(activity => { contentDiv.innerHTML += `<div class="pt-4 border-t first:border-t-0 border-slate-200"><p class="font-semibold text-slate-700">${activity.date} - ${activity.title}</p><p class="text-sm">${activity.desc}</p></div>`; });
+                monthDiv.appendChild(button); monthDiv.appendChild(contentDiv); container.appendChild(monthDiv);
             });
         }
 
         function renderAbout() {
-            const basesContainer = document.getElementById('bases-content');
-            const funcoesContainer = document.getElementById('funcoes-content');
+            const basesContainer = document.getElementById('bases-content'), funcoesContainer = document.getElementById('funcoes-content');
             if (!basesContainer || !funcoesContainer) return;
             basesContainer.innerHTML = staticData.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join('');
             funcoesContainer.innerHTML = '';
             Object.entries(staticData.funcoes).forEach(([category, roles]) => {
                 let catHtml = `<h4 class="font-bold text-lg text-slate-700 pt-4 border-t first:border-t-0 border-slate-200">${category}</h4><ul class="list-disc list-inside list-disc-custom space-y-2">`;
                 roles.forEach(role => { catHtml += `<li><strong>${role.title}:</strong> ${role.content}</li>`; });
-                catHtml += `</ul>`;
-                funcoesContainer.innerHTML += catHtml;
+                catHtml += `</ul>`; funcoesContainer.innerHTML += catHtml;
             });
         }
 
         function renderUnitLeaderDashboard() {
-            const gestaoTitleEl = document.getElementById('gestao-title');
-            if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Líder de Unidade'; else return;
-            const gestaoContent = document.getElementById('gestao-content');
-            if (!gestaoContent) return;
-
+            const gestaoTitleEl = document.getElementById('gestao-title'); if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Líder de Unidade'; else return;
+            const gestaoContent = document.getElementById('gestao-content'); if (!gestaoContent) return;
             gestaoContent.innerHTML = `
                 <div class="bg-white p-6 rounded-xl shadow-md mb-8">
                     <h3 class="text-xl font-semibold text-blue-600 mb-4">Enviar Atividade Concluída</h3>
@@ -707,69 +547,58 @@
                         <div><label for="unit-select-leader" class="block text-sm font-medium text-slate-700">Sua Unidade:</label><select id="unit-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione sua unidade</option></select><p id="no-units-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma unidade.</p></div>
                         <div><label for="activity-select-leader" class="block text-sm font-medium text-slate-700">Atividade:</label><select id="activity-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione uma atividade</option></select><p id="no-activities-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma atividade.</p></div>
                         <div><label for="details-leader" class="block text-sm font-medium text-slate-700">Detalhes da Conclusão:</label><textarea id="details-leader" rows="3" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required placeholder="Descreva..."></textarea></div>
-                        <div><label for="photo-url-leader" class="block text-sm font-medium text-slate-700">URL da Foto (Opcional):</label><input type="url" id="photo-url-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="https://..."></div>
-                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">Enviar</button>
+                        <div>
+                            <label for="photo-upload-leader" class="block text-sm font-medium text-slate-700">Enviar Foto (Opcional):</label>
+                            <input type="file" id="photo-upload-leader" class="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept="image/*">
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center">Enviar</button>
                     </form>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-md"><h3 class="text-xl font-semibold text-blue-600 mb-4">Meus Envios Recentes</h3><div id="leader-submissions-list"><p class="text-slate-600">Selecione uma unidade.</p></div></div>`;
-
-            const unitSL = document.getElementById('unit-select-leader');
-            const actSL = document.getElementById('activity-select-leader');
-            const noUnitsMsgL = document.getElementById('no-units-message-leader');
-            const noActsMsgL = document.getElementById('no-activities-message-leader');
-
-            unitSL.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
-            if (noUnitsMsgL) noUnitsMsgL.classList.toggle('hidden', currentUnits.length > 0);
-
-            actSL.innerHTML = currentActivities.length > 0 ? '<option value="">Selecione</option>' + currentActivities.map(a => `<option value="${a.id}">${a.name} (${a.type})</option>`).join('') : '<option value="">Nenhuma atividade</option>';
-            if (noActsMsgL) noActsMsgL.classList.toggle('hidden', currentActivities.length > 0);
-
+            populateLeaderUnitSelect(); populateLeaderActivitySelect();
             document.getElementById('submit-activity-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const unitId = unitSL.value, actId = actSL.value, details = document.getElementById('details-leader').value, photoUrl = document.getElementById('photo-url-leader').value;
-                if (!unitId || !actId || !details.trim()) { showMessage("Preencha todos os campos obrigatórios."); return; }
-                const activity = currentActivities.find(a => a.id === actId);
-                if (!activity) { showMessage("Atividade inválida."); return; }
+                const submitBtn = e.target.querySelector('button[type="submit"]'); const originalBtnText = submitBtn.innerHTML;
+                submitBtn.disabled = true; submitBtn.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>`;
+                const unitId = document.getElementById('unit-select-leader').value, actId = document.getElementById('activity-select-leader').value, details = document.getElementById('details-leader').value, photoFile = document.getElementById('photo-upload-leader').files[0];
+                if (!unitId || !actId || !details.trim()) { showMessage("Preencha todos os campos obrigatórios."); submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; return; }
+                let photoUrl = '';
                 try {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), {
-                        unitId, unitName: currentUnits.find(u => u.id === unitId)?.name || '?', activityId: actId, activityName: activity.name, details, photoUrl, status: 'pending', submittedBy: currentUser.uid, submittedAt: serverTimestamp()
-                    });
-                    showMessage("Enviado com sucesso!");
-                    e.target.reset(); unitSL.value = ""; actSL.value = ""; updateLeaderSubmissionsList(""); // Clear list or show placeholder
-                } catch (err) { console.error("Erro envio:", err); showMessage("Erro ao enviar."); }
+                    if (photoFile) {
+                        const filePath = `submissions/${appId}/${currentUser.uid}/${Date.now()}-${photoFile.name}`;
+                        const storageRef = ref(storage, filePath);
+                        await uploadBytes(storageRef, photoFile);
+                        photoUrl = await getDownloadURL(storageRef);
+                    }
+                    const activity = currentActivities.find(a => a.id === actId);
+                    if (!activity) { showMessage("Atividade inválida."); throw new Error("Atividade selecionada é inválida"); }
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), { unitId, unitName: currentUnits.find(u => u.id === unitId)?.name || '?', activityId: actId, activityName: activity.name, details, photoUrl, status: 'pending', submittedBy: currentUser.uid, submittedAt: serverTimestamp() });
+                    showMessage("Atividade enviada para avaliação com sucesso!"); e.target.reset(); document.getElementById('unit-select-leader').value = ""; document.getElementById('activity-select-leader').value = ""; updateLeaderSubmissionsList("");
+                } catch (err) { console.error("Erro no envio:", err); showMessage("Ocorreu um erro ao enviar a atividade. Verifique o console para mais detalhes."); } finally { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; }
             });
-
-            unitSL.addEventListener('change', (e) => updateLeaderSubmissionsList(e.target.value));
-            updateLeaderSubmissionsList(unitSL.value); // Initial call
+            document.getElementById('unit-select-leader').addEventListener('change', (e) => updateLeaderSubmissionsList(e.target.value));
+            updateLeaderSubmissionsList(document.getElementById('unit-select-leader').value);
         }
 
         function updateLeaderSubmissionsList(selectedUnitId) {
-            const listEl = document.getElementById('leader-submissions-list');
-            if (!listEl) return;
+            const listEl = document.getElementById('leader-submissions-list'); if (!listEl) return;
             if (!selectedUnitId) { listEl.innerHTML = '<p class="text-slate-600">Selecione uma unidade para ver os envios.</p>'; return; }
             const unitSubs = currentSubmissions.filter(s => s.unitId === selectedUnitId);
             if (unitSubs.length === 0) { listEl.innerHTML = '<p class="text-slate-600">Nenhum envio para esta unidade.</p>'; return; }
             listEl.innerHTML = `<div class="overflow-x-auto"><table class="min-w-full bg-white rounded-lg shadow-md"><thead class="bg-blue-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Detalhes</th><th class="th-cell">Status</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody>${unitSubs.map(s => `<tr><td class="td-cell">${s.activityName || '?'}</td><td class="td-cell truncate" title="${s.details}">${s.details || '?'}</td><td class="td-cell"><span class="status-badge ${s.status}">${s.status}</span></td><td class="td-cell font-bold">${s.pointsAwarded != null ? s.pointsAwarded : 'N/A'}</td><td class="td-cell">${s.submittedAt ? new Date(s.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
-            // Helper for table cell classes (can be defined in style or added directly)
             listEl.querySelectorAll('.th-cell').forEach(th => th.classList.add('py-3', 'px-4', 'text-left', 'text-sm', 'font-semibold', 'text-slate-700'));
             listEl.querySelectorAll('.td-cell').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm', 'border-b', 'border-slate-200'));
         }
 
-
         function renderSecretaryDashboard() {
-            const gestaoTitleEl = document.getElementById('gestao-title');
-            if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Secretário'; else return;
-            const gestaoContent = document.getElementById('gestao-content');
-            if (!gestaoContent) return;
-
+            const gestaoTitleEl = document.getElementById('gestao-title'); if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Secretário'; else return;
+            const gestaoContent = document.getElementById('gestao-content'); if (!gestaoContent) return;
             gestaoContent.innerHTML = `
                 <section class="admin-section"><h3 class="admin-h3 text-blue-600">Gerenciar Unidades</h3><div class="flex flex-col sm:flex-row gap-4 mb-4"><input type="text" id="new-unit-name" placeholder="Nome da unidade" class="admin-input"><button id="add-unit-btn" class="admin-btn bg-blue-600 hover:bg-blue-700">Adicionar</button></div><div class="table-container"><table class="admin-table"><thead class="bg-blue-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="units-table-body"></tbody></table></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-green-600">Gerenciar Atividades</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"><input type="text" id="new-activity-name" placeholder="Nome" class="admin-input"><select id="new-activity-type" class="admin-input"><option value="">Tipo</option><option>Físico</option><option>Mental</option><option>Espiritual</option><option>Social</option><option>Pioneirismo</option><option>Natureza</option><option>Serviço</option><option>Culinária</option><option>Geral</option></select><input type="number" id="new-activity-max-points" placeholder="Pontos Máx." class="admin-input" min="0"></div><button id="add-activity-btn" class="admin-btn bg-green-600 hover:bg-green-700 w-full">Adicionar</button><div class="table-container mt-6"><table class="admin-table"><thead class="bg-green-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Tipo</th><th class="th-cell">Pontos Máx.</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="activities-table-body"></tbody></table></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-red-700">Gerenciar Deméritos</h3><div class="space-y-4 mb-4"><div><label for="demerit-unit-select" class="admin-label">Unidade:</label><select id="demerit-unit-select" class="admin-input" required><option value="">Selecione</option></select></div><div><label for="demerit-points" class="admin-label">Pontos a Deduzir:</label><input type="number" id="demerit-points" min="1" class="admin-input" required placeholder="Ex: 10"></div><div><label for="demerit-reason" class="admin-label">Razão:</label><textarea id="demerit-reason" rows="3" class="admin-input" required placeholder="Motivo..."></textarea></div><button id="apply-demerit-btn" class="admin-btn bg-red-600 hover:bg-red-700 w-full">Aplicar</button></div><div class="table-container mt-6"><table class="admin-table"><thead class="bg-red-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell">Razão</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody id="demerits-table-body"></tbody></table></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-yellow-800">Envios Pendentes (<span id="pending-submissions-count">0</span>)</h3><div id="pending-submissions-list" class="table-container"><p>Nenhum pendente.</p></div></section>
                 <section class="admin-section !mb-0"><h3 class="admin-h3 text-slate-700">Histórico de Envios</h3><div id="all-submissions-list" class="table-container"><p>Nenhum registro.</p></div></section>`;
-
-            // Aplicar classes comuns para simplificar o HTML injetado
             gestaoContent.querySelectorAll('.admin-section').forEach(el => el.classList.add('mb-8', 'p-4', 'rounded-xl', 'shadow-inner'));
             gestaoContent.querySelectorAll('.admin-h3').forEach(el => el.classList.add('text-xl', 'font-semibold', 'mb-4'));
             gestaoContent.querySelectorAll('.admin-input').forEach(el => el.classList.add('block', 'w-full', 'p-3', 'border', 'border-slate-300', 'rounded-lg', 'focus:ring-2'));
@@ -778,302 +607,161 @@
             gestaoContent.querySelectorAll('.table-container').forEach(el => el.classList.add('overflow-x-auto'));
             gestaoContent.querySelectorAll('.admin-table').forEach(el => el.classList.add('min-w-full', 'bg-white', 'rounded-lg', 'shadow-md'));
             gestaoContent.querySelectorAll('.th-cell').forEach(th => th.classList.add('py-3', 'px-4', 'text-left', 'text-sm', 'font-semibold', 'text-slate-700'));
-            // Note: td-cell classes will be applied dynamically in their respective update functions
-
-            const demeritUnitSelect = document.getElementById('demerit-unit-select');
-            demeritUnitSelect.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
-
-            document.getElementById('apply-demerit-btn').addEventListener('click', async () => {
-                const unitId = demeritUnitSelect.value, points = parseInt(document.getElementById('demerit-points').value), reason = document.getElementById('demerit-reason').value.trim();
-                if (!unitId || isNaN(points) || points <= 0 || !reason) { showMessage("Preencha os campos do demérito."); return; }
-                const unitName = currentUnits.find(u => u.id === unitId)?.name || '?';
-                showMessage(`Aplicar ${points} deméritos a "${unitName}" por "${reason}"?`, async (confirmed) => {
-                    if (!confirmed) return;
-                    try {
-                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), { unitId, unitName, points, reason, appliedBy: currentUser.uid, appliedAt: serverTimestamp() });
-                        const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
-                        const unitSnap = await getDoc(unitDocRef);
-                        if (unitSnap.exists()) await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - points });
-                        showMessage("Demérito aplicado!");
-                        demeritUnitSelect.value = ""; document.getElementById('demerit-points').value = ""; document.getElementById('demerit-reason').value = "";
-                    } catch (err) { console.error("Erro demérito:", err); showMessage("Erro ao aplicar demérito."); }
-                }, true);
-            });
-
-            document.getElementById('add-unit-btn').addEventListener('click', async () => {
-                const name = document.getElementById('new-unit-name').value.trim();
-                if (!name) { showMessage("Nome da unidade vazio."); return; }
-                try {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'units'), { name, score: 0, createdAt: serverTimestamp() });
-                    showMessage(`Unidade "${name}" adicionada!`); document.getElementById('new-unit-name').value = '';
-                } catch (err) { console.error("Erro unidade:", err); showMessage("Erro ao adicionar unidade."); }
-            });
-
-            document.getElementById('add-activity-btn').addEventListener('click', async () => {
-                const name = document.getElementById('new-activity-name').value.trim(), type = document.getElementById('new-activity-type').value, maxPoints = parseInt(document.getElementById('new-activity-max-points').value);
-                if (!name || !type || isNaN(maxPoints) || maxPoints < 0) { showMessage("Preencha os campos da atividade."); return; }
-                try {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), { name, type, maxPoints, createdAt: serverTimestamp() });
-                    showMessage(`Atividade "${name}" adicionada!`);
-                    document.getElementById('new-activity-name').value = ''; document.getElementById('new-activity-type').value = ''; document.getElementById('new-activity-max-points').value = '';
-                } catch (err) { console.error("Erro atividade:", err); showMessage("Erro ao adicionar atividade."); }
-            });
-
+            const demeritUnitSelect = document.getElementById('demerit-unit-select'); demeritUnitSelect.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
+            document.getElementById('add-unit-btn').addEventListener('click', async () => { const name = document.getElementById('new-unit-name').value.trim(); if (!name) { showMessage("O nome da unidade não pode estar vazio."); return; } try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'units'), { name, score: 0, createdAt: serverTimestamp() }); showMessage(`Unidade "${name}" adicionada com sucesso!`); document.getElementById('new-unit-name').value = ''; } catch (err) { console.error("Erro ao adicionar unidade:", err); showMessage("Ocorreu um erro ao adicionar a unidade."); } });
+            document.getElementById('add-activity-btn').addEventListener('click', async () => { const name = document.getElementById('new-activity-name').value.trim(), type = document.getElementById('new-activity-type').value, maxPoints = parseInt(document.getElementById('new-activity-max-points').value); if (!name || !type || isNaN(maxPoints) || maxPoints < 0) { showMessage("Por favor, preencha todos os campos da atividade corretamente."); return; } try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), { name, type, maxPoints, createdAt: serverTimestamp() }); showMessage(`Atividade "${name}" adicionada com sucesso!`); document.getElementById('new-activity-name').value = ''; document.getElementById('new-activity-type').value = ''; document.getElementById('new-activity-max-points').value = ''; } catch (err) { console.error("Erro ao adicionar atividade:", err); showMessage("Ocorreu um erro ao adicionar a atividade."); } });
+            document.getElementById('apply-demerit-btn').addEventListener('click', async () => { const unitId = demeritUnitSelect.value, points = parseInt(document.getElementById('demerit-points').value), reason = document.getElementById('demerit-reason').value.trim(); if (!unitId || isNaN(points) || points <= 0 || !reason) { showMessage("Por favor, preencha todos os campos do demérito."); return; } const unitName = currentUnits.find(u => u.id === unitId)?.name || '?'; showMessage(`Aplicar ${points} pontos de demérito a "${unitName}" pelo motivo: "${reason}"?`, async (confirmed) => { if (!confirmed) return; try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), { unitId, unitName, points, reason, appliedBy: currentUser.uid, appliedAt: serverTimestamp() }); const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId); const unitSnap = await getDoc(unitDocRef); if (unitSnap.exists()) await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - points }); showMessage("Demérito aplicado com sucesso!"); demeritUnitSelect.value = ""; document.getElementById('demerit-points').value = ""; document.getElementById('demerit-reason').value = ""; } catch (err) { console.error("Erro ao aplicar demérito:", err); showMessage("Ocorreu um erro ao aplicar o demérito."); } }, true); });
             updateUnitsTable(); updateActivitiesTable(); updateDemeritsTable(); updateSubmissionsTables();
         }
 
-        function applyTableStyles(tableBodyElement) {
-            tableBodyElement.querySelectorAll('tr').forEach(tr => tr.classList.add('border-b', 'border-slate-200', 'last:border-b-0', 'hover:bg-slate-50'));
-            tableBodyElement.querySelectorAll('td').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm'));
-        }
-
+        function applyTableStyles(tableBodyElement) { tableBodyElement.querySelectorAll('tr').forEach(tr => tr.classList.add('border-b', 'border-slate-200', 'last:border-b-0', 'hover:bg-slate-50')); tableBodyElement.querySelectorAll('td').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm')); }
+        
         function updateUnitsTable() {
-            const tbody = document.getElementById('units-table-body');
-            if (!tbody) return;
-            tbody.innerHTML = currentUnits.length === 0 ? '<tr><td colspan="3" class="text-center p-4">Nenhuma unidade.</td></tr>' :
-                currentUnits.map(u => `<tr><td>${u.name}</td><td class="font-bold">${u.score || 0}</td><td><button data-id="${u.id}" data-name="${u.name}" class="delete-unit-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
+            const tbody = document.getElementById('units-table-body'); if (!tbody) return;
+            tbody.innerHTML = currentUnits.length === 0 ? '<tr><td colspan="3" class="text-center p-4">Nenhuma unidade cadastrada.</td></tr>' : currentUnits.map(u => `<tr><td>${u.name}</td><td class="font-bold">${u.score || 0}</td><td><button data-id="${u.id}" data-name="${u.name}" class="delete-unit-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
             applyTableStyles(tbody);
-            tbody.querySelectorAll('.delete-unit-btn').forEach(btn => btn.addEventListener('click', (e) => handleDeleteUnit(e.target.dataset.id, e.target.dataset.name)));
-            tbody.querySelectorAll('.admin-btn-xs').forEach(btn => btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'));
+            tbody.querySelectorAll('.delete-unit-btn').forEach(btn => { btn.addEventListener('click', (e) => handleDeleteUnit(e.target.dataset.id, e.target.dataset.name)); btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'); });
         }
 
-        async function handleDeleteUnit(unitId, unitName) {
-            showMessage(`Excluir "${unitName}"?`, async (confirmed) => {
-                if (!confirmed) return;
-                try {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId));
-                    showMessage(`"${unitName}" excluída!`);
-                } catch (err) { console.error("Erro excluir unidade:", err); showMessage("Erro ao excluir."); }
-            }, true);
-        }
-
+        async function handleDeleteUnit(unitId, unitName) { showMessage(`Tem certeza que deseja excluir a unidade "${unitName}"? Esta ação não pode ser desfeita.`, async (confirmed) => { if (!confirmed) return; try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId)); showMessage(`Unidade "${unitName}" excluída com sucesso!`); } catch (err) { console.error("Erro ao excluir unidade:", err); showMessage("Ocorreu um erro ao excluir a unidade."); } }, true); }
+        
         function updateActivitiesTable() {
-            const tbody = document.getElementById('activities-table-body');
-            if (!tbody) return;
-            tbody.innerHTML = currentActivities.length === 0 ? '<tr><td colspan="4" class="text-center p-4">Nenhuma atividade.</td></tr>' :
-                currentActivities.map(a => `<tr><td>${a.name}</td><td>${a.type}</td><td class="font-bold">${a.maxPoints}</td><td><button data-id="${a.id}" data-name="${a.name}" class="delete-activity-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
+            const tbody = document.getElementById('activities-table-body'); if (!tbody) return;
+            tbody.innerHTML = currentActivities.length === 0 ? '<tr><td colspan="4" class="text-center p-4">Nenhuma atividade cadastrada.</td></tr>' : currentActivities.map(a => `<tr><td>${a.name}</td><td>${a.type}</td><td class="font-bold">${a.maxPoints}</td><td><button data-id="${a.id}" data-name="${a.name}" class="delete-activity-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
             applyTableStyles(tbody);
-            tbody.querySelectorAll('.delete-activity-btn').forEach(btn => btn.addEventListener('click', (e) => handleDeleteActivity(e.target.dataset.id, e.target.dataset.name)));
-            tbody.querySelectorAll('.admin-btn-xs').forEach(btn => btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'));
+            tbody.querySelectorAll('.delete-activity-btn').forEach(btn => { btn.addEventListener('click', (e) => handleDeleteActivity(e.target.dataset.id, e.target.dataset.name)); btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'); });
         }
 
-        async function handleDeleteActivity(activityId, activityName) {
-            showMessage(`Excluir "${activityName}"?`, async (confirmed) => {
-                if (!confirmed) return;
-                try {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'activities', activityId));
-                    showMessage(`"${activityName}" excluída!`);
-                } catch (err) { console.error("Erro excluir atividade:", err); showMessage("Erro ao excluir."); }
-            }, true);
-        }
-
+        async function handleDeleteActivity(activityId, activityName) { showMessage(`Tem certeza que deseja excluir a atividade "${activityName}"?`, async (confirmed) => { if (!confirmed) return; try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'activities', activityId)); showMessage(`Atividade "${activityName}" excluída com sucesso!`); } catch (err) { console.error("Erro ao excluir atividade:", err); showMessage("Ocorreu um erro ao excluir a atividade."); } }, true); }
+        
         function updateDemeritsTable() {
-            const tbody = document.getElementById('demerits-table-body');
-            if (!tbody) return;
-            tbody.innerHTML = currentDemerits.length === 0 ? '<tr><td colspan="4" class="text-center p-4">Nenhum demérito.</td></tr>' :
-                currentDemerits.map(d => `<tr><td>${d.unitName}</td><td class="font-bold text-red-600">-${d.points}</td><td class="truncate max-w-xs" title="${d.reason}">${d.reason}</td><td>${d.appliedAt ? new Date(d.appliedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('');
+            const tbody = document.getElementById('demerits-table-body'); if (!tbody) return;
+            tbody.innerHTML = currentDemerits.length === 0 ? '<tr><td colspan="4" class="text-center p-4">Nenhum demérito aplicado.</td></tr>' : currentDemerits.map(d => `<tr><td>${d.unitName}</td><td class="font-bold text-red-600">-${d.points}</td><td class="truncate max-w-xs" title="${d.reason}">${d.reason}</td><td>${d.appliedAt ? new Date(d.appliedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('');
             applyTableStyles(tbody);
         }
 
         function updateSubmissionsTables() {
             const pendingSubs = currentSubmissions.filter(s => s.status === 'pending');
-            const pendingCountEl = document.getElementById('pending-submissions-count');
-            if (pendingCountEl) pendingCountEl.textContent = pendingSubs.length;
-
+            const pendingCountEl = document.getElementById('pending-submissions-count'); if (pendingCountEl) pendingCountEl.textContent = pendingSubs.length;
             const pendingListDiv = document.getElementById('pending-submissions-list');
             if (pendingListDiv) {
-                pendingListDiv.innerHTML = pendingSubs.length === 0 ? '<p class="text-slate-600 p-4">Nenhum envio pendente.</p>' :
-                    `<table class="admin-table"><thead class="bg-yellow-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Atividade</th><th class="th-cell">Detalhes</th><th class="th-cell">Evidência</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody>${pendingSubs.map(s => {
-                        const act = currentActivities.find(a => a.id === s.activityId);
-                        const maxPts = act?.maxPoints || 0;
-                        return `<tr><td>${s.unitName}</td><td>${s.activityName}</td><td class="truncate max-w-xs" title="${s.details}">${s.details}</td><td>${s.photoUrl ? `<a href="${s.photoUrl}" target="_blank" class="link">Ver</a>` : 'N/A'}</td><td><input type="number" value="${maxPts}" min="0" max="${maxPts}" class="points-input w-20"><span class="text-xs">/${maxPts}</span></td><td class="flex gap-1"><button data-id="${s.id}" data-unit-id="${s.unitId}" class="approve-btn admin-btn-xs bg-green-500">Aprovar</button><button data-id="${s.id}" class="reject-btn admin-btn-xs bg-red-500">Rejeitar</button></td></tr>`;
-                    }).join('')}</tbody></table>`;
+                pendingListDiv.innerHTML = pendingSubs.length === 0 ? '<p class="text-slate-600 p-4">Nenhum envio pendente.</p>' : `<table class="admin-table"><thead class="bg-yellow-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Atividade</th><th class="th-cell">Detalhes</th><th class="th-cell">Evidência</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody>${pendingSubs.map(s => { const act = currentActivities.find(a => a.id === s.activityId); const maxPts = act?.maxPoints || 0; const evidenceCell = s.photoUrl ? `<a href="${s.photoUrl}" target="_blank" title="Clique para ver a imagem completa"><img src="${s.photoUrl}" alt="Evidência" class="w-16 h-16 object-cover rounded-md hover:opacity-75 transition-opacity" onerror="this.onerror=null; this.src='https://placehold.co/64x64/fee2e2/b91c1c?text=Erro';"></a>` : '<span class="text-xs text-slate-500">N/A</span>'; return `<tr><td class="align-middle">${s.unitName}</td><td class="align-middle">${s.activityName}</td><td class="align-middle truncate max-w-xs" title="${s.details}">${s.details}</td><td class="align-middle">${evidenceCell}</td><td class="align-middle"><input type="number" value="${maxPts}" min="0" max="${maxPts}" class="points-input w-20"><span class="text-xs">/${maxPts}</span></td><td class="align-middle"><div class="flex flex-col sm:flex-row gap-1"><button data-id="${s.id}" data-unit-id="${s.unitId}" class="approve-btn admin-btn-xs bg-green-500">Aprovar</button><button data-id="${s.id}" class="reject-btn admin-btn-xs bg-red-500">Rejeitar</button></div></td></tr>`; }).join('')}</tbody></table>`;
                 if (pendingSubs.length > 0) {
                     applyTableStyles(pendingListDiv.querySelector('tbody'));
                     pendingListDiv.querySelectorAll('.admin-btn-xs').forEach(btn => btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'));
-                    pendingListDiv.querySelectorAll('.link').forEach(a => a.classList.add('text-blue-600', 'hover:underline'));
                     pendingListDiv.querySelectorAll('.points-input').forEach(input => input.classList.add('p-1', 'border', 'border-slate-300', 'rounded-md', 'text-center'));
                     pendingListDiv.querySelectorAll('.approve-btn').forEach(btn => btn.addEventListener('click', e => handleApproveSubmission(e.target.dataset.id, e.target.dataset.unitId, parseInt(e.target.closest('tr').querySelector('.points-input').value))));
                     pendingListDiv.querySelectorAll('.reject-btn').forEach(btn => btn.addEventListener('click', e => handleRejectSubmission(e.target.dataset.id)));
                 }
             }
-
             const allSubsListDiv = document.getElementById('all-submissions-list');
             if (allSubsListDiv) {
-                allSubsListDiv.innerHTML = currentSubmissions.length === 0 ? '<p class="text-slate-600 p-4">Nenhum envio.</p>' :
-                    `<table class="admin-table"><thead class="bg-slate-200"><tr><th class="th-cell">Unidade</th><th class="th-cell">Atividade</th><th class="th-cell">Status</th><th class="th-cell">Pontos</th><th class="th-cell">Envio</th><th class="th-cell rounded-tr-lg">Validação</th></tr></thead><tbody>${currentSubmissions.map(s => `<tr><td>${s.unitName}</td><td>${s.activityName}</td><td><span class="status-badge ${s.status}">${s.status}</span></td><td class="font-bold">${s.pointsAwarded != null ? s.pointsAwarded : 'N/A'}</td><td>${s.submittedAt ? new Date(s.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td><td>${s.validatedAt ? new Date(s.validatedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('')}</tbody></table>`;
+                allSubsListDiv.innerHTML = currentSubmissions.length === 0 ? '<p class="text-slate-600 p-4">Nenhum envio.</p>' : `<table class="admin-table"><thead class="bg-slate-200"><tr><th class="th-cell">Unidade</th><th class="th-cell">Atividade</th><th class="th-cell">Status</th><th class="th-cell">Pontos</th><th class="th-cell">Envio</th><th class="th-cell rounded-tr-lg">Validação</th></tr></thead><tbody>${currentSubmissions.map(s => `<tr><td>${s.unitName}</td><td>${s.activityName}</td><td><span class="status-badge ${s.status}">${s.status}</span></td><td class="font-bold">${s.pointsAwarded != null ? s.pointsAwarded : 'N/A'}</td><td>${s.submittedAt ? new Date(s.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td><td>${s.validatedAt ? new Date(s.validatedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('')}</tbody></table>`;
                 if (currentSubmissions.length > 0) applyTableStyles(allSubsListDiv.querySelector('tbody'));
             }
         }
 
         async function handleApproveSubmission(submissionId, unitId, points) {
-            const sub = currentSubmissions.find(s => s.id === submissionId);
-            if (!sub) { showMessage("Submissão não encontrada."); return; }
-            const act = currentActivities.find(a => a.id === sub.activityId);
-            const maxPts = act?.maxPoints || 0;
-            if (isNaN(points) || points < 0 || points > maxPts) { showMessage(`Pontos inválidos (0-${maxPts}).`); return; }
-            showMessage(`Aprovar com ${points} pontos?`, async (confirmed) => {
+            const sub = currentSubmissions.find(s => s.id === submissionId); if (!sub) { showMessage("Erro: Submissão não encontrada."); return; }
+            const act = currentActivities.find(a => a.id === sub.activityId); const maxPts = act?.maxPoints || 0;
+            if (isNaN(points) || points < 0 || points > maxPts) { showMessage(`Pontuação inválida. O valor deve estar entre 0 e ${maxPts}.`); return; }
+            showMessage(`Aprovar este envio com ${points} pontos?`, async (confirmed) => {
                 if (!confirmed) return;
                 try {
-                    const subDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
-                    await updateDoc(subDocRef, { status: 'approved', pointsAwarded: points, validatedAt: serverTimestamp() });
-                    const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
-                    const unitSnap = await getDoc(unitDocRef);
-                    if (unitSnap.exists()) await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) + points });
-                    showMessage("Aprovado e pontuado!");
-                } catch (err) { console.error("Erro aprovar:", err); showMessage("Erro ao aprovar."); }
+                    const subDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId); await updateDoc(subDocRef, { status: 'approved', pointsAwarded: points, validatedAt: serverTimestamp(), validatedBy: currentUser.uid });
+                    const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId); const unitSnap = await getDoc(unitDocRef);
+                    if (unitSnap.exists()) { const currentScore = unitSnap.data().score || 0; await updateDoc(unitDocRef, { score: currentScore + points }); }
+                    showMessage("Atividade aprovada e pontuação atribuída!");
+                } catch (err) { console.error("Erro ao aprovar submissão:", err); showMessage("Ocorreu um erro ao aprovar a submissão."); }
             }, true);
         }
 
         async function handleRejectSubmission(submissionId) {
-            showMessage("Rejeitar este envio?", async (confirmed) => {
+            showMessage("Tem certeza que deseja rejeitar este envio?", async (confirmed) => {
                 if (!confirmed) return;
                 try {
-                    const subDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
-                    const subSnap = await getDoc(subDocRef);
+                    const subDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId); const subSnap = await getDoc(subDocRef);
                     if (subSnap.exists() && subSnap.data().status === 'approved' && subSnap.data().pointsAwarded > 0) {
-                        const unitIdAdj = subSnap.data().unitId, ptsRev = subSnap.data().pointsAwarded;
-                        const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitIdAdj);
-                        const unitSnap = await getDoc(unitDocRef);
-                        if (unitSnap.exists()) await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - ptsRev });
+                        const unitIdAdj = subSnap.data().unitId; const ptsRev = subSnap.data().pointsAwarded; const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitIdAdj); const unitSnap = await getDoc(unitDocRef);
+                        if (unitSnap.exists()) { await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - ptsRev }); }
                     }
-                    await updateDoc(subDocRef, { status: 'rejected', pointsAwarded: 0, validatedAt: serverTimestamp() });
-                    showMessage("Envio rejeitado!");
-                } catch (err) { console.error("Erro rejeitar:", err); showMessage("Erro ao rejeitar."); }
+                    await updateDoc(subDocRef, { status: 'rejected', pointsAwarded: 0, validatedAt: serverTimestamp(), validatedBy: currentUser.uid });
+                    showMessage("Envio rejeitado com sucesso!");
+                } catch (err) { console.error("Erro ao rejeitar submissão:", err); showMessage("Ocorreu um erro ao rejeitar a submissão."); }
             }, true);
         }
 
-        // Autenticação e Inicialização
         function setupAuthFormListeners() {
             const authForm = document.getElementById('auth-form'), emailIn = document.getElementById('email'), passIn = document.getElementById('password'), loginBtn = document.getElementById('login-btn'), regBtn = document.getElementById('register-btn'), logoutBtn = document.getElementById('logout-btn');
             if (authForm && loginBtn && regBtn) {
-                loginBtn.onclick = async (e) => {
-                    e.preventDefault(); const email = emailIn.value, pass = passIn.value;
-                    if (!email || !pass) { showMessage("Preencha email e palavra-passe."); return; }
-                    try { await signInWithEmailAndPassword(auth, email, pass); }
-                    catch (err) { console.error("Login erro:", err); showMessage(err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential' ? "Email/passe incorretos." : "Erro ao iniciar sessão."); }
-                };
-                regBtn.onclick = async (e) => {
-                    e.preventDefault(); const email = emailIn.value, pass = passIn.value;
-                    if (!email || !pass) { showMessage("Preencha email e passe para registar."); return; }
-                    if (pass.length < 6) { showMessage("Passe deve ter >= 6 caracteres."); return; }
-                    try { await createUserWithEmailAndPassword(auth, email, pass); showMessage("Registo OK! A iniciar sessão..."); }
-                    catch (err) { console.error("Registo erro:", err); showMessage(err.code === 'auth/email-already-in-use' ? "Email já registado." : err.code === 'auth/weak-password' ? "Passe fraca." : "Erro ao registar."); }
-                };
+                loginBtn.onclick = async (e) => { e.preventDefault(); const email = emailIn.value, pass = passIn.value; if (!email || !pass) { showMessage("Por favor, preencha o email e a palavra-passe."); return; } try { await signInWithEmailAndPassword(auth, email, pass); } catch (err) { console.error("Erro de Login:", err.code); showMessage(err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential' ? "Email ou palavra-passe incorretos." : "Erro ao tentar iniciar sessão."); } };
+                regBtn.onclick = async (e) => { e.preventDefault(); const email = emailIn.value, pass = passIn.value; if (!email || !pass) { showMessage("Por favor, preencha o email e a palavra-passe para se registar."); return; } if (pass.length < 6) { showMessage("A palavra-passe deve ter pelo menos 6 caracteres."); return; } try { await createUserWithEmailAndPassword(auth, email, pass); showMessage("Registo efetuado com sucesso! A iniciar sessão..."); } catch (err) { console.error("Erro de Registo:", err.code); showMessage(err.code === 'auth/email-already-in-use' ? "Este email já está em uso." : err.code === 'auth/weak-password' ? "A palavra-passe é muito fraca." : "Erro ao tentar registar."); } };
             }
-            if (logoutBtn) logoutBtn.onclick = async () => { try { await signOut(auth); showMessage("Sessão terminada!"); } catch (err) { console.error("Logout erro:", err); showMessage("Erro ao sair."); } };
+            if (logoutBtn) { logoutBtn.onclick = async () => { try { await signOut(auth); showMessage("Sessão terminada com sucesso!"); } catch (err) { console.error("Erro de Logout:", err); showMessage("Ocorreu um erro ao terminar a sessão."); } }; }
         }
 
         let unsubscribers = [];
-        function cleanupListeners() {
-            unsubscribers.forEach(unsub => unsub());
-            unsubscribers = [];
-        }
+        function cleanupListeners() { unsubscribers.forEach(unsub => unsub()); unsubscribers = []; }
 
         document.addEventListener('DOMContentLoaded', async () => {
             const loadingOverlay = document.getElementById('loading-overlay');
             try {
                 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) throw new Error("Credenciais Firebase incompletas.");
                 firebaseApp = initializeApp(firebaseConfig);
-                db = getFirestore(firebaseApp);
-                auth = getAuth(firebaseApp);
+                db = getFirestore(firebaseApp); auth = getAuth(firebaseApp); storage = getStorage(firebaseApp);
                 if (loadingOverlay) loadingOverlay.classList.add('hidden');
                 setupAuthFormListeners();
-
                 onAuthStateChanged(auth, async (user) => {
                     const authSect = document.getElementById('auth-section'), mainContent = document.getElementById('main-app-content'), userP = document.getElementById('user-info'), logoutB = document.getElementById('logout-btn');
-                    cleanupListeners(); // Limpa listeners antigos antes de reconfigurar
+                    cleanupListeners();
                     if (user) {
                         currentUser = user;
-                        const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
-                        const userDocSnap = await getDoc(userDocRef);
+                        const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid); const userDocSnap = await getDoc(userDocRef);
                         userRole = userDocSnap.exists() ? userDocSnap.data().role : 'leader';
-                        if (!userDocSnap.exists()) await setDoc(userDocRef, { role: 'leader', uid: user.uid, email: user.email || '', createdAt: serverTimestamp() });
-
-                        if (userP) userP.textContent = `Olá, ${userRole === 'secretary' ? 'Secretário(a)' : 'Líder'} (${user.email || '?'})`;
-                        if (logoutB) logoutB.classList.remove('hidden');
-                        if (authSect) authSect.classList.add('hidden');
-                        if (mainContent) mainContent.classList.remove('hidden');
+                        if (!userDocSnap.exists()) { await setDoc(userDocRef, { role: 'leader', uid: user.uid, email: user.email || '', createdAt: serverTimestamp() }); }
+                        if (userP) userP.textContent = `Olá, ${userRole === 'secretary' ? 'Secretário(a)' : 'Líder'} (${user.email || 'Anônimo'})`;
+                        if (logoutB) logoutB.classList.remove('hidden'); if (authSect) authSect.classList.add('hidden'); if (mainContent) mainContent.classList.remove('hidden');
                         initAppContent();
                     } else {
                         currentUser = null; userRole = null;
-                        if (userP) userP.textContent = 'Carregando...';
-                        if (logoutB) logoutB.classList.add('hidden');
-                        if (authSect) authSect.classList.remove('hidden');
-                        if (mainContent) mainContent.classList.add('hidden');
+                        if (userP) userP.textContent = 'Carregando...'; if (logoutB) logoutB.classList.add('hidden'); if (authSect) authSect.classList.remove('hidden'); if (mainContent) mainContent.classList.add('hidden');
                     }
                 });
-            } catch (err) {
-                console.error("Init Firebase erro:", err);
-                showMessage(`Erro Firebase: ${err.message}. Verifique consola/config.`);
-                if (loadingOverlay) loadingOverlay.classList.add('hidden');
-            }
+            } catch (err) { console.error("Erro na inicialização do Firebase:", err); showMessage(`Erro Firebase: ${err.message}. Verifique a consola e a sua configuração.`); if (loadingOverlay) loadingOverlay.classList.add('hidden'); }
         });
 
         async function initAppContent() {
-            const gestaoTabBtn = document.querySelector('button[data-tab="gestao"]');
-            if (gestaoTabBtn) gestaoTabBtn.classList.toggle('hidden', !(userRole === 'leader' || userRole === 'secretary'));
-
-            // Configura listeners onSnapshot e guarda as funções de unsubscribe
+            const gestaoTabBtn = document.querySelector('button[data-tab="gestao"]'); if (gestaoTabBtn) gestaoTabBtn.classList.toggle('hidden', !(userRole === 'leader' || userRole === 'secretary'));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'), s => { currentUnits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0)); renderDashboard(); if (isActiveTabSecretary()) updateUnitsTable(); if (isActiveTabLeader()) populateLeaderUnitSelect(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), s => { currentActivities = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) updateActivitiesTable(); if (isActiveTabLeader()) populateLeaderActivitySelect(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), s => { currentSubmissions = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0)); renderDashboard(); if (isActiveTabSecretary()) updateSubmissionsTables(); if (isActiveTabLeader()) updateLeaderSubmissionsList(document.getElementById('unit-select-leader')?.value); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), s => { currentDemerits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0)); if (isActiveTabSecretary()) updateDemeritsTable(); }));
-
             renderCalendar(); renderAbout();
-
-            const tabs = document.querySelectorAll('.tab-button');
-            const contentSections = document.querySelectorAll('.content-section');
-
+            const tabs = document.querySelectorAll('.tab-button'), contentSections = document.querySelectorAll('.content-section');
             function switchTab(targetTabId) {
-                tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === targetTabId));
-                contentSections.forEach(s => s.classList.toggle('active', s.id === targetTabId));
+                tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === targetTabId)); contentSections.forEach(s => s.classList.toggle('active', s.id === targetTabId));
                 if (targetTabId === 'inicio') renderDashboard();
                 else if (targetTabId === 'gestao') {
                     if (userRole === 'secretary') renderSecretaryDashboard();
                     else if (userRole === 'leader') renderUnitLeaderDashboard();
-                    else { showMessage("Sem permissão."); switchTab('inicio'); }
+                    else { showMessage("Sem permissão para aceder a esta área."); switchTab('inicio'); }
                 }
             }
-
-            tabs.forEach(tab => {
-                const newTab = tab.cloneNode(true); // Para limpar listeners antigos
-                tab.parentNode.replaceChild(newTab, tab);
-                newTab.addEventListener('click', () => switchTab(newTab.dataset.tab));
-            });
-
-            document.body.addEventListener('click', (event) => { // Delegação de eventos para acordeões
-                const button = event.target.closest('.accordion-button');
-                if (button) {
-                    const content = button.nextElementSibling, icon = button.querySelector('span:last-child');
-                    if (!content || !icon) return;
-                    button.classList.toggle('open'); icon.classList.toggle('rotate-180');
-                    content.style.maxHeight = button.classList.contains('open') ? content.scrollHeight + 'px' : null;
-                }
-            });
-
-            switchTab('inicio'); // Ativa a aba inicial
+            tabs.forEach(tab => { const newTab = tab.cloneNode(true); tab.parentNode.replaceChild(newTab, tab); newTab.addEventListener('click', () => switchTab(newTab.dataset.tab)); });
+            document.body.addEventListener('click', (event) => { const button = event.target.closest('.accordion-button'); if (button) { const content = button.nextElementSibling, icon = button.querySelector('span:last-child'); if (!content || !icon) return; button.classList.toggle('open'); icon.classList.toggle('rotate-180'); content.style.maxHeight = button.classList.contains('open') ? content.scrollHeight + 'px' : null; } });
+            switchTab('inicio');
         }
 
-        // Funções auxiliares para verificar abas ativas na gestão
         function isActiveTabSecretary() { return document.getElementById('gestao')?.classList.contains('active') && userRole === 'secretary'; }
         function isActiveTabLeader() { return document.getElementById('gestao')?.classList.contains('active') && userRole === 'leader'; }
-
+        
         function populateLeaderUnitSelect() {
-            const unitSL = document.getElementById('unit-select-leader');
-            const noUnitsMsgL = document.getElementById('no-units-message-leader');
-            if (unitSL) {
-                unitSL.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione sua unidade</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade cadastrada</option>';
-                if (noUnitsMsgL) noUnitsMsgL.classList.toggle('hidden', currentUnits.length > 0);
-            }
+            const unitSL = document.getElementById('unit-select-leader'), noUnitsMsgL = document.getElementById('no-units-message-leader');
+            if (unitSL) { unitSL.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione sua unidade</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade cadastrada</option>'; if (noUnitsMsgL) noUnitsMsgL.classList.toggle('hidden', currentUnits.length > 0); }
         }
         function populateLeaderActivitySelect() {
-            const actSL = document.getElementById('activity-select-leader');
-            const noActsMsgL = document.getElementById('no-activities-message-leader');
-            if (actSL) {
-                actSL.innerHTML = currentActivities.length > 0 ? '<option value="">Selecione uma atividade</option>' + currentActivities.map(a => `<option value="${a.id}">${a.name} (${a.type})</option>`).join('') : '<option value="">Nenhuma atividade cadastrada</option>';
-                if (noActsMsgL) noActsMsgL.classList.toggle('hidden', currentActivities.length > 0);
-            }
+            const actSL = document.getElementById('activity-select-leader'), noActsMsgL = document.getElementById('no-activities-message-leader');
+            if (actSL) { actSL.innerHTML = currentActivities.length > 0 ? '<option value="">Selecione uma atividade</option>' + currentActivities.map(a => `<option value="${a.id}">${a.name} (${a.type})</option>`).join('') : '<option value="">Nenhuma atividade cadastrada</option>'; if (noActsMsgL) noActsMsgL.classList.toggle('hidden', currentActivities.length > 0); }
         }
 
     </script>
