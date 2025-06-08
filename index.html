@@ -53,6 +53,7 @@
             .chart-container {
                 height: 60vh;
             }
+
             nav.overflow-x-auto {
                 justify-content: flex-start;
             }
@@ -93,14 +94,12 @@
 
 <body class="bg-slate-50 text-slate-800">
 
-    <!-- Carregando Overlay -->
     <div id="loading-overlay"
         class="fixed inset-0 bg-slate-100 bg-opacity-90 flex flex-col justify-center items-center z-50">
         <div class="animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-blue-500"></div>
         <p class="mt-4 text-lg text-slate-700">A carregar aplicação...</p>
     </div>
 
-    <!-- Messagem Box -->
     <div id="messageBox" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 hidden">
         <div class="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full text-center">
             <p id="messageText" class="text-lg font-semibold mb-4"></p>
@@ -113,7 +112,6 @@
         </div>
     </div>
 
-    <!-- Authentication Section (visible by default, hidden by JS on auth) -->
     <section id="auth-section"
         class="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-blue-200 p-4">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
@@ -144,9 +142,7 @@
         </div>
     </section>
 
-    <!-- Main Application Content (hidden until authenticated) -->
     <div id="main-app-content" class="container mx-auto p-4 md:p-8 hidden">
-        <!-- Header -->
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold text-blue-800">Gincana de Unidades</h1>
             <h2 class="text-2xl md:text-3xl font-semibold text-slate-600">Edição 2025</h2>
@@ -157,7 +153,6 @@
                 class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md hidden">Sair</button>
         </header>
 
-        <!-- Navigation Tabs -->
         <nav class="flex md:justify-center border-b-2 border-slate-200 mb-8 overflow-x-auto">
             <button data-tab="inicio"
                 class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏁
@@ -176,9 +171,7 @@
                 Gestão</button>
         </nav>
 
-        <!-- Content Area -->
         <main>
-            <!-- Início / Dashboard Section -->
             <section id="inicio" class="content-section">
                 <p class="mb-6 text-slate-700 text-center">Bem-vindo ao painel da Gincana de Unidades! Aqui você
                     encontra um resumo rápido do progresso e o placar geral das unidades. Explore as outras abas para
@@ -206,7 +199,6 @@
                 </div>
             </section>
 
-            <!-- Calendário Section -->
             <section id="calendario" class="content-section">
                 <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Calendário de Atividades</h2>
                 <p class="mb-6 text-slate-700 text-center">Navegue pelas atividades diárias e semanais programadas para
@@ -215,7 +207,6 @@
                 </div>
             </section>
 
-            <!-- Regulamento Section -->
             <section id="regulamento" class="content-section">
                 <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Regulamento Interno da Gincana</h2>
                 <p class="mb-6 text-slate-700 text-center">Conheça as regras de pontuação, critérios de desempate,
@@ -320,7 +311,6 @@
                 </div>
             </section>
 
-            <!-- Sobre o Clube Section -->
             <section id="sobre" class="content-section">
                 <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Sobre o Clube de Desbravadores</h2>
                 <p class="mb-6 text-slate-700 text-center">Conheça os fundamentos, a história e a estrutura que guiam o
@@ -348,21 +338,18 @@
                 </div>
             </section>
 
-            <!-- Gestão Section -->
             <section id="gestao" class="content-section">
                 <h2 id="gestao-title" class="text-3xl font-bold text-center mb-8 text-slate-700">
                     Carregando informações de gestão...
                 </h2>
                 <div id="gestao-content" class="space-y-6">
-                    <!-- O conteúdo específico do papel (Líder ou Secretário) será carregado aqui pelo JavaScript -->
-                </div>
+                    </div>
             </section>
         </main>
     </div>
 
-    <!-- Firebase SDKs e lógica principal da aplicação (como um módulo) -->
     <script type="module">
-        console.log("Script de módulo a ser executado - Versão: 2024-06-07_FINAL_COMPLETO");
+        console.log("Script de módulo a ser executado - Versão: 2024-06-08_COM_DEADLINE");
 
         // Importações do Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
@@ -374,7 +361,7 @@
         let firebaseApp = null;
         let db = null;
         let auth = null;
-        let storage = null; 
+        let storage = null;
         let currentUser = null;
         let userRole = null;
 
@@ -429,13 +416,10 @@
         // Dados estáticos da aplicação (Calendário, Sobre, etc.)
         const staticData = {
             calendar: {
-                "Junho: Mês do Pioneirismo e da Natureza": [{ date: "15/06/2025", title: "Construção de Abrigo Improvisado", desc: "Cada unidade deve construir um abrigo simples e funcional usando materiais naturais ou lona/corda, capaz de proteger minimamente de intempéries. (Pioneirismo)" }, { date: "22/06/2025", title: "Bom em Nós e Amarras", desc: "Um mini campeonato de quem consegue realizar mais nós e amarras corretamente, a unidade que no total, conseguir o maior número de nós e amarras, vence. (Pioneirismo)" }, { date: "29/06/2025", title: "Caça ao Tesouro da Orientação", desc: "Utilizando bússola e um mapa simples, as unidades devem seguir pistas para encontrar um tesouro escondido. (Orientação)" }],
-                "Julho: Mês da Saúde e Bem-Estar": [{ date: "06/07/2025", title: "Circuito de Habilidades Físicas", desc: "Montagem de um circuito com 5 a 7 estações que envolvam corrida, salto, agachamento, flexão, polichinelos (adaptadas à idade e capacidade). As unidades competem para completar o circuito no menor tempo, com boa execução. (Físico)" }, { date: "13/07/2025", title: "Oficina de Primeiros Socorros Básicos", desc: "Simulação de situações de emergência comuns (pequenos cortes, entorses, picadas de inseto). As unidades devem demonstrar como fazer curativos simples, imobilizar um braço, estancar sangramento e acionar ajuda. (Primeiros Socorros)" }, { date: "20/07/2025", title: "Gincana Esportiva Lúdica", desc: "Competições de jogos populares e cooperativos como cabo de guerra, corrida de saco, queimada (com regras adaptadas para segurança e inclusão). O espírito esportivo e a diversão serão valorizados. (Físico/Integração)" }, { date: "27/07/2025", title: "Culinária Saudável Desbravador", desc: "Cada unidade prepara uma receita saudável e saborosa (ex: salada de frutas criativa, sanduíches naturais, sucos detox). A apresentação, o sabor e a explicação dos benefícios nutricionais serão avaliadas. (Culinária/Saúde)" }],
-                "Agosto: Mês da Comunicação e Expressão": [{ date: "03/08/2025", title: "Teatro de Fantoches/Mímica com Mensagem", desc: "Cada unidade cria e apresenta uma pequena peça de teatro de fantoches ou uma esquete de mímica com uma mensagem positiva ou um ensinamento moral (ex: sobre honestidade, amizade, respeito). (Criatividade/Expressão)" }, { date: "10/08/2025", title: "Campanha de Conscientização Criativa", desc: "As unidades devem desenvolver uma pequena campanha de conscientização sobre um tema relevante para a comunidade (ex: reciclagem, combate ao bullying, importância da leitura). Podem ser cartazes, vídeos curtos (para exibição interna), jingles ou pequenas apresentações. (Serviço/Comunicação)" }, { date: "17/08/2025", title: "Roda de Conversa: Meus Sonhos e Talentos", desc: "Em um ambiente acolhedor, cada Desbravador compartilha um sonho pessoal ou um talento que possui/gostaria de desenvolver. A escuta ativa e o apoio mútuo são incentivados. (Espiritual/Social)" }, { date: "24/08/2025", title: "Visita e Ação de Doação a uma Instituição", desc: "A unidade organiza e realiza uma visita a um asilo, orfanato ou instituição de caridade (com permissão e acompanhamento da diretoria), levando doações (arrecadadas previamente) e, se possível, realizando uma pequena apresentação ou atividade interativa. (Serviço Comunitário)" }, { date: "31/08/2025", title: "Descanso/Preparação para Setembro", desc: "Dia livre para atividades de autocuidado e reflexão individual." }],
-                "Setembro: Mês do Conhecimento e da História": [{ date: "07/09/2025", title: "Gincana do Conhecimento Desbravador", desc: "Uma competição de perguntas e respostas sobre a história do clube, seus ideais (Voto e Lei), classes, especialidades e regulamentos básicos. (Mental)" }, { date: "14/09/2025", title: "Estudo Bíblico Aprofundado e Apresentação", desc: "Cada unidade escolhe um tema bíblico (ex: a criação, a história de José, os milagres de Jesus) e prepara um pequeno estudo para apresentar de forma criativa (com slides, desenhos, encenação) para as outras unidades. (Espiritual/Mental)" }, { date: "21/09/2025", title: "Projeto de Civismo 'Minha Pátria, Minha História'", desc: "Pesquisar sobre um herói nacional, um símbolo do país (bandeira, hino) ou um evento histórico importante. As unidades devem apresentar suas descobertas de forma criativa (mural, jogral, vídeo). (Cívico/Mental)" }, { date: "28/09/2025", title: "Criação de um 'Museu' do Clube", desc: "Cada unidade monta um pequeno painel ou 'exposição' com fotos, objetos, distintivos e histórias que representem a trajetória da sua unidade e do clube. (História/Criatividade)" }],
-                "Outubro: Mês da Aventura e da Superação": [{ date: "05/10/2025", title: "Circuito de Aventura 'Desbravador Radical'", desc: "Montar um circuito com obstáculos (rastejar sob cordas, pular pneus, passar por túneis improvisados, escalar baixo em estruturas seguras) que exija coordenação, agilidade e trabalho em equipe. (Físico/Mental)" }, { date: "12/10/2025", title: "Desafio de Sobrevivência (Teórico e Prático)", desc: "Simulação de situações de sobrevivência. As unidades devem demonstrar habilidades como purificar água (teórico), fazer um sinal de socorro, montar uma pequena armadilha (segura e não-letal), identificar plantas seguras para consumo (teórico). (Pioneirismo/Mental)" }, { date: "19/10/2025", title: "Jogo Noturno 'Mistério da Mata'", desc: "Um jogo de estratégia ou caça ao tesouro em ambiente escuro (com lanternas e supervisão rigorosa), onde as unidades precisam usar a audição, tato e trabalho em equipe para cumprir objetivos. (Mental/Físico)" }, { date: "26/10/2025", title: "Desafio de Resolução de Problemas 'A Ponte da Unidade'", desc: "Apresentar um problema complexo para as unidades, como 'construir uma ponte que suporte um peso X usando apenas materiais Y e Z'. A criatividade e a eficácia da solução serão avaliadas. (Mental/Engenharia)" }],
-                "Novembro: Mês da Gratidão e da Celebração": [{ date: "02/11/2025", title: "Preparação da Cápsula do Tempo da Gincana", desc: "Cada unidade reúne objetos simbólicos, fotos, mensagens e relatos sobre suas experiências na gincana. A cápsula será lacrada e aberta em uma data futura (ex: daqui a 1 ano), para relembrar as conquistas. (Criatividade/Reflexão)" }, { date: "09/11/2025", title: "Dia da Gratidão e Serviço Comunitário", desc: "Ações de serviço focadas em expressar gratidão à comunidade ou à igreja. Exemplos: limpeza e organização do local do clube, ajuda em eventos da igreja, preparação de cestas básicas para doação. (Serviço/Espiritual)" }, { date: "16/11/2025", title: "Ensaio Geral para a Celebração Final", desc: "As unidades praticam quaisquer apresentações, cantos, jograis ou números de Ordem Unida que desejam apresentar no evento de encerramento. Este é um momento de integração e aprimoramento. (Integração)" }, { date: "23/11/2025", title: "Grande Jogo Final 'A Jornada do Desbravador'", desc: "Uma atividade abrangente que combina elementos de todos os meses, testando diversas habilidades (físicas, mentais, de pioneirismo, etc.) e o espírito de equipe. Pode ser um circuito de estações, um jogo de tabuleiro gigante ou uma grande caça ao tesouro com desafios variados. (Revisão/Integração)" }, { date: "30/11/2025", title: "Última revisão e preparação para a Celebração Final", desc: "Dia dedicado aos últimos preparativos para o grande evento de encerramento da gincana." }],
-                "Dezembro: Grande Celebração e Encerramento": [{ date: "01/12/2025", title: "Grande Celebração e Encerramento da Gincana", desc: "Um evento especial com a presença dos pais, familiares e da comunidade, para celebrar as conquistas da gincana. Incluirá apresentações das unidades, reconhecimento, a revelação do placar final e premiação, uma mensagem final inspiradora dos líderes e confraternização." }]
+                "Junho: Mês do Pioneirismo e da Natureza": [
+                    { date: "15/06/2025", title: "A divulgar", desc: "" },
+                    { date: "22/06/2025", title: "A divulgar", desc: "" },
+                    { date: "29/06/2025", title: "A divulgar", desc: "" }],
             },
             bases: [{ title: "Origem Histórica", content: "O Clube de Desbravadores foi oficializado em nível mundial no ano de 1950 pela Associação Geral da Igreja Adventista do Sétimo Dia, nos Estados Unidos. Suas raízes, no entanto, remontam a iniciativas anteriores de clubes missionários e de jovens que buscavam o desenvolvimento integral." }, { title: "Filosofia", content: "A filosofia do Clube de Desbravadores baseia-se no desenvolvimento harmonioso das forças físicas, mentais e espirituais dos juvenis e adolescentes. O programa busca preparar os jovens para a cidadania útil, o serviço à comunidade e o compromisso com Deus. Tudo o que o Desbravador faz tem um sentido, uma base, um alicerce de valores cristãos e princípios de vida." }, { title: "Objetivos Prioritários", content: "Os objetivos do Clube são amplos e visam o crescimento completo do indivíduo: Desenvolvimento Físico, Mental, Espiritual e Social." }, { title: "Símbolos do Clube", content: "Os símbolos do Desbravador são elementos visuais e conceituais que representam seus princípios: Ideais (Voto e Lei), Hino, Emblemas, Bandeira, Bandeirim e o Uniforme." }],
             funcoes: {
@@ -467,7 +451,7 @@
             const approvedSubmissionsCount = currentSubmissions.filter(sub => sub.status === 'approved').length;
             unidadeDestaqueEl.textContent = currentUnits.length > 0 && currentUnits[0].name ? currentUnits[0].name : 'N/A';
             totalPontosEl.textContent = totalScore;
-            atividadesRealizadasEl.textContent = `${approvedSubmissionsCount} / ${totalActivitiesDefined}`;
+            atividadesRealizadasEl.textContent = `${approvedSubmissionsCount}`;
             renderScoreChart(currentUnits);
         }
 
@@ -527,8 +511,31 @@
                 e.preventDefault();
                 const submitBtn = e.target.querySelector('button[type="submit"]'); const originalBtnText = submitBtn.innerHTML;
                 submitBtn.disabled = true; submitBtn.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>`;
-                const unitId = document.getElementById('unit-select-leader').value, actId = document.getElementById('activity-select-leader').value, details = document.getElementById('details-leader').value, photoFile = document.getElementById('photo-upload-leader').files[0];
-                if (!unitId || !actId || !details.trim()) { showMessage("Preencha todos os campos obrigatórios."); submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; return; }
+
+                const unitId = document.getElementById('unit-select-leader').value;
+                const actId = document.getElementById('activity-select-leader').value;
+                const details = document.getElementById('details-leader').value;
+                const photoFile = document.getElementById('photo-upload-leader').files[0];
+
+                if (!unitId || !actId || !details.trim()) {
+                    showMessage("Preencha todos os campos obrigatórios.");
+                    submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; return;
+                }
+
+                // --- INÍCIO DA VERIFICAÇÃO DE DATA LIMITE ---
+                const selectedActivity = currentActivities.find(a => a.id === actId);
+                if (selectedActivity && selectedActivity.deadline) {
+                    const deadlineDate = selectedActivity.deadline.toDate(); // Converte o timestamp do Firebase para Data
+                    const now = new Date();
+
+                    if (now > deadlineDate) {
+                        showMessage("O prazo para enviar esta atividade já terminou.");
+                        submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText;
+                        return; // Impede o envio
+                    }
+                }
+                // --- FIM DA VERIFICAÇÃO DE DATA LIMITE ---
+
                 let photoUrl = '';
                 try {
                     if (photoFile) {
@@ -537,9 +544,8 @@
                         await uploadBytes(storageRef, photoFile);
                         photoUrl = await getDownloadURL(storageRef);
                     }
-                    const activity = currentActivities.find(a => a.id === actId);
-                    if (!activity) { showMessage("Atividade inválida."); throw new Error("Atividade selecionada é inválida"); }
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), { unitId, unitName: currentUnits.find(u => u.id === unitId)?.name || '?', activityId: actId, activityName: activity.name, details, photoUrl, status: 'pending', submittedBy: currentUser.uid, submittedAt: serverTimestamp() });
+                    if (!selectedActivity) { showMessage("Atividade inválida."); throw new Error("Atividade selecionada é inválida"); }
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), { unitId, unitName: currentUnits.find(u => u.id === unitId)?.name || '?', activityId: actId, activityName: selectedActivity.name, details, photoUrl, status: 'pending', submittedBy: currentUser.uid, submittedAt: serverTimestamp() });
                     showMessage("Atividade enviada para avaliação com sucesso!"); e.target.reset(); document.getElementById('unit-select-leader').value = ""; document.getElementById('activity-select-leader').value = ""; updateLeaderSubmissionsList("");
                 } catch (err) { console.error("Erro no envio:", err); showMessage("Ocorreu um erro ao enviar a atividade. Verifique o console para mais detalhes."); } finally { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; }
             });
@@ -562,7 +568,20 @@
             const gestaoContent = document.getElementById('gestao-content'); if (!gestaoContent) return;
             gestaoContent.innerHTML = `
                 <section class="admin-section"><h3 class="admin-h3 text-blue-600">Gerenciar Unidades</h3><div class="flex flex-col sm:flex-row gap-4 mb-4"><input type="text" id="new-unit-name" placeholder="Nome da unidade" class="admin-input"><button id="add-unit-btn" class="admin-btn bg-blue-600 hover:bg-blue-700">Adicionar</button></div><div class="table-container"><table class="admin-table"><thead class="bg-blue-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="units-table-body"></tbody></table></div></section>
-                <section class="admin-section"><h3 class="admin-h3 text-green-600">Gerenciar Atividades</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"><input type="text" id="new-activity-name" placeholder="Nome" class="admin-input"><select id="new-activity-type" class="admin-input"><option value="">Tipo</option><option>Físico</option><option>Mental</option><option>Espiritual</option><option>Social</option><option>Pioneirismo</option><option>Natureza</option><option>Serviço</option><option>Culinária</option><option>Geral</option></select><input type="number" id="new-activity-max-points" placeholder="Pontos Máx." class="admin-input" min="0"></div><button id="add-activity-btn" class="admin-btn bg-green-600 hover:bg-green-700 w-full">Adicionar</button><div class="table-container mt-6"><table class="admin-table"><thead class="bg-green-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Tipo</th><th class="th-cell">Pontos Máx.</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="activities-table-body"></tbody></table></div></section>
+                <section class="admin-section"><h3 class="admin-h3 text-green-600">Gerenciar Atividades</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <input type="text" id="new-activity-name" placeholder="Nome da Atividade" class="admin-input">
+                        <select id="new-activity-type" class="admin-input"><option value="">Tipo</option><option>Físico</option><option>Mental</option><option>Espiritual</option><option>Social</option><option>Pioneirismo</option><option>Natureza</option><option>Serviço</option><option>Culinária</option><option>Geral</option></select>
+                        <input type="number" id="new-activity-max-points" placeholder="Pontos Máx." class="admin-input" min="0">
+                        <input type="datetime-local" id="new-activity-deadline" class="admin-input" title="Prazo Limite (opcional)">
+                    </div>
+                    <button id="add-activity-btn" class="admin-btn bg-green-600 hover:bg-green-700 w-full">Adicionar Atividade</button>
+                    <div class="table-container mt-6">
+                        <table class="admin-table"><thead class="bg-green-100">
+                            <tr><th class="th-cell">Atividade</th><th class="th-cell">Tipo</th><th class="th-cell">Pontos Máx.</th><th class="th-cell">Prazo Limite</th><th class="th-cell rounded-tr-lg">Ações</th></tr>
+                        </thead><tbody id="activities-table-body"></tbody></table>
+                    </div>
+                </section>
                 <section class="admin-section"><h3 class="admin-h3 text-red-700">Gerenciar Deméritos</h3><div class="space-y-4 mb-4"><div><label for="demerit-unit-select" class="admin-label">Unidade:</label><select id="demerit-unit-select" class="admin-input" required><option value="">Selecione</option></select></div><div><label for="demerit-points" class="admin-label">Pontos a Deduzir:</label><input type="number" id="demerit-points" min="1" class="admin-input" required placeholder="Ex: 10"></div><div><label for="demerit-reason" class="admin-label">Razão:</label><textarea id="demerit-reason" rows="3" class="admin-input" required placeholder="Motivo..."></textarea></div><button id="apply-demerit-btn" class="admin-btn bg-red-600 hover:bg-red-700 w-full">Aplicar</button></div><div class="table-container mt-6"><table class="admin-table"><thead class="bg-red-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell">Razão</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody id="demerits-table-body"></tbody></table></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-yellow-800">Envios Pendentes (<span id="pending-submissions-count">0</span>)</h3><div id="pending-submissions-list" class="table-container"><p>Nenhum pendente.</p></div></section>
                 <section class="admin-section !mb-0"><h3 class="admin-h3 text-slate-700">Histórico de Envios</h3><div id="all-submissions-list" class="table-container"><p>Nenhum registro.</p></div></section>`;
@@ -576,13 +595,49 @@
             gestaoContent.querySelectorAll('.th-cell').forEach(th => th.classList.add('py-3', 'px-4', 'text-left', 'text-sm', 'font-semibold', 'text-slate-700'));
             const demeritUnitSelect = document.getElementById('demerit-unit-select'); demeritUnitSelect.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
             document.getElementById('add-unit-btn').addEventListener('click', async () => { const name = document.getElementById('new-unit-name').value.trim(); if (!name) { showMessage("O nome da unidade não pode estar vazio."); return; } try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'units'), { name, score: 0, createdAt: serverTimestamp() }); showMessage(`Unidade "${name}" adicionada com sucesso!`); document.getElementById('new-unit-name').value = ''; } catch (err) { console.error("Erro ao adicionar unidade:", err); showMessage("Ocorreu um erro ao adicionar a unidade."); } });
-            document.getElementById('add-activity-btn').addEventListener('click', async () => { const name = document.getElementById('new-activity-name').value.trim(), type = document.getElementById('new-activity-type').value, maxPoints = parseInt(document.getElementById('new-activity-max-points').value); if (!name || !type || isNaN(maxPoints) || maxPoints < 0) { showMessage("Por favor, preencha todos os campos da atividade corretamente."); return; } try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), { name, type, maxPoints, createdAt: serverTimestamp() }); showMessage(`Atividade "${name}" adicionada com sucesso!`); document.getElementById('new-activity-name').value = ''; document.getElementById('new-activity-type').value = ''; document.getElementById('new-activity-max-points').value = ''; } catch (err) { console.error("Erro ao adicionar atividade:", err); showMessage("Ocorreu um erro ao adicionar a atividade."); } });
+            
+            // --- LÓGICA ATUALIZADA PARA ADICIONAR ATIVIDADE COM DATA LIMITE ---
+            document.getElementById('add-activity-btn').addEventListener('click', async () => {
+                const name = document.getElementById('new-activity-name').value.trim();
+                const type = document.getElementById('new-activity-type').value;
+                const maxPoints = parseInt(document.getElementById('new-activity-max-points').value);
+                const deadlineValue = document.getElementById('new-activity-deadline').value;
+
+                if (!name || !type || isNaN(maxPoints) || maxPoints < 0) {
+                    showMessage("Por favor, preencha nome, tipo e pontos da atividade corretamente.");
+                    return;
+                }
+                
+                const activityData = {
+                    name,
+                    type,
+                    maxPoints,
+                    createdAt: serverTimestamp()
+                };
+
+                if (deadlineValue) {
+                    activityData.deadline = new Date(deadlineValue); // Adiciona a data limite ao objeto
+                }
+
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), activityData);
+                    showMessage(`Atividade "${name}" adicionada com sucesso!`);
+                    document.getElementById('new-activity-name').value = '';
+                    document.getElementById('new-activity-type').value = '';
+                    document.getElementById('new-activity-max-points').value = '';
+                    document.getElementById('new-activity-deadline').value = '';
+                } catch (err) {
+                    console.error("Erro ao adicionar atividade:", err);
+                    showMessage("Ocorreu um erro ao adicionar a atividade.");
+                }
+            });
+
             document.getElementById('apply-demerit-btn').addEventListener('click', async () => { const unitId = demeritUnitSelect.value, points = parseInt(document.getElementById('demerit-points').value), reason = document.getElementById('demerit-reason').value.trim(); if (!unitId || isNaN(points) || points <= 0 || !reason) { showMessage("Por favor, preencha todos os campos do demérito."); return; } const unitName = currentUnits.find(u => u.id === unitId)?.name || '?'; showMessage(`Aplicar ${points} pontos de demérito a "${unitName}" pelo motivo: "${reason}"?`, async (confirmed) => { if (!confirmed) return; try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), { unitId, unitName, points, reason, appliedBy: currentUser.uid, appliedAt: serverTimestamp() }); const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId); const unitSnap = await getDoc(unitDocRef); if (unitSnap.exists()) await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - points }); showMessage("Demérito aplicado com sucesso!"); demeritUnitSelect.value = ""; document.getElementById('demerit-points').value = ""; document.getElementById('demerit-reason').value = ""; } catch (err) { console.error("Erro ao aplicar demérito:", err); showMessage("Ocorreu um erro ao aplicar o demérito."); } }, true); });
             updateUnitsTable(); updateActivitiesTable(); updateDemeritsTable(); updateSubmissionsTables();
         }
 
         function applyTableStyles(tableBodyElement) { tableBodyElement.querySelectorAll('tr').forEach(tr => tr.classList.add('border-b', 'border-slate-200', 'last:border-b-0', 'hover:bg-slate-50')); tableBodyElement.querySelectorAll('td').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm')); }
-        
+
         function updateUnitsTable() {
             const tbody = document.getElementById('units-table-body'); if (!tbody) return;
             tbody.innerHTML = currentUnits.length === 0 ? '<tr><td colspan="3" class="text-center p-4">Nenhuma unidade cadastrada.</td></tr>' : currentUnits.map(u => `<tr><td>${u.name}</td><td class="font-bold">${u.score || 0}</td><td><button data-id="${u.id}" data-name="${u.name}" class="delete-unit-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
@@ -591,16 +646,26 @@
         }
 
         async function handleDeleteUnit(unitId, unitName) { showMessage(`Tem certeza que deseja excluir a unidade "${unitName}"? Esta ação não pode ser desfeita.`, async (confirmed) => { if (!confirmed) return; try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId)); showMessage(`Unidade "${unitName}" excluída com sucesso!`); } catch (err) { console.error("Erro ao excluir unidade:", err); showMessage("Ocorreu um erro ao excluir a unidade."); } }, true); }
-        
+
+        // --- FUNÇÃO ATUALIZADA PARA MOSTRAR DATA LIMITE NA TABELA ---
         function updateActivitiesTable() {
             const tbody = document.getElementById('activities-table-body'); if (!tbody) return;
-            tbody.innerHTML = currentActivities.length === 0 ? '<tr><td colspan="4" class="text-center p-4">Nenhuma atividade cadastrada.</td></tr>' : currentActivities.map(a => `<tr><td>${a.name}</td><td>${a.type}</td><td class="font-bold">${a.maxPoints}</td><td><button data-id="${a.id}" data-name="${a.name}" class="delete-activity-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
+            tbody.innerHTML = currentActivities.length === 0 ? '<tr><td colspan="5" class="text-center p-4">Nenhuma atividade cadastrada.</td></tr>' : currentActivities.map(a => {
+                const deadlineFormatted = a.deadline ? new Date(a.deadline.toDate()).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                return `<tr>
+                    <td>${a.name}</td>
+                    <td>${a.type}</td>
+                    <td class="font-bold">${a.maxPoints}</td>
+                    <td>${deadlineFormatted}</td>
+                    <td><button data-id="${a.id}" data-name="${a.name}" class="delete-activity-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td>
+                </tr>`;
+            }).join('');
             applyTableStyles(tbody);
             tbody.querySelectorAll('.delete-activity-btn').forEach(btn => { btn.addEventListener('click', (e) => handleDeleteActivity(e.target.dataset.id, e.target.dataset.name)); btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'); });
         }
 
         async function handleDeleteActivity(activityId, activityName) { showMessage(`Tem certeza que deseja excluir a atividade "${activityName}"?`, async (confirmed) => { if (!confirmed) return; try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'activities', activityId)); showMessage(`Atividade "${activityName}" excluída com sucesso!`); } catch (err) { console.error("Erro ao excluir atividade:", err); showMessage("Ocorreu um erro ao excluir a atividade."); } }, true); }
-        
+
         function updateDemeritsTable() {
             const tbody = document.getElementById('demerits-table-body'); if (!tbody) return;
             tbody.innerHTML = currentDemerits.length === 0 ? '<tr><td colspan="4" class="text-center p-4">Nenhum demérito aplicado.</td></tr>' : currentDemerits.map(d => `<tr><td>${d.unitName}</td><td class="font-bold text-red-600">-${d.points}</td><td class="truncate max-w-xs" title="${d.reason}">${d.reason}</td><td>${d.appliedAt ? new Date(d.appliedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('');
@@ -721,16 +786,35 @@
 
         function isActiveTabSecretary() { return document.getElementById('gestao')?.classList.contains('active') && userRole === 'secretary'; }
         function isActiveTabLeader() { return document.getElementById('gestao')?.classList.contains('active') && userRole === 'leader'; }
-        
+
         function populateLeaderUnitSelect() {
             const unitSL = document.getElementById('unit-select-leader'), noUnitsMsgL = document.getElementById('no-units-message-leader');
             if (unitSL) { unitSL.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione sua unidade</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade cadastrada</option>'; if (noUnitsMsgL) noUnitsMsgL.classList.toggle('hidden', currentUnits.length > 0); }
         }
+        
+        // --- FUNÇÃO ATUALIZADA PARA MOSTRAR DATA LIMITE NO SELECT ---
         function populateLeaderActivitySelect() {
             const actSL = document.getElementById('activity-select-leader'), noActsMsgL = document.getElementById('no-activities-message-leader');
-            if (actSL) { actSL.innerHTML = currentActivities.length > 0 ? '<option value="">Selecione uma atividade</option>' + currentActivities.map(a => `<option value="${a.id}">${a.name} (${a.type})</option>`).join('') : '<option value="">Nenhuma atividade cadastrada</option>'; if (noActsMsgL) noActsMsgL.classList.toggle('hidden', currentActivities.length > 0); }
-        }
+            if (actSL) {
+                const optionsHtml = currentActivities.map(a => {
+                    let deadlineText = '';
+                    if (a.deadline) {
+                        const deadlineDate = a.deadline.toDate();
+                        const now = new Date();
+                        const isExpired = now > deadlineDate;
+                        const formattedDate = deadlineDate.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                        deadlineText = ` - Prazo: ${formattedDate}${isExpired ? ' (Expirado)' : ''}`;
+                    }
+                    return `<option value="${a.id}">${a.name} (${a.type})${deadlineText}</option>`;
+                }).join('');
 
+                actSL.innerHTML = currentActivities.length > 0 ?
+                    '<option value="">Selecione uma atividade</option>' + optionsHtml :
+                    '<option value="">Nenhuma atividade cadastrada</option>';
+
+                if (noActsMsgL) noActsMsgL.classList.toggle('hidden', currentActivities.length > 0);
+            }
+        }
     </script>
 </body>
 
