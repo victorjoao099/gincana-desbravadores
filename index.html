@@ -111,6 +111,20 @@
             </div>
         </div>
     </div>
+    
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 hidden">
+        <div class="bg-white rounded-lg p-6 shadow-xl max-w-lg w-full">
+            <h3 id="editModalTitle" class="text-2xl font-bold mb-4 text-slate-800"></h3>
+            <div id="editModalContent" class="space-y-4"></div>
+            <div class="flex justify-end space-x-4 mt-6">
+                <button id="editModalCancelBtn"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                <button id="editModalSaveBtn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
 
     <section id="auth-section"
         class="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-blue-200 p-4">
@@ -303,7 +317,7 @@
                                     24 horas após a divulgação da pontuação contestada.</li>
                                 <li><strong>Análise Preliminar:</strong> A secretária e o diretor associado responsável
                                     pela gincana analisarão o recurso e as evidências.</li>
-                                <li><strong>Decisão:</strong> A decisão será comunicada ao líder da unidade em até 48
+                                <li><strong>Decisão:</strong> A decisão será comunicada ao Conselheiro da unidade em até 48
                                     horas. A decisão da diretoria é final e irrevogável.</li>
                             </ol>
                         </div>
@@ -343,13 +357,13 @@
                     Carregando informações de gestão...
                 </h2>
                 <div id="gestao-content" class="space-y-6">
-                    </div>
+                </div>
             </section>
         </main>
     </div>
 
     <script type="module">
-        console.log("Script de módulo a ser executado - Versão: 2024-06-08_COM_DEADLINE");
+        console.log("Script de módulo a ser executado - Versão: 2024-06-08_COM_MOTIVO_REJEICAO");
 
         // Importações do Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
@@ -406,26 +420,30 @@
             }
         };
 
+        // Função do Modal de Edição Genérico
+        function showEditModal(title, contentHtml, onSaveCallback) {
+            const modal = document.getElementById('editModal'), modalTitle = document.getElementById('editModalTitle'), modalContent = document.getElementById('editModalContent'), saveBtn = document.getElementById('editModalSaveBtn'), cancelBtn = document.getElementById('editModalCancelBtn');
+            if (!modal || !modalTitle || !modalContent || !saveBtn || !cancelBtn) return;
+            modalTitle.textContent = title; modalContent.innerHTML = contentHtml; modal.classList.remove('hidden');
+            const newSaveBtn = saveBtn.cloneNode(true); saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+            const newCancelBtn = cancelBtn.cloneNode(true); cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+            newSaveBtn.onclick = () => { if (onSaveCallback) onSaveCallback(); modal.classList.add('hidden'); };
+            newCancelBtn.onclick = () => modal.classList.add('hidden');
+        }
+
         // Variáveis de estado da aplicação
         let chartInstance = null;
         let currentUnits = [];
         let currentActivities = [];
         let currentSubmissions = [];
         let currentDemerits = [];
+        let currentUsers = [];
 
         // Dados estáticos da aplicação (Calendário, Sobre, etc.)
         const staticData = {
-            calendar: {
-                "Junho: Mês do Pioneirismo e da Natureza": [
-                    { date: "15/06/2025", title: "A divulgar", desc: "" },
-                    { date: "22/06/2025", title: "A divulgar", desc: "" },
-                    { date: "29/06/2025", title: "A divulgar", desc: "" }],
-            },
+            calendar: { "Junho: Mês do Pioneirismo e da Natureza": [{ date: "15/06/2025", title: "A divulgar", desc: "" }, { date: "22/06/2025", title: "A divulgar", desc: "" }, { date: "29/06/2025", title: "A divulgar", desc: "" }], },
             bases: [{ title: "Origem Histórica", content: "O Clube de Desbravadores foi oficializado em nível mundial no ano de 1950 pela Associação Geral da Igreja Adventista do Sétimo Dia, nos Estados Unidos. Suas raízes, no entanto, remontam a iniciativas anteriores de clubes missionários e de jovens que buscavam o desenvolvimento integral." }, { title: "Filosofia", content: "A filosofia do Clube de Desbravadores baseia-se no desenvolvimento harmonioso das forças físicas, mentais e espirituais dos juvenis e adolescentes. O programa busca preparar os jovens para a cidadania útil, o serviço à comunidade e o compromisso com Deus. Tudo o que o Desbravador faz tem um sentido, uma base, um alicerce de valores cristãos e princípios de vida." }, { title: "Objetivos Prioritários", content: "Os objetivos do Clube são amplos e visam o crescimento completo do indivíduo: Desenvolvimento Físico, Mental, Espiritual e Social." }, { title: "Símbolos do Clube", content: "Os símbolos do Desbravador são elementos visuais e conceituais que representam seus princípios: Ideais (Voto e Lei), Hino, Emblemas, Bandeira, Bandeirim e o Uniforme." }],
-            funcoes: {
-                "Cargos da Unidade": [{ title: "Conselheiro(a)", content: "É a autoridade máxima dentro da unidade, responsável pela ordem e andamento geral. Atua como elo entre a unidade e a direção do clube. Geralmente, deve ser batizado e ter mais de 18 anos (ou 16+ com supervisão de um diretor maior de idade em atividades externas)." }, { title: "Capitão(ã)", content: "Membro da unidade (10 a 15 anos) responsável por animar o grupo a cumprir o programa, por meio do exemplo e influência pessoal. Lidera a unidade em formações de Ordem Unida e a representa perante a direção. Deve ser organizado, ter liderança, disciplina, honestidade, fidelidade e humildade." }, { title: "Secretário(a) de Unidade", content: "Responsável por manter os registos da unidade atualizados, incluindo chamada de presença, pontualidade, assiduidade, uso do uniforme e higiene pessoal. Idade entre 10 e 15 anos." }, { title: "Tesoureiro(a) de Unidade", content: "Gerencia os pequenos recursos financeiros da unidade, mantendo registos precisos de despesas e receitas. Idade entre 10 e 15 anos." }, { title: "Padioleiro(a) de Unidade", content: "Atua como o 'enfermeiro' da unidade, responsável por auxiliar em pequenos acidentes e aplicar primeiros socorros básicos, sob supervisão. Idade entre 10 e 15 anos." }, { title: "Almoxarife de Unidade", content: "Responsável pela guarda e organização dos materiais e equipamentos da unidade. Idade entre 10 e 15 anos." }, { title: "Capelão(ã) de Unidade", content: "Mantém a ordem e harmonia espiritual da unidade, juntamente com o conselheiro, promovendo momentos de reflexão e estudo bíblico. Idade entre 10 e 15 anos, deve ser de boa índole e respeitador." }],
-                "Cargos da Direção do Clube": [{ title: "Diretor(a) do Clube", content: "É a autoridade máxima do clube. Responsável por planejar, organizar e supervisionar todas as atividades, manter a ligação com o Pastor e a Associação, presidir as reuniões da comissão executiva e docente, e assegurar um programa completo para o clube. Deve ser um líder maduro, com boa reputação na Igreja e ter o treinamento para oficiais. Deve ser um exemplo de espiritualidade, prontidão, amabilidade, temperança, pontualidade e asseio pessoal, incluindo o uso adequado do uniforme." }, { title: "Diretores(as) Associados(as)", content: "São o braço direito do diretor, responsáveis pelo cumprimento do programa do clube. Coordenam as Classes, Especialidades e Unidades, gerenciando o trabalho dos instrutores e conselheiros. Geralmente há um diretor associado para a ala feminina e outro para a ala masculina. Não há limite para o número de diretores associados, dependendo do tamanho do clube." }, { title: "Secretário(a) do Clube", content: "Assume a responsabilidade pela documentação e registo das atividades do clube. Isso abrange a manutenção de registos de membros, elaboração de relatórios de eventos e comunicação de informações cruciais aos membros e suas famílias. Essencial para a organização administrativa do clube." }, { title: "Tesoureiro(a) do Clube", content: "Gerencia as finanças do clube, mantendo um registo preciso das despesas e receitas, elaborando orçamentos e assegurando o uso responsável dos recursos financeiros disponíveis. Responsável pela saúde financeira do clube." }, { title: "Capelão(ã) do Clube", content: "Encarregado da dimensão espiritual do clube, liderando estudos bíblicos, momentos de oração e promovendo os valores e princípios inerentes à crença Adventista do Sétimo Dia. Essencial para o desenvolvimento espiritual dos Desbravadores." }, { title: "Conselheiros(as) (Gerais) e Instrutores(as)", content: "Os conselheiros supervisionam as unidades, enquanto os instrutores são responsáveis por ensinar as classes e especialidades. Ambos trabalham em estreita colaboração com os diretores associados para garantir a execução do programa educativo do clube. A função de conselheiro é considerada uma das mais importantes, devido ao contato direto com os juvenis." }]
-            }
+            funcoes: { "Cargos da Unidade": [{ title: "Conselheiro(a)", content: "É a autoridade máxima dentro da unidade, responsável pela ordem e andamento geral. Atua como elo entre a unidade e a direção do clube. Geralmente, deve ser batizado e ter mais de 18 anos (ou 16+ com supervisão de um diretor maior de idade em atividades externas)." }, { title: "Capitão(ã)", content: "Membro da unidade (10 a 15 anos) responsável por animar o grupo a cumprir o programa, por meio do exemplo e influência pessoal. Lidera a unidade em formações de Ordem Unida e a representa perante a direção. Deve ser organizado, ter liderança, disciplina, honestidade, fidelidade e humildade." }, { title: "Secretário(a) de Unidade", content: "Responsável por manter os registos da unidade atualizados, incluindo chamada de presença, pontualidade, assiduidade, uso do uniforme e higiene pessoal. Idade entre 10 e 15 anos." }, { title: "Tesoureiro(a) de Unidade", content: "Gerencia os pequenos recursos financeiros da unidade, mantendo registos precisos de despesas e receitas. Idade entre 10 e 15 anos." }, { title: "Padioleiro(a) de Unidade", content: "Atua como o 'enfermeiro' da unidade, responsável por auxiliar em pequenos acidentes e aplicar primeiros socorros básicos, sob supervisão. Idade entre 10 e 15 anos." }, { title: "Almoxarife de Unidade", content: "Responsável pela guarda e organização dos materiais e equipamentos da unidade. Idade entre 10 e 15 anos." }, { title: "Capelão(ã) de Unidade", content: "Mantém a ordem e harmonia espiritual da unidade, juntamente com o conselheiro, promovendo momentos de reflexão e estudo bíblico. Idade entre 10 e 15 anos, deve ser de boa índole e respeitador." }], "Cargos da Direção do Clube": [{ title: "Diretor(a) do Clube", content: "É a autoridade máxima do clube. Responsável por planejar, organizar e supervisionar todas as atividades, manter a ligação com o Pastor e a Associação, presidir as reuniões da comissão executiva e docente, e assegurar um programa completo para o clube. Deve ser um líder maduro, com boa reputação na Igreja e ter o treinamento para oficiais. Deve ser um exemplo de espiritualidade, prontidão, amabilidade, temperança, pontualidade e asseio pessoal, incluindo o uso adequado do uniforme." }, { title: "Diretores(as) Associados(as)", content: "São o braço direito do diretor, responsáveis pelo cumprimento do programa do clube. Coordenam as Classes, Especialidades e Unidades, gerenciando o trabalho dos instrutores e conselheiros. Geralmente há um diretor associado para a ala feminina e outro para a ala masculina. Não há limite para o número de diretores associados, dependendo do tamanho do clube." }, { title: "Secretário(a) do Clube", content: "Assume a responsabilidade pela documentação e registo das atividades do clube. Isso abrange a manutenção de registos de membros, elaboração de relatórios de eventos e comunicação de informações cruciais aos membros e suas famílias. Essencial para a organização administrativa do clube." }, { title: "Tesoureiro(a) do Clube", content: "Gerencia as finanças do clube, mantendo um registo preciso das despesas e receitas, elaborando orçamentos e assegurando o uso responsável dos recursos financeiros disponíveis. Responsável pela saúde financeira do clube." }, { title: "Capelão(ã) do Clube", content: "Encarregado da dimensão espiritual do clube, liderando estudos bíblicos, momentos de oração e promovendo os valores e princípios inerentes à crença Adventista do Sétimo Dia. Essencial para o desenvolvimento espiritual dos Desbravadores." }, { title: "Conselheiros(as) (Gerais) e Instrutores(as)", content: "Os conselheiros supervisionam as unidades, enquanto os instrutores são responsáveis por ensinar as classes e especialidades. Ambos trabalham em estreita colaboração com os diretores associados para garantir a execução do programa educativo do clube. A função de conselheiro é considerada uma das mais importantes, devido ao contato direto com os juvenis." }] }
         };
 
         // Funções de Renderização da UI
@@ -447,7 +465,6 @@
             const unidadeDestaqueEl = document.getElementById('unidade-destaque'), totalPontosEl = document.getElementById('total-pontos'), atividadesRealizadasEl = document.getElementById('atividades-realizadas');
             if (!unidadeDestaqueEl || !totalPontosEl || !atividadesRealizadasEl) return;
             const totalScore = currentUnits.reduce((sum, item) => sum + (item.score || 0), 0);
-            const totalActivitiesDefined = Object.values(staticData.calendar).flat().length;
             const approvedSubmissionsCount = currentSubmissions.filter(sub => sub.status === 'approved').length;
             unidadeDestaqueEl.textContent = currentUnits.length > 0 && currentUnits[0].name ? currentUnits[0].name : 'N/A';
             totalPontosEl.textContent = totalScore;
@@ -456,21 +473,13 @@
         }
 
         function renderScoreChart(unitsData) {
-            const scoreChartEl = document.getElementById('scoreChart');
-            if (!scoreChartEl) return;
-            const ctx = scoreChartEl.getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: unitsData.map(item => wrapLabel(item.name, 15)), datasets: [{ label: 'Pontuação da Unidade', data: unitsData.map(item => item.score || 0), backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 5, }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} pontos` } } }, scales: { x: { beginAtZero: true, grid: { display: true, color: 'rgba(203, 213, 225, 0.5)' } }, y: { grid: { display: false }, ticks: { autoSkip: false } } } }
-            });
+            const scoreChartEl = document.getElementById('scoreChart'); if (!scoreChartEl) return;
+            const ctx = scoreChartEl.getContext('2d'); if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, { type: 'bar', data: { labels: unitsData.map(item => wrapLabel(item.name, 15)), datasets: [{ label: 'Pontuação da Unidade', data: unitsData.map(item => item.score || 0), backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 5, }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} pontos` } } }, scales: { x: { beginAtZero: true, grid: { display: true, color: 'rgba(203, 213, 225, 0.5)' } }, y: { grid: { display: false }, ticks: { autoSkip: false } } } } });
         }
 
         function renderCalendar() {
-            const container = document.getElementById('calendario-container');
-            if (!container) return;
-            container.innerHTML = '';
+            const container = document.getElementById('calendario-container'); if (!container) return; container.innerHTML = '';
             Object.entries(staticData.calendar).forEach(([month, activities]) => {
                 const monthDiv = document.createElement('div'); monthDiv.className = 'bg-white rounded-xl shadow-md';
                 const button = document.createElement('button'); button.className = 'accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center'; button.innerHTML = `<span>${month}</span><span class="transform transition-transform duration-300">▼</span>`;
@@ -483,8 +492,7 @@
         function renderAbout() {
             const basesContainer = document.getElementById('bases-content'), funcoesContainer = document.getElementById('funcoes-content');
             if (!basesContainer || !funcoesContainer) return;
-            basesContainer.innerHTML = staticData.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join('');
-            funcoesContainer.innerHTML = '';
+            basesContainer.innerHTML = staticData.bases.map(item => `<div class="pt-4 border-t first:border-t-0 border-slate-200"><h4 class="font-bold text-lg text-slate-700">${item.title}</h4><p>${item.content}</p></div>`).join(''); funcoesContainer.innerHTML = '';
             Object.entries(staticData.funcoes).forEach(([category, roles]) => {
                 let catHtml = `<h4 class="font-bold text-lg text-slate-700 pt-4 border-t first:border-t-0 border-slate-200">${category}</h4><ul class="list-disc list-inside list-disc-custom space-y-2">`;
                 roles.forEach(role => { catHtml += `<li><strong>${role.title}:</strong> ${role.content}</li>`; });
@@ -495,46 +503,18 @@
         function renderUnitLeaderDashboard() {
             const gestaoTitleEl = document.getElementById('gestao-title'); if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Líder de Unidade'; else return;
             const gestaoContent = document.getElementById('gestao-content'); if (!gestaoContent) return;
-            gestaoContent.innerHTML = `
-                <div class="bg-white p-6 rounded-xl shadow-md mb-8">
-                    <h3 class="text-xl font-semibold text-blue-600 mb-4">Enviar Atividade Concluída</h3>
-                    <form id="submit-activity-form" class="space-y-4 mb-8">
-                        <div><label for="unit-select-leader" class="block text-sm font-medium text-slate-700">Sua Unidade:</label><select id="unit-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione sua unidade</option></select><p id="no-units-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma unidade.</p></div>
-                        <div><label for="activity-select-leader" class="block text-sm font-medium text-slate-700">Atividade:</label><select id="activity-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione uma atividade</option></select><p id="no-activities-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma atividade.</p></div>
-                        <div><label for="details-leader" class="block text-sm font-medium text-slate-700">Detalhes da Conclusão:</label><textarea id="details-leader" rows="3" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required placeholder="Descreva..."></textarea></div>
-                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center">Enviar</button>
-                    </form>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md"><h3 class="text-xl font-semibold text-blue-600 mb-4">Meus Envios Recentes</h3><div id="leader-submissions-list"><p class="text-slate-600">Selecione uma unidade.</p></div></div>`;
+            gestaoContent.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-md mb-8"><h3 class="text-xl font-semibold text-blue-600 mb-4">Enviar Atividade Concluída</h3><form id="submit-activity-form" class="space-y-4 mb-8"><div><label for="unit-select-leader" class="block text-sm font-medium text-slate-700">Sua Unidade:</label><select id="unit-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione sua unidade</option></select><p id="no-units-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma unidade.</p></div><div><label for="activity-select-leader" class="block text-sm font-medium text-slate-700">Atividade:</label><select id="activity-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione uma atividade</option></select><p id="no-activities-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma atividade.</p></div><div><label for="details-leader" class="block text-sm font-medium text-slate-700">Detalhes da Conclusão:</label><textarea id="details-leader" rows="3" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required placeholder="Descreva..."></textarea></div><button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center">Enviar</button></form></div><div class="bg-white p-6 rounded-xl shadow-md"><h3 class="text-xl font-semibold text-blue-600 mb-4">Meus Envios Recentes</h3><div id="leader-submissions-list"><p class="text-slate-600">Selecione uma unidade.</p></div></div>`;
             populateLeaderUnitSelect(); populateLeaderActivitySelect();
             document.getElementById('submit-activity-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const submitBtn = e.target.querySelector('button[type="submit"]'); const originalBtnText = submitBtn.innerHTML;
-                submitBtn.disabled = true; submitBtn.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>`;
-
-                const unitId = document.getElementById('unit-select-leader').value;
-                const actId = document.getElementById('activity-select-leader').value;
-                const details = document.getElementById('details-leader').value;
-
-                if (!unitId || !actId || !details.trim()) {
-                    showMessage("Preencha todos os campos obrigatórios.");
-                    submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; return;
-                }
-
-                // --- INÍCIO DA VERIFICAÇÃO DE DATA LIMITE ---
+                const submitBtn = e.target.querySelector('button[type="submit"]'); const originalBtnText = submitBtn.innerHTML; submitBtn.disabled = true; submitBtn.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>`;
+                const unitId = document.getElementById('unit-select-leader').value, actId = document.getElementById('activity-select-leader').value, details = document.getElementById('details-leader').value;
+                if (!unitId || !actId || !details.trim()) { showMessage("Preencha todos os campos obrigatórios."); submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; return; }
                 const selectedActivity = currentActivities.find(a => a.id === actId);
                 if (selectedActivity && selectedActivity.deadline) {
-                    const deadlineDate = selectedActivity.deadline.toDate(); // Converte o timestamp do Firebase para Data
-                    const now = new Date();
-
-                    if (now > deadlineDate) {
-                        showMessage("O prazo para enviar esta atividade já terminou.");
-                        submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText;
-                        return; // Impede o envio
-                    }
+                    const deadlineDate = selectedActivity.deadline.toDate(); const now = new Date();
+                    if (now > deadlineDate) { showMessage("O prazo para enviar esta atividade já terminou."); submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; return; }
                 }
-                // --- FIM DA VERIFICAÇÃO DE DATA LIMITE ---
-
                 try {
                     if (!selectedActivity) { showMessage("Atividade inválida."); throw new Error("Atividade selecionada é inválida"); }
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), { unitId, unitName: currentUnits.find(u => u.id === unitId)?.name || '?', activityId: actId, activityName: selectedActivity.name, details, status: 'pending', submittedBy: currentUser.uid, submittedAt: serverTimestamp() });
@@ -550,7 +530,13 @@
             if (!selectedUnitId) { listEl.innerHTML = '<p class="text-slate-600">Selecione uma unidade para ver os envios.</p>'; return; }
             const unitSubs = currentSubmissions.filter(s => s.unitId === selectedUnitId);
             if (unitSubs.length === 0) { listEl.innerHTML = '<p class="text-slate-600">Nenhum envio para esta unidade.</p>'; return; }
-            listEl.innerHTML = `<div class="overflow-x-auto"><table class="min-w-full bg-white rounded-lg shadow-md"><thead class="bg-blue-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Detalhes</th><th class="th-cell">Status</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody>${unitSubs.map(s => `<tr><td class="td-cell">${s.activityName || '?'}</td><td class="td-cell truncate" title="${s.details}">${s.details || '?'}</td><td class="td-cell"><span class="status-badge ${s.status}">${s.status}</span></td><td class="td-cell font-bold">${s.pointsAwarded != null ? s.pointsAwarded : 'N/A'}</td><td class="td-cell">${s.submittedAt ? new Date(s.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
+            listEl.innerHTML = `<div class="overflow-x-auto"><table class="min-w-full bg-white rounded-lg shadow-md"><thead class="bg-blue-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Detalhes</th><th class="th-cell">Status</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody>${unitSubs.map(s => {
+                let statusCellHtml = `<span class="status-badge ${s.status}">${s.status}</span>`;
+                if (s.status === 'rejected' && s.rejectionReason) {
+                    statusCellHtml += `<p class="text-xs text-red-600 italic mt-1" title="Motivo da Rejeição">${s.rejectionReason}</p>`;
+                }
+                return `<tr><td class="td-cell">${s.activityName || '?'}</td><td class="td-cell truncate" title="${s.details}">${s.details || '?'}</td><td class="td-cell">${statusCellHtml}</td><td class="td-cell font-bold">${s.pointsAwarded != null ? s.pointsAwarded : 'N/A'}</td><td class="td-cell">${s.submittedAt ? new Date(s.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`;
+            }).join('')}</tbody></table></div>`;
             listEl.querySelectorAll('.th-cell').forEach(th => th.classList.add('py-3', 'px-4', 'text-left', 'text-sm', 'font-semibold', 'text-slate-700'));
             listEl.querySelectorAll('.td-cell').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm', 'border-b', 'border-slate-200'));
         }
@@ -560,100 +546,64 @@
             const gestaoContent = document.getElementById('gestao-content'); if (!gestaoContent) return;
             gestaoContent.innerHTML = `
                 <section class="admin-section"><h3 class="admin-h3 text-blue-600">Gerenciar Unidades</h3><div class="flex flex-col sm:flex-row gap-4 mb-4"><input type="text" id="new-unit-name" placeholder="Nome da unidade" class="admin-input"><button id="add-unit-btn" class="admin-btn bg-blue-600 hover:bg-blue-700">Adicionar</button></div><div class="table-container"><table class="admin-table"><thead class="bg-blue-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="units-table-body"></tbody></table></div></section>
-                <section class="admin-section"><h3 class="admin-h3 text-green-600">Gerenciar Atividades</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                        <input type="text" id="new-activity-name" placeholder="Nome da Atividade" class="admin-input">
-                        <select id="new-activity-type" class="admin-input"><option value="">Tipo</option><option>Físico</option><option>Mental</option><option>Espiritual</option><option>Social</option><option>Pioneirismo</option><option>Natureza</option><option>Serviço</option><option>Culinária</option><option>Geral</option></select>
-                        <input type="number" id="new-activity-max-points" placeholder="Pontos Máx." class="admin-input" min="0">
-                        <input type="datetime-local" id="new-activity-deadline" class="admin-input" title="Prazo Limite (opcional)">
-                    </div>
-                    <button id="add-activity-btn" class="admin-btn bg-green-600 hover:bg-green-700 w-full">Adicionar Atividade</button>
-                    <div class="table-container mt-6">
-                        <table class="admin-table"><thead class="bg-green-100">
-                            <tr><th class="th-cell">Atividade</th><th class="th-cell">Tipo</th><th class="th-cell">Pontos Máx.</th><th class="th-cell">Prazo Limite</th><th class="th-cell rounded-tr-lg">Ações</th></tr>
-                        </thead><tbody id="activities-table-body"></tbody></table>
-                    </div>
-                </section>
+                <section class="admin-section"><h3 class="admin-h3 text-green-600">Gerenciar Atividades</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4"><input type="text" id="new-activity-name" placeholder="Nome da Atividade" class="admin-input"><select id="new-activity-type" class="admin-input"><option value="">Tipo</option><option>Físico</option><option>Mental</option><option>Espiritual</option><option>Social</option><option>Pioneirismo</option><option>Natureza</option><option>Serviço</option><option>Culinária</option><option>Geral</option></select><input type="number" id="new-activity-max-points" placeholder="Pontos Máx." class="admin-input" min="0"><input type="datetime-local" id="new-activity-deadline" class="admin-input" title="Prazo Limite (opcional)"></div><button id="add-activity-btn" class="admin-btn bg-green-600 hover:bg-green-700 w-full">Adicionar Atividade</button><div class="table-container mt-6"><table class="admin-table"><thead class="bg-green-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Tipo</th><th class="th-cell">Pontos Máx.</th><th class="th-cell">Prazo Limite</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="activities-table-body"></tbody></table></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-red-700">Gerenciar Deméritos</h3><div class="space-y-4 mb-4"><div><label for="demerit-unit-select" class="admin-label">Unidade:</label><select id="demerit-unit-select" class="admin-input" required><option value="">Selecione</option></select></div><div><label for="demerit-points" class="admin-label">Pontos a Deduzir:</label><input type="number" id="demerit-points" min="1" class="admin-input" required placeholder="Ex: 10"></div><div><label for="demerit-reason" class="admin-label">Razão:</label><textarea id="demerit-reason" rows="3" class="admin-input" required placeholder="Motivo..."></textarea></div><button id="apply-demerit-btn" class="admin-btn bg-red-600 hover:bg-red-700 w-full">Aplicar</button></div><div class="table-container mt-6"><table class="admin-table"><thead class="bg-red-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell">Razão</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody id="demerits-table-body"></tbody></table></div></section>
+                <section class="admin-section"><h3 class="admin-h3 text-purple-600">Gerenciar Usuários</h3><div id="users-management-list" class="table-container"><p>Carregando usuários...</p></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-yellow-800">Envios Pendentes (<span id="pending-submissions-count">0</span>)</h3><div id="pending-submissions-list" class="table-container"><p>Nenhum pendente.</p></div></section>
                 <section class="admin-section !mb-0"><h3 class="admin-h3 text-slate-700">Histórico de Envios</h3><div id="all-submissions-list" class="table-container"><p>Nenhum registro.</p></div></section>`;
-            gestaoContent.querySelectorAll('.admin-section').forEach(el => el.classList.add('mb-8', 'p-4', 'rounded-xl', 'shadow-inner'));
-            gestaoContent.querySelectorAll('.admin-h3').forEach(el => el.classList.add('text-xl', 'font-semibold', 'mb-4'));
-            gestaoContent.querySelectorAll('.admin-input').forEach(el => el.classList.add('block', 'w-full', 'p-3', 'border', 'border-slate-300', 'rounded-lg', 'focus:ring-2'));
-            gestaoContent.querySelectorAll('.admin-btn').forEach(el => el.classList.add('text-white', 'font-bold', 'py-3', 'px-4', 'rounded-lg', 'transition', 'duration-300', 'ease-in-out', 'transform', 'hover:scale-105', 'shadow-md'));
-            gestaoContent.querySelectorAll('.admin-label').forEach(el => el.classList.add('block', 'text-sm', 'font-medium', 'text-slate-700', 'mb-1'));
-            gestaoContent.querySelectorAll('.table-container').forEach(el => el.classList.add('overflow-x-auto'));
-            gestaoContent.querySelectorAll('.admin-table').forEach(el => el.classList.add('min-w-full', 'bg-white', 'rounded-lg', 'shadow-md'));
-            gestaoContent.querySelectorAll('.th-cell').forEach(th => th.classList.add('py-3', 'px-4', 'text-left', 'text-sm', 'font-semibold', 'text-slate-700'));
+            gestaoContent.querySelectorAll('.admin-section').forEach(el => el.classList.add('mb-8', 'p-4', 'rounded-xl', 'shadow-inner')); gestaoContent.querySelectorAll('.admin-h3').forEach(el => el.classList.add('text-xl', 'font-semibold', 'mb-4')); gestaoContent.querySelectorAll('.admin-input').forEach(el => el.classList.add('block', 'w-full', 'p-3', 'border', 'border-slate-300', 'rounded-lg', 'focus:ring-2')); gestaoContent.querySelectorAll('.admin-btn').forEach(el => el.classList.add('text-white', 'font-bold', 'py-3', 'px-4', 'rounded-lg', 'transition', 'duration-300', 'ease-in-out', 'transform', 'hover:scale-105', 'shadow-md')); gestaoContent.querySelectorAll('.admin-label').forEach(el => el.classList.add('block', 'text-sm', 'font-medium', 'text-slate-700', 'mb-1')); gestaoContent.querySelectorAll('.table-container').forEach(el => el.classList.add('overflow-x-auto')); gestaoContent.querySelectorAll('.admin-table').forEach(el => el.classList.add('min-w-full', 'bg-white', 'rounded-lg', 'shadow-md')); gestaoContent.querySelectorAll('.th-cell').forEach(th => th.classList.add('py-3', 'px-4', 'text-left', 'text-sm', 'font-semibold', 'text-slate-700'));
             const demeritUnitSelect = document.getElementById('demerit-unit-select'); demeritUnitSelect.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
             document.getElementById('add-unit-btn').addEventListener('click', async () => { const name = document.getElementById('new-unit-name').value.trim(); if (!name) { showMessage("O nome da unidade não pode estar vazio."); return; } try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'units'), { name, score: 0, createdAt: serverTimestamp() }); showMessage(`Unidade "${name}" adicionada com sucesso!`); document.getElementById('new-unit-name').value = ''; } catch (err) { console.error("Erro ao adicionar unidade:", err); showMessage("Ocorreu um erro ao adicionar a unidade."); } });
-            
-            // --- LÓGICA ATUALIZADA PARA ADICIONAR ATIVIDADE COM DATA LIMITE ---
-            document.getElementById('add-activity-btn').addEventListener('click', async () => {
-                const name = document.getElementById('new-activity-name').value.trim();
-                const type = document.getElementById('new-activity-type').value;
-                const maxPoints = parseInt(document.getElementById('new-activity-max-points').value);
-                const deadlineValue = document.getElementById('new-activity-deadline').value;
-
-                if (!name || !type || isNaN(maxPoints) || maxPoints < 0) {
-                    showMessage("Por favor, preencha nome, tipo e pontos da atividade corretamente.");
-                    return;
-                }
-                
-                const activityData = {
-                    name,
-                    type,
-                    maxPoints,
-                    createdAt: serverTimestamp()
-                };
-
-                if (deadlineValue) {
-                    activityData.deadline = new Date(deadlineValue); // Adiciona a data limite ao objeto
-                }
-
-                try {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), activityData);
-                    showMessage(`Atividade "${name}" adicionada com sucesso!`);
-                    document.getElementById('new-activity-name').value = '';
-                    document.getElementById('new-activity-type').value = '';
-                    document.getElementById('new-activity-max-points').value = '';
-                    document.getElementById('new-activity-deadline').value = '';
-                } catch (err) {
-                    console.error("Erro ao adicionar atividade:", err);
-                    showMessage("Ocorreu um erro ao adicionar a atividade.");
-                }
-            });
-
+            document.getElementById('add-activity-btn').addEventListener('click', async () => { const name = document.getElementById('new-activity-name').value.trim(), type = document.getElementById('new-activity-type').value, maxPoints = parseInt(document.getElementById('new-activity-max-points').value), deadlineValue = document.getElementById('new-activity-deadline').value; if (!name || !type || isNaN(maxPoints) || maxPoints < 0) { showMessage("Por favor, preencha nome, tipo e pontos da atividade corretamente."); return; } const activityData = { name, type, maxPoints, createdAt: serverTimestamp() }; if (deadlineValue) activityData.deadline = new Date(deadlineValue); try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), activityData); showMessage(`Atividade "${name}" adicionada com sucesso!`); document.getElementById('new-activity-name').value = ''; document.getElementById('new-activity-type').value = ''; document.getElementById('new-activity-max-points').value = ''; document.getElementById('new-activity-deadline').value = ''; } catch (err) { console.error("Erro ao adicionar atividade:", err); showMessage("Ocorreu um erro ao adicionar a atividade."); } });
             document.getElementById('apply-demerit-btn').addEventListener('click', async () => { const unitId = demeritUnitSelect.value, points = parseInt(document.getElementById('demerit-points').value), reason = document.getElementById('demerit-reason').value.trim(); if (!unitId || isNaN(points) || points <= 0 || !reason) { showMessage("Por favor, preencha todos os campos do demérito."); return; } const unitName = currentUnits.find(u => u.id === unitId)?.name || '?'; showMessage(`Aplicar ${points} pontos de demérito a "${unitName}" pelo motivo: "${reason}"?`, async (confirmed) => { if (!confirmed) return; try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), { unitId, unitName, points, reason, appliedBy: currentUser.uid, appliedAt: serverTimestamp() }); const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId); const unitSnap = await getDoc(unitDocRef); if (unitSnap.exists()) await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - points }); showMessage("Demérito aplicado com sucesso!"); demeritUnitSelect.value = ""; document.getElementById('demerit-points').value = ""; document.getElementById('demerit-reason').value = ""; } catch (err) { console.error("Erro ao aplicar demérito:", err); showMessage("Ocorreu um erro ao aplicar o demérito."); } }, true); });
-            updateUnitsTable(); updateActivitiesTable(); updateDemeritsTable(); updateSubmissionsTables();
+            updateUnitsTable(); updateActivitiesTable(); updateDemeritsTable(); updateSubmissionsTables(); updateUsersTable();
         }
 
         function applyTableStyles(tableBodyElement) { tableBodyElement.querySelectorAll('tr').forEach(tr => tr.classList.add('border-b', 'border-slate-200', 'last:border-b-0', 'hover:bg-slate-50')); tableBodyElement.querySelectorAll('td').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm')); }
 
         function updateUnitsTable() {
             const tbody = document.getElementById('units-table-body'); if (!tbody) return;
-            tbody.innerHTML = currentUnits.length === 0 ? '<tr><td colspan="3" class="text-center p-4">Nenhuma unidade cadastrada.</td></tr>' : currentUnits.map(u => `<tr><td>${u.name}</td><td class="font-bold">${u.score || 0}</td><td><button data-id="${u.id}" data-name="${u.name}" class="delete-unit-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
+            tbody.innerHTML = currentUnits.length === 0 ? '<tr><td colspan="3" class="text-center p-4">Nenhuma unidade cadastrada.</td></tr>' : currentUnits.map(u => `<tr><td>${u.name}</td><td class="font-bold">${u.score || 0}</td><td class="whitespace-nowrap"><button data-id="${u.id}" class="edit-unit-btn admin-btn-xs bg-yellow-500 hover:bg-yellow-600 mr-1">Editar</button><button data-id="${u.id}" data-name="${u.name}" class="delete-unit-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
             applyTableStyles(tbody);
-            tbody.querySelectorAll('.delete-unit-btn').forEach(btn => { btn.addEventListener('click', (e) => handleDeleteUnit(e.target.dataset.id, e.target.dataset.name)); btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'); });
+            tbody.querySelectorAll('.admin-btn-xs').forEach(btn => btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'));
+            tbody.querySelectorAll('.delete-unit-btn').forEach(btn => btn.addEventListener('click', (e) => handleDeleteUnit(e.target.dataset.id, e.target.dataset.name)));
+            tbody.querySelectorAll('.edit-unit-btn').forEach(btn => btn.addEventListener('click', (e) => handleEditUnit(e.target.dataset.id)));
+        }
+
+        async function handleEditUnit(unitId) {
+            const unit = currentUnits.find(u => u.id === unitId); if (!unit) { showMessage("Unidade não encontrada."); return; }
+            const contentHtml = `<div><label for="edit-unit-name" class="block text-sm font-medium text-slate-700">Nome da Unidade:</label><input type="text" id="edit-unit-name" value="${unit.name}" class="admin-input mt-1"></div><div><label for="edit-unit-score" class="block text-sm font-medium text-slate-700">Pontuação:</label><input type="number" id="edit-unit-score" value="${unit.score || 0}" class="admin-input mt-1"></div>`;
+            showEditModal(`Editar Unidade: ${unit.name}`, contentHtml, async () => {
+                const newName = document.getElementById('edit-unit-name').value.trim(); const newScore = parseInt(document.getElementById('edit-unit-score').value, 10);
+                if (!newName || isNaN(newScore)) { showMessage("Nome e pontuação são obrigatórios e a pontuação deve ser um número."); return; }
+                try { const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId); await updateDoc(unitDocRef, { name: newName, score: newScore }); showMessage("Unidade atualizada com sucesso!"); } catch (err) { console.error("Erro ao atualizar unidade:", err); showMessage("Ocorreu um erro ao atualizar a unidade."); }
+            });
+            document.querySelectorAll('#editModal .admin-input').forEach(el => el.classList.add('block', 'w-full', 'p-3', 'border', 'border-slate-300', 'rounded-lg', 'focus:ring-2'));
         }
 
         async function handleDeleteUnit(unitId, unitName) { showMessage(`Tem certeza que deseja excluir a unidade "${unitName}"? Esta ação não pode ser desfeita.`, async (confirmed) => { if (!confirmed) return; try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId)); showMessage(`Unidade "${unitName}" excluída com sucesso!`); } catch (err) { console.error("Erro ao excluir unidade:", err); showMessage("Ocorreu um erro ao excluir a unidade."); } }, true); }
 
-        // --- FUNÇÃO ATUALIZADA PARA MOSTRAR DATA LIMITE NA TABELA ---
         function updateActivitiesTable() {
             const tbody = document.getElementById('activities-table-body'); if (!tbody) return;
-            tbody.innerHTML = currentActivities.length === 0 ? '<tr><td colspan="5" class="text-center p-4">Nenhuma atividade cadastrada.</td></tr>' : currentActivities.map(a => {
-                const deadlineFormatted = a.deadline ? new Date(a.deadline.toDate()).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
-                return `<tr>
-                    <td>${a.name}</td>
-                    <td>${a.type}</td>
-                    <td class="font-bold">${a.maxPoints}</td>
-                    <td>${deadlineFormatted}</td>
-                    <td><button data-id="${a.id}" data-name="${a.name}" class="delete-activity-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td>
-                </tr>`;
-            }).join('');
+            tbody.innerHTML = currentActivities.length === 0 ? '<tr><td colspan="5" class="text-center p-4">Nenhuma atividade cadastrada.</td></tr>' : currentActivities.map(a => { const deadlineFormatted = a.deadline ? new Date(a.deadline.toDate()).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'; return `<tr><td>${a.name}</td><td>${a.type}</td><td class="font-bold">${a.maxPoints}</td><td>${deadlineFormatted}</td><td class="whitespace-nowrap"><button data-id="${a.id}" class="edit-activity-btn admin-btn-xs bg-yellow-500 hover:bg-yellow-600 mr-1">Editar</button><button data-id="${a.id}" data-name="${a.name}" class="delete-activity-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`; }).join('');
             applyTableStyles(tbody);
-            tbody.querySelectorAll('.delete-activity-btn').forEach(btn => { btn.addEventListener('click', (e) => handleDeleteActivity(e.target.dataset.id, e.target.dataset.name)); btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'); });
+            tbody.querySelectorAll('.admin-btn-xs').forEach(btn => btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'));
+            tbody.querySelectorAll('.delete-activity-btn').forEach(btn => btn.addEventListener('click', (e) => handleDeleteActivity(e.target.dataset.id, e.target.dataset.name)));
+            tbody.querySelectorAll('.edit-activity-btn').forEach(btn => btn.addEventListener('click', (e) => handleEditActivity(e.target.dataset.id)));
+        }
+
+        async function handleEditActivity(activityId) {
+            const activity = currentActivities.find(a => a.id === activityId); if (!activity) { showMessage("Atividade não encontrada."); return; }
+            const deadlineValue = activity.deadline ? activity.deadline.toDate().toISOString().substring(0, 16) : '';
+            const contentHtml = `<div><label for="edit-activity-name" class="block text-sm font-medium text-slate-700">Nome:</label><input type="text" id="edit-activity-name" value="${activity.name}" class="admin-input mt-1"></div><div><label for="edit-activity-type" class="block text-sm font-medium text-slate-700">Tipo:</label><select id="edit-activity-type" class="admin-input mt-1"><option>Físico</option><option>Mental</option><option>Espiritual</option><option>Social</option><option>Pioneirismo</option><option>Natureza</option><option>Serviço</option><option>Culinária</option><option>Geral</option></select></div><div><label for="edit-activity-max-points" class="block text-sm font-medium text-slate-700">Pontos Máx.:</label><input type="number" id="edit-activity-max-points" value="${activity.maxPoints || 0}" class="admin-input mt-1" min="0"></div><div><label for="edit-activity-deadline" class="block text-sm font-medium text-slate-700">Prazo Limite:</label><input type="datetime-local" id="edit-activity-deadline" value="${deadlineValue}" class="admin-input mt-1"></div>`;
+            showEditModal(`Editar Atividade: ${activity.name}`, contentHtml, async () => {
+                const name = document.getElementById('edit-activity-name').value.trim(), type = document.getElementById('edit-activity-type').value, maxPoints = parseInt(document.getElementById('edit-activity-max-points').value, 10), deadlineValue = document.getElementById('edit-activity-deadline').value;
+                if (!name || !type || isNaN(maxPoints)) { showMessage("Preencha todos os campos corretamente."); return; }
+                const updatedData = { name, type, maxPoints }; if (deadlineValue) updatedData.deadline = new Date(deadlineValue);
+                try { const activityDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'activities', activityId); await updateDoc(activityDocRef, updatedData); showMessage("Atividade atualizada com sucesso!"); } catch (err) { console.error("Erro ao atualizar atividade:", err); showMessage("Ocorreu um erro ao atualizar a atividade."); }
+            });
+            document.getElementById('edit-activity-type').value = activity.type;
+            document.querySelectorAll('#editModal .admin-input').forEach(el => el.classList.add('block', 'w-full', 'p-3', 'border', 'border-slate-300', 'rounded-lg', 'focus:ring-2'));
         }
 
         async function handleDeleteActivity(activityId, activityName) { showMessage(`Tem certeza que deseja excluir a atividade "${activityName}"?`, async (confirmed) => { if (!confirmed) return; try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'activities', activityId)); showMessage(`Atividade "${activityName}" excluída com sucesso!`); } catch (err) { console.error("Erro ao excluir atividade:", err); showMessage("Ocorreu um erro ao excluir a atividade."); } }, true); }
@@ -669,7 +619,7 @@
             const pendingCountEl = document.getElementById('pending-submissions-count'); if (pendingCountEl) pendingCountEl.textContent = pendingSubs.length;
             const pendingListDiv = document.getElementById('pending-submissions-list');
             if (pendingListDiv) {
-                pendingListDiv.innerHTML = pendingSubs.length === 0 ? '<p class="text-slate-600 p-4">Nenhum envio pendente.</p>' : `<table class="admin-table"><thead class="bg-yellow-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Atividade</th><th class="th-cell">Detalhes</th><th class="th-cell">Evidência</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody>${pendingSubs.map(s => { const act = currentActivities.find(a => a.id === s.activityId); const maxPts = act?.maxPoints || 0; const evidenceCell = s.photoUrl ? `<a href="${s.photoUrl}" target="_blank" title="Clique para ver a imagem completa"><img src="${s.photoUrl}" alt="Evidência" class="w-16 h-16 object-cover rounded-md hover:opacity-75 transition-opacity" onerror="this.onerror=null; this.src='https://placehold.co/64x64/fee2e2/b91c1c?text=Erro';"></a>` : '<span class="text-xs text-slate-500">N/A</span>'; return `<tr><td class="align-middle">${s.unitName}</td><td class="align-middle">${s.activityName}</td><td class="align-middle truncate max-w-xs" title="${s.details}">${s.details}</td><td class="align-middle">${evidenceCell}</td><td class="align-middle"><input type="number" value="${maxPts}" min="0" max="${maxPts}" class="points-input w-20"><span class="text-xs">/${maxPts}</span></td><td class="align-middle"><div class="flex flex-col sm:flex-row gap-1"><button data-id="${s.id}" data-unit-id="${s.unitId}" class="approve-btn admin-btn-xs bg-green-500">Aprovar</button><button data-id="${s.id}" class="reject-btn admin-btn-xs bg-red-500">Rejeitar</button></div></td></tr>`; }).join('')}</tbody></table>`;
+                pendingListDiv.innerHTML = pendingSubs.length === 0 ? '<p class="text-slate-600 p-4">Nenhum envio pendente.</p>' : `<table class="admin-table"><thead class="bg-yellow-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Atividade</th><th class="th-cell">Detalhes</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody>${pendingSubs.map(s => { const act = currentActivities.find(a => a.id === s.activityId); const maxPts = act?.maxPoints || 0; return `<tr><td class="align-middle">${s.unitName}</td><td class="align-middle">${s.activityName}</td><td class="align-middle truncate max-w-xs" title="${s.details}">${s.details}</td><td class="align-middle"><input type="number" value="${maxPts}" min="0" max="${maxPts}" class="points-input w-20"><span class="text-xs">/${maxPts}</span></td><td class="align-middle"><div class="flex flex-col sm:flex-row gap-1"><button data-id="${s.id}" data-unit-id="${s.unitId}" class="approve-btn admin-btn-xs bg-green-500">Aprovar</button><button data-id="${s.id}" class="reject-btn admin-btn-xs bg-red-500">Rejeitar</button></div></td></tr>`; }).join('')}</tbody></table>`;
                 if (pendingSubs.length > 0) {
                     applyTableStyles(pendingListDiv.querySelector('tbody'));
                     pendingListDiv.querySelectorAll('.admin-btn-xs').forEach(btn => btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'));
@@ -680,9 +630,32 @@
             }
             const allSubsListDiv = document.getElementById('all-submissions-list');
             if (allSubsListDiv) {
-                allSubsListDiv.innerHTML = currentSubmissions.length === 0 ? '<p class="text-slate-600 p-4">Nenhum envio.</p>' : `<table class="admin-table"><thead class="bg-slate-200"><tr><th class="th-cell">Unidade</th><th class="th-cell">Atividade</th><th class="th-cell">Status</th><th class="th-cell">Pontos</th><th class="th-cell">Envio</th><th class="th-cell rounded-tr-lg">Validação</th></tr></thead><tbody>${currentSubmissions.map(s => `<tr><td>${s.unitName}</td><td>${s.activityName}</td><td><span class="status-badge ${s.status}">${s.status}</span></td><td class="font-bold">${s.pointsAwarded != null ? s.pointsAwarded : 'N/A'}</td><td>${s.submittedAt ? new Date(s.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td><td>${s.validatedAt ? new Date(s.validatedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('')}</tbody></table>`;
+                allSubsListDiv.innerHTML = currentSubmissions.length === 0 ? '<p class="text-slate-600 p-4">Nenhum envio.</p>' : `<table class="admin-table"><thead class="bg-slate-200"><tr><th class="th-cell">Unidade</th><th class="th-cell">Atividade</th><th class="th-cell">Status</th><th class="th-cell">Pontos</th><th class="th-cell">Envio</th><th class="th-cell rounded-tr-lg">Validação</th></tr></thead><tbody>${currentSubmissions.map(s => {
+                    let statusCellHtml = `<span class="status-badge ${s.status}">${s.status}</span>`;
+                    if (s.status === 'rejected' && s.rejectionReason) {
+                        statusCellHtml += `<p class="text-xs text-red-600 italic mt-1" title="Motivo da Rejeição">${s.rejectionReason}</p>`;
+                    }
+                    return `<tr><td>${s.unitName}</td><td>${s.activityName}</td><td>${statusCellHtml}</td><td class="font-bold">${s.pointsAwarded != null ? s.pointsAwarded : 'N/A'}</td><td>${s.submittedAt ? new Date(s.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td><td>${s.validatedAt ? new Date(s.validatedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`;
+                }).join('')}</tbody></table>`;
                 if (currentSubmissions.length > 0) applyTableStyles(allSubsListDiv.querySelector('tbody'));
             }
+        }
+
+        function updateUsersTable() {
+            const container = document.getElementById('users-management-list'); if (!container) return;
+            if (currentUsers.length === 0) { container.innerHTML = '<p>Nenhum usuário registrado.</p>'; return; }
+            const tableHtml = `<table class="admin-table"><thead class="bg-purple-100"><tr><th class="th-cell">Email</th><th class="th-cell">Função</th><th class="th-cell rounded-tr-lg">Data de Registro</th></tr></thead><tbody>${currentUsers.map(user => `<tr><td>${user.email || 'N/A'}</td><td><select data-uid="${user.uid}" class="user-role-select admin-input !p-2 !text-sm"><option value="leader" ${user.role === 'leader' ? 'selected' : ''}>Conselheiro</option><option value="secretary" ${user.role === 'secretary' ? 'selected' : ''}>Secretário</option></select></td><td>${user.createdAt ? new Date(user.createdAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('')}</tbody></table>`;
+            container.innerHTML = tableHtml; applyTableStyles(container.querySelector('tbody'));
+            container.querySelectorAll('.user-role-select').forEach(select => {
+                select.addEventListener('change', async (e) => {
+                    const userId = e.target.dataset.uid, newRole = e.target.value, userEmail = currentUsers.find(u => u.uid === userId)?.email || 'este usuário';
+                    showMessage(`Tem certeza que deseja alterar a função de ${userEmail} para "${newRole}"?`, async (confirmed) => {
+                        if (confirmed) {
+                            try { const userDocRef = doc(db, 'artifacts', appId, 'users', userId); await updateDoc(userDocRef, { role: newRole }); showMessage("Função do usuário atualizada com sucesso!"); } catch (err) { console.error("Erro ao atualizar função:", err); showMessage("Ocorreu um erro ao atualizar a função do usuário."); e.target.value = currentUsers.find(u => u.uid === userId)?.role; }
+                        } else { e.target.value = currentUsers.find(u => u.uid === userId)?.role; }
+                    }, true);
+                });
+            });
         }
 
         async function handleApproveSubmission(submissionId, unitId, points) {
@@ -701,19 +674,40 @@
         }
 
         async function handleRejectSubmission(submissionId) {
-            showMessage("Tem certeza que deseja rejeitar este envio?", async (confirmed) => {
-                if (!confirmed) return;
-                try {
-                    const subDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId); const subSnap = await getDoc(subDocRef);
-                    if (subSnap.exists() && subSnap.data().status === 'approved' && subSnap.data().pointsAwarded > 0) {
-                        const unitIdAdj = subSnap.data().unitId; const ptsRev = subSnap.data().pointsAwarded; const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitIdAdj); const unitSnap = await getDoc(unitDocRef);
-                        if (unitSnap.exists()) { await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - ptsRev }); }
+            const reason = prompt("Por favor, insira o motivo da rejeição:");
+            if (reason === null || reason.trim() === "") {
+                showMessage("A rejeição foi cancelada pois nenhum motivo foi fornecido.", () => {}, false);
+                return;
+            }
+
+            try {
+                const subDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
+                const subSnap = await getDoc(subDocRef);
+
+                if (subSnap.exists() && subSnap.data().status === 'approved' && subSnap.data().pointsAwarded > 0) {
+                    const unitIdAdj = subSnap.data().unitId;
+                    const ptsRev = subSnap.data().pointsAwarded;
+                    const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitIdAdj);
+                    const unitSnap = await getDoc(unitDocRef);
+                    if (unitSnap.exists()) {
+                        await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - ptsRev });
                     }
-                    await updateDoc(subDocRef, { status: 'rejected', pointsAwarded: 0, validatedAt: serverTimestamp(), validatedBy: currentUser.uid });
-                    showMessage("Envio rejeitado com sucesso!");
-                } catch (err) { console.error("Erro ao rejeitar submissão:", err); showMessage("Ocorreu um erro ao rejeitar a submissão."); }
-            }, true);
+                }
+                
+                await updateDoc(subDocRef, {
+                    status: 'rejected',
+                    pointsAwarded: 0,
+                    rejectionReason: reason.trim(), // Salva o motivo
+                    validatedAt: serverTimestamp(),
+                    validatedBy: currentUser.uid
+                });
+                showMessage("Envio rejeitado com sucesso!");
+            } catch (err) {
+                console.error("Erro ao rejeitar submissão:", err);
+                showMessage("Ocorreu um erro ao rejeitar a submissão.");
+            }
         }
+
 
         function setupAuthFormListeners() {
             const authForm = document.getElementById('auth-form'), emailIn = document.getElementById('email'), passIn = document.getElementById('password'), loginBtn = document.getElementById('login-btn'), regBtn = document.getElementById('register-btn'), logoutBtn = document.getElementById('logout-btn');
@@ -731,8 +725,7 @@
             const loadingOverlay = document.getElementById('loading-overlay');
             try {
                 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) throw new Error("Credenciais Firebase incompletas.");
-                firebaseApp = initializeApp(firebaseConfig);
-                db = getFirestore(firebaseApp); auth = getAuth(firebaseApp); storage = getStorage(firebaseApp);
+                firebaseApp = initializeApp(firebaseConfig); db = getFirestore(firebaseApp); auth = getAuth(firebaseApp); storage = getStorage(firebaseApp);
                 if (loadingOverlay) loadingOverlay.classList.add('hidden');
                 setupAuthFormListeners();
                 onAuthStateChanged(auth, async (user) => {
@@ -760,15 +753,14 @@
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), s => { currentActivities = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) updateActivitiesTable(); if (isActiveTabLeader()) populateLeaderActivitySelect(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), s => { currentSubmissions = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0)); renderDashboard(); if (isActiveTabSecretary()) updateSubmissionsTables(); if (isActiveTabLeader()) updateLeaderSubmissionsList(document.getElementById('unit-select-leader')?.value); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), s => { currentDemerits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0)); if (isActiveTabSecretary()) updateDemeritsTable(); }));
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'users'), s => { currentUsers = s.docs.map(d => ({ id: d.id, ...d.data() })); if (isActiveTabSecretary()) updateUsersTable(); }));
             renderCalendar(); renderAbout();
             const tabs = document.querySelectorAll('.tab-button'), contentSections = document.querySelectorAll('.content-section');
             function switchTab(targetTabId) {
                 tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === targetTabId)); contentSections.forEach(s => s.classList.toggle('active', s.id === targetTabId));
                 if (targetTabId === 'inicio') renderDashboard();
                 else if (targetTabId === 'gestao') {
-                    if (userRole === 'secretary') renderSecretaryDashboard();
-                    else if (userRole === 'leader') renderUnitLeaderDashboard();
-                    else { showMessage("Sem permissão para aceder a esta área."); switchTab('inicio'); }
+                    if (userRole === 'secretary') renderSecretaryDashboard(); else if (userRole === 'leader') renderUnitLeaderDashboard(); else { showMessage("Sem permissão para aceder a esta área."); switchTab('inicio'); }
                 }
             }
             tabs.forEach(tab => { const newTab = tab.cloneNode(true); tab.parentNode.replaceChild(newTab, tab); newTab.addEventListener('click', () => switchTab(newTab.dataset.tab)); });
@@ -783,27 +775,12 @@
             const unitSL = document.getElementById('unit-select-leader'), noUnitsMsgL = document.getElementById('no-units-message-leader');
             if (unitSL) { unitSL.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione sua unidade</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade cadastrada</option>'; if (noUnitsMsgL) noUnitsMsgL.classList.toggle('hidden', currentUnits.length > 0); }
         }
-        
-        // --- FUNÇÃO ATUALIZADA PARA MOSTRAR DATA LIMITE NO SELECT ---
+
         function populateLeaderActivitySelect() {
             const actSL = document.getElementById('activity-select-leader'), noActsMsgL = document.getElementById('no-activities-message-leader');
             if (actSL) {
-                const optionsHtml = currentActivities.map(a => {
-                    let deadlineText = '';
-                    if (a.deadline) {
-                        const deadlineDate = a.deadline.toDate();
-                        const now = new Date();
-                        const isExpired = now > deadlineDate;
-                        const formattedDate = deadlineDate.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-                        deadlineText = ` - Prazo: ${formattedDate}${isExpired ? ' (Expirado)' : ''}`;
-                    }
-                    return `<option value="${a.id}">${a.name} (${a.type})${deadlineText}</option>`;
-                }).join('');
-
-                actSL.innerHTML = currentActivities.length > 0 ?
-                    '<option value="">Selecione uma atividade</option>' + optionsHtml :
-                    '<option value="">Nenhuma atividade cadastrada</option>';
-
+                const optionsHtml = currentActivities.map(a => { let deadlineText = ''; if (a.deadline) { const deadlineDate = a.deadline.toDate(), now = new Date(), isExpired = now > deadlineDate, formattedDate = deadlineDate.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); deadlineText = ` - Prazo: ${formattedDate}${isExpired ? ' (Expirado)' : ''}`; } return `<option value="${a.id}">${a.name} (${a.type})${deadlineText}</option>`; }).join('');
+                actSL.innerHTML = currentActivities.length > 0 ? '<option value="">Selecione uma atividade</option>' + optionsHtml : '<option value="">Nenhuma atividade cadastrada</option>';
                 if (noActsMsgL) noActsMsgL.classList.toggle('hidden', currentActivities.length > 0);
             }
         }
