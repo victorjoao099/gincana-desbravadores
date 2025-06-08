@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gincana de Unidades: A Aventura do Desbravador</title>
+    <title>Gincana de Unidades: Edição 2025</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -38,90 +38,69 @@
 
         .accordion-button.open+.accordion-content {
             max-height: 1000px;
-            /* Adjust as needed for content length */
         }
 
         .chart-container {
             position: relative;
             height: 40vh;
-            /* Responsive height */
             width: 100%;
             max-width: 800px;
-            /* Max width to prevent excessive stretching */
             margin: auto;
-            /* Center horizontally */
             max-height: 400px;
-            /* Max height to prevent vertical overflow */
         }
 
         @media (max-width: 768px) {
             .chart-container {
                 height: 60vh;
-                /* Taller on mobile for better readability */
             }
-
-            /* Specific for mobile nav to ensure scroll works well */
             nav.overflow-x-auto {
                 justify-content: flex-start;
-                /* Align tabs to the start for better scroll */
             }
         }
 
         .list-disc-custom li::marker {
             color: #2563eb;
-            /* Custom bullet color */
         }
 
         .list-decimal-custom li::marker {
             color: #2563eb;
-            /* Custom number color */
         }
 
-        /* Estilos para status de submissão */
         .status-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
-            /* pill shape */
             font-size: 0.75rem;
-            /* text-xs */
             font-weight: 600;
-            /* semibold */
             text-transform: capitalize;
         }
 
         .status-badge.pending {
             background-color: #fef9c3;
-            /* yellow-100 */
             color: #ca8a04;
-            /* yellow-700 */
         }
 
         .status-badge.approved {
             background-color: #dcfce7;
-            /* green-100 */
             color: #16a34a;
-            /* green-700 */
         }
 
         .status-badge.rejected {
             background-color: #fee2e2;
-            /* red-100 */
             color: #dc2626;
-            /* red-700 */
         }
     </style>
 </head>
 
 <body class="bg-slate-50 text-slate-800">
 
-    <!-- Loading Overlay -->
+    <!-- Carregando Overlay -->
     <div id="loading-overlay"
         class="fixed inset-0 bg-slate-100 bg-opacity-90 flex flex-col justify-center items-center z-50">
         <div class="animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-blue-500"></div>
         <p class="mt-4 text-lg text-slate-700">A carregar aplicação...</p>
     </div>
 
-    <!-- Message Box -->
+    <!-- Messagem Box -->
     <div id="messageBox" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 hidden">
         <div class="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full text-center">
             <p id="messageText" class="text-lg font-semibold mb-4"></p>
@@ -274,14 +253,6 @@
                             <h4 class="font-bold text-lg text-slate-700 mt-4">Placar e Acompanhamento:</h4>
                             <p>Um Placar Geral visível e atualizado semanalmente (online ou físico) com a pontuação de
                                 cada unidade. Um "Painel de Conquistas" registrará visualmente os progressos.</p>
-                            <h4 class="font-bold text-lg text-slate-700 mt-4">Submissão e Validação de Requisitos:</h4>
-                            <p>Os líderes de unidade registrarão a conclusão dos requisitos no "Cantinho da Unidade" (<a
-                                    href="https://clubes.adventistas.org/br/unit-control/" target="_blank"
-                                    class="text-blue-600 hover:underline">https://clubes.adventistas.org/br/unit-control/</a>).
-                                A secretária do clube validará os requisitos e atribuirá a pontuação via SGC (<a
-                                    href="https://sg.sdasystems.org/cms/login.php?lang=pt_br" target="_blank"
-                                    class="text-blue-600 hover:underline">https://sg.sdasystems.org/cms/login.php?lang=pt_br</a>).
-                                Um PDF com o placar de pontos atualizado será divulgado semanalmente.</p>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-md">
@@ -715,7 +686,7 @@
                         const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid); const userDocSnap = await getDoc(userDocRef);
                         userRole = userDocSnap.exists() ? userDocSnap.data().role : 'leader';
                         if (!userDocSnap.exists()) { await setDoc(userDocRef, { role: 'leader', uid: user.uid, email: user.email || '', createdAt: serverTimestamp() }); }
-                        if (userP) userP.textContent = `Olá, ${userRole === 'secretary' ? 'Secretário(a)' : 'Líder'} (${user.email || 'Anônimo'})`;
+                        if (userP) userP.textContent = `Olá, ${userRole === 'secretary' ? 'Secretário(a)' : 'Conselheiro(a)'} (${user.email || 'Anônimo'})`;
                         if (logoutB) logoutB.classList.remove('hidden'); if (authSect) authSect.classList.add('hidden'); if (mainContent) mainContent.classList.remove('hidden');
                         initAppContent();
                     } else {
