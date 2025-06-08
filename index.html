@@ -535,16 +535,9 @@
                 }
                 // --- FIM DA VERIFICAÇÃO DE DATA LIMITE ---
 
-                let photoUrl = '';
                 try {
-                    if (photoFile) {
-                        const filePath = `submissions/${appId}/${currentUser.uid}/${Date.now()}-${photoFile.name}`;
-                        const storageRef = ref(storage, filePath);
-                        await uploadBytes(storageRef, photoFile);
-                        photoUrl = await getDownloadURL(storageRef);
-                    }
                     if (!selectedActivity) { showMessage("Atividade inválida."); throw new Error("Atividade selecionada é inválida"); }
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), { unitId, unitName: currentUnits.find(u => u.id === unitId)?.name || '?', activityId: actId, activityName: selectedActivity.name, details, photoUrl, status: 'pending', submittedBy: currentUser.uid, submittedAt: serverTimestamp() });
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), { unitId, unitName: currentUnits.find(u => u.id === unitId)?.name || '?', activityId: actId, activityName: selectedActivity.name, details, status: 'pending', submittedBy: currentUser.uid, submittedAt: serverTimestamp() });
                     showMessage("Atividade enviada para avaliação com sucesso!"); e.target.reset(); document.getElementById('unit-select-leader').value = ""; document.getElementById('activity-select-leader').value = ""; updateLeaderSubmissionsList("");
                 } catch (err) { console.error("Erro no envio:", err); showMessage("Ocorreu um erro ao enviar a atividade. Verifique o console para mais detalhes."); } finally { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; }
             });
