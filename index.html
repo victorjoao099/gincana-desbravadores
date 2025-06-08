@@ -93,7 +93,7 @@
             background-color: #fee2e2;
             color: #dc2626;
         }
-        
+
         #surprise-challenge-banner {
             animation: slideDown 0.5s ease-in-out;
         }
@@ -103,6 +103,7 @@
                 opacity: 0;
                 transform: translateY(-20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -139,7 +140,8 @@
                 <button id="editModalCancelBtn"
                     class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancelar</button>
                 <button id="editModalSaveBtn"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Salvar Alterações</button>
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Salvar
+                    Alterações</button>
             </div>
         </div>
     </div>
@@ -169,25 +171,31 @@
                     class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Registar</button>
             </form>
             <p class="text-sm text-slate-500 mt-4">
-                Após o registo, a sua conta terá acesso de visualização. Contacte a diretoria para obter permissões de Líder ou Secretário.
+                Após o registo, a sua conta terá acesso de visualização. Contacte a diretoria para obter permissões de
+                Líder ou Secretário.
             </p>
         </div>
     </section>
 
     <div id="main-app-content" class="container mx-auto p-4 md:p-8 hidden">
-        
-        <div id="surprise-challenge-banner" class="hidden mb-8 p-6 bg-gradient-to-r from-amber-400 to-yellow-500 text-white rounded-xl shadow-2xl">
+
+        <div id="surprise-challenge-banner"
+            class="hidden mb-8 p-6 bg-gradient-to-r from-amber-400 to-yellow-500 text-white rounded-xl shadow-2xl">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                 <h3 class="text-2xl font-bold">⚡ Desafio Surpresa Ativo!</h3>
-                <div id="challenge-timer" class="text-3xl font-bold bg-white text-yellow-500 rounded-lg px-4 py-2">00:00</div>
+                <div id="challenge-timer" class="text-3xl font-bold bg-white text-yellow-500 rounded-lg px-4 py-2">00:00
+                </div>
             </div>
             <h4 id="challenge-title" class="text-xl font-semibold"></h4>
             <p id="challenge-description" class="mt-2"></p>
             <p class="mt-2 font-bold">Vale: <span id="challenge-points"></span> pontos!</p>
             <form id="challenge-submission-form" class="mt-4 flex flex-col md:flex-row gap-4">
-                <select id="challenge-unit-select" class="admin-input !text-slate-800 w-full md:w-auto" required></select>
-                <input type="text" id="challenge-answer-input" placeholder="Digite sua resposta aqui" class="admin-input !text-slate-800 flex-grow" required>
-                <button type="submit" class="admin-btn bg-white hover:bg-yellow-100 !text-yellow-600 font-bold">Enviar Resposta</button>
+                <select id="challenge-unit-select" class="admin-input !text-slate-800 w-full md:w-auto"
+                    required></select>
+                <input type="text" id="challenge-answer-input" placeholder="Digite sua resposta aqui"
+                    class="admin-input !text-slate-800 flex-grow" required>
+                <button type="submit" class="admin-btn bg-white hover:bg-yellow-100 !text-yellow-600 font-bold">Enviar
+                    Resposta</button>
             </form>
         </div>
 
@@ -200,24 +208,31 @@
                 <div class="flex items-center justify-center md:justify-end space-x-4 mt-4 md:mt-0">
                     <div id="notifications-bell-container" class="relative hidden">
                         <button id="notifications-bell-btn" class="text-slate-500 hover:text-blue-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
-                            <span id="notifications-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                            <span id="notifications-count"
+                                class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
                         </button>
-                        <div id="notifications-panel" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-slate-200 z-10">
+                        <div id="notifications-panel"
+                            class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-slate-200 z-10">
                             <div class="p-3 border-b font-bold text-slate-700">Notificações</div>
                             <div id="notifications-list" class="max-h-96 overflow-y-auto"></div>
                             <div class="p-2 border-t text-center">
-                                <button id="mark-all-read-btn" class="text-sm text-blue-600 hover:underline">Marcar todas como lidas</button>
+                                <button id="mark-all-read-btn" class="text-sm text-blue-600 hover:underline">Marcar
+                                    todas como lidas</button>
                             </div>
                         </div>
                     </div>
-                    <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md hidden">Sair</button>
+                    <button id="logout-btn"
+                        class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md hidden">Sair</button>
                 </div>
             </div>
             <div class="text-center mt-4">
-                <p class="text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas, nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
+                <p class="text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas,
+                    nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
                 <p id="user-info" class="mt-2 text-sm text-slate-500">Carregando...</p>
             </div>
         </header>
@@ -247,27 +262,34 @@
             <section id="inicio" class="content-section">
                 <div id="inicio-empty-state" class="hidden text-center p-8 bg-white rounded-lg shadow-md">
                     <h3 class="text-2xl font-bold text-slate-700">Bem-vindo(a) à Gincana!</h3>
-                    <p id="inicio-empty-state-secretary" class="hidden mt-4 text-slate-600">Ainda não há unidades cadastradas. Para começar, vá para a aba <strong class="text-blue-600">⚙️ Gestão</strong> e adicione sua primeira unidade.</p>
-                    <p id="inicio-empty-state-leader" class="hidden mt-2 text-slate-500">Aguarde até que o secretário do clube configure as unidades e atividades.</p>
+                    <p id="inicio-empty-state-secretary" class="hidden mt-4 text-slate-600">Ainda não há unidades
+                        cadastradas. Para começar, vá para a aba <strong class="text-blue-600">⚙️ Gestão</strong> e
+                        adicione sua primeira unidade.</p>
+                    <p id="inicio-empty-state-leader" class="hidden mt-2 text-slate-500">Aguarde até que o secretário do
+                        clube configure as unidades e atividades.</p>
                 </div>
-                
+
                 <div id="dashboard-main-content">
-                    <p class="mb-6 text-slate-700 text-center">Bem-vindo ao painel da Gincana de Unidades! Aqui você encontra um resumo rápido do progresso e o placar geral das unidades.</p>
+                    <p class="mb-6 text-slate-700 text-center">Bem-vindo ao painel da Gincana de Unidades! Aqui você
+                        encontra um resumo rápido do progresso e o placar geral das unidades.</p>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center">
                         <div class="bg-white p-6 rounded-xl shadow-md">
                             <h3 class="text-slate-500 font-semibold text-base md:text-lg">Unidade em Destaque</h3>
-                            <p id="unidade-destaque" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">Carregando...</p>
+                            <p id="unidade-destaque" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">
+                                Carregando...</p>
                         </div>
                         <div class="bg-white p-6 rounded-xl shadow-md">
-                            <h3 class="text-slate-500 font-semibold text-base md:text-lg">Total de Pontos Acumulados</h3>
+                            <h3 class="text-slate-500 font-semibold text-base md:text-lg">Total de Pontos Acumulados
+                            </h3>
                             <p id="total-pontos" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">0</p>
                         </div>
                         <div class="bg-white p-6 rounded-xl shadow-md">
                             <h3 class="text-slate-500 font-semibold text-base md:text-lg">Atividades Concluídas</h3>
-                            <p id="atividades-realizadas" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">0</p>
+                            <p id="atividades-realizadas" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">0
+                            </p>
                         </div>
                     </div>
-    
+
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">Placar Geral da Gincana</h3>
                         <div class="chart-container">
@@ -281,25 +303,32 @@
                 <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Mural de Honra: Conquistas</h2>
                 <p class="mb-6 text-slate-700 text-center">Aqui são exibidas todas as medalhas e conquistas especiais
                     concedidas às unidades por feitos notáveis durante a gincana.</p>
-                <div id="achievements-feed"
-                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div id="achievements-feed" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 </div>
             </section>
 
             <section id="unit-page" class="content-section">
-                <button id="back-to-main-btn" class="mb-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                <button id="back-to-main-btn"
+                    class="mb-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                            clip-rule="evenodd" />
+                    </svg>
                     Voltar
                 </button>
                 <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
                     <div class="text-center border-b pb-4 mb-6">
-                        <h2 id="unit-page-name" class="text-3xl md:text-4xl font-bold text-blue-800">Nome da Unidade</h2>
-                        <p class="text-xl md:text-2xl font-semibold text-slate-600 mt-2">Pontuação: <span id="unit-page-score" class="text-blue-600">0</span></p>
+                        <h2 id="unit-page-name" class="text-3xl md:text-4xl font-bold text-blue-800">Nome da Unidade
+                        </h2>
+                        <p class="text-xl md:text-2xl font-semibold text-slate-600 mt-2">Pontuação: <span
+                                id="unit-page-score" class="text-blue-600">0</span></p>
                     </div>
-                    
+
                     <div class="mb-8">
                         <h3 class="text-2xl font-bold text-slate-700 mb-4">🏆 Conquistas da Unidade</h3>
-                        <div id="unit-page-achievements" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 text-center">
+                        <div id="unit-page-achievements"
+                            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 text-center">
                         </div>
                     </div>
 
@@ -371,7 +400,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, serverTimestamp, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-        
+
         // Variáveis de estado do Firebase e da aplicação
         let firebaseApp = null;
         let db = null;
@@ -386,7 +415,7 @@
             apiKey: "AIzaSyBJI_Hrp1I5GJHt82UKo5xjr392Z4XTMS8",
             authDomain: "gincana-de-unidade.firebaseapp.com",
             projectId: "gincana-de-unidade",
-            storageBucket: "gincana-de-unidade.appspot.com",
+            storageBucket: "gincana-de-unidade.firebasestorage.app",
             messagingSenderId: "497226153394",
             appId: "1:497226153394:web:35d484f3737e3a3b4938ab"
         };
@@ -466,23 +495,23 @@
             return lines;
         }
 
-        function applyTableStyles(tableBodyElement) { 
-            if(!tableBodyElement) return;
-            tableBodyElement.querySelectorAll('tr').forEach(tr => tr.classList.add('border-b', 'border-slate-200', 'last:border-b-0', 'hover:bg-slate-50')); 
-            tableBodyElement.querySelectorAll('td').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm')); 
+        function applyTableStyles(tableBodyElement) {
+            if (!tableBodyElement) return;
+            tableBodyElement.querySelectorAll('tr').forEach(tr => tr.classList.add('border-b', 'border-slate-200', 'last:border-b-0', 'hover:bg-slate-50'));
+            tableBodyElement.querySelectorAll('td').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm'));
         }
 
         const handleAddUnit = async () => { const name = document.getElementById('new-unit-name').value.trim(); if (!name) { showMessage("O nome da unidade não pode estar vazio."); return; } try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'units'), { name, score: 0, createdAt: serverTimestamp() }); showMessage(`Unidade "${name}" adicionada com sucesso!`); document.getElementById('new-unit-name').value = ''; } catch (err) { console.error("Erro ao adicionar unidade:", err); showMessage("Ocorreu um erro ao adicionar a unidade."); } };
         const handleAddActivity = async () => { const name = document.getElementById('new-activity-name').value.trim(), type = document.getElementById('new-activity-type').value, maxPoints = parseInt(document.getElementById('new-activity-max-points').value), deadlineValue = document.getElementById('new-activity-deadline').value; if (!name || !type || isNaN(maxPoints) || maxPoints < 0) { showMessage("Por favor, preencha nome, tipo e pontos da atividade corretamente."); return; } const activityData = { name, type, maxPoints, createdAt: serverTimestamp() }; if (deadlineValue) activityData.deadline = new Date(deadlineValue); try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), activityData); showMessage(`Atividade "${name}" adicionada com sucesso!`); document.getElementById('new-activity-name').value = ''; document.getElementById('new-activity-type').value = ''; document.getElementById('new-activity-max-points').value = ''; document.getElementById('new-activity-deadline').value = ''; await createNotification({ title: "Nova Atividade!", message: `Uma nova atividade foi adicionada: ${name}`, icon: '📝', link: 'calendario' }); } catch (err) { console.error("Erro ao adicionar atividade:", err); showMessage("Ocorreu um erro ao adicionar a atividade."); } };
         const handleApplyDemerit = async () => { const unitId = document.getElementById('demerit-unit-select').value, points = parseInt(document.getElementById('demerit-points').value), reason = document.getElementById('demerit-reason').value.trim(); if (!unitId || isNaN(points) || points <= 0 || !reason) { showMessage("Por favor, preencha todos os campos do demérito."); return; } const unitName = currentUnits.find(u => u.id === unitId)?.name || '?'; showMessage(`Aplicar ${points} pontos de demérito a "${unitName}" pelo motivo: "${reason}"?`, async (confirmed) => { if (!confirmed) return; try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), { unitId, unitName, points, reason, appliedBy: currentUser.uid, appliedAt: serverTimestamp() }); const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId); const unitSnap = await getDoc(unitDocRef); if (unitSnap.exists()) await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - points }); showMessage("Demérito aplicado com sucesso!"); await createNotification({ title: "Demérito Aplicado", message: `A unidade ${unitName} recebeu ${points} pontos de demérito.`, icon: '📉', targetUnitId: unitId, link: 'regulamento' }); document.getElementById('demerit-unit-select').value = ""; document.getElementById('demerit-points').value = ""; document.getElementById('demerit-reason').value = ""; } catch (err) { console.error("Erro ao aplicar demérito:", err); showMessage("Ocorreu um erro ao aplicar o demérito."); } }, true); };
-        const handleSendAnnouncement = async () => { const message = document.getElementById('new-announcement-message').value.trim(); if(!message) { showMessage("A mensagem do anúncio não pode estar vazia."); return; } await createNotification({ title: "Anúncio da Diretoria", message: message, icon: '📢' }); showMessage("Anúncio enviado com sucesso!"); document.getElementById('new-announcement-message').value = ''; };
+        const handleSendAnnouncement = async () => { const message = document.getElementById('new-announcement-message').value.trim(); if (!message) { showMessage("A mensagem do anúncio não pode estar vazia."); return; } await createNotification({ title: "Anúncio da Diretoria", message: message, icon: '📢' }); showMessage("Anúncio enviado com sucesso!"); document.getElementById('new-announcement-message').value = ''; };
         const handleLaunchChallenge = async () => {
             const title = document.getElementById('challenge-title-input').value.trim();
             const description = document.getElementById('challenge-desc-input').value.trim();
             const points = parseInt(document.getElementById('challenge-points-input').value, 10);
             const duration = parseInt(document.getElementById('challenge-duration-input').value, 10);
             const answer = document.getElementById('challenge-answer-input-admin').value.trim().toLowerCase();
-            if(!title || !description || isNaN(points) || isNaN(duration) || !answer) {
+            if (!title || !description || isNaN(points) || isNaN(duration) || !answer) {
                 showMessage("Preencha todos os campos do desafio corretamente.");
                 return;
             }
@@ -494,13 +523,13 @@
                 await setDoc(challengeRef, challengeData);
                 showMessage("Desafio Surpresa lançado com sucesso!");
                 await createNotification({ title: "Desafio Surpresa!", message: `Um novo desafio foi lançado: ${title}`, icon: '⚡' });
-            } catch(e) { console.error("Erro ao lançar desafio:", e); showMessage("Ocorreu um erro ao lançar o desafio."); }
+            } catch (e) { console.error("Erro ao lançar desafio:", e); showMessage("Ocorreu um erro ao lançar o desafio."); }
         };
         const handleEndChallenge = async () => {
             const challengeRef = doc(db, 'artifacts', appId, 'public', 'data', 'surprise_challenges', 'active');
             showMessage("Tem certeza que deseja encerrar o desafio atual?", async (confirmed) => {
-                if(!confirmed) return;
-                try { await deleteDoc(challengeRef); showMessage("Desafio encerrado com sucesso."); } catch(e) { console.error("Erro ao encerrar desafio:", e); }
+                if (!confirmed) return;
+                try { await deleteDoc(challengeRef); showMessage("Desafio encerrado com sucesso."); } catch (e) { console.error("Erro ao encerrar desafio:", e); }
             }, true);
         };
         const handleAddAchievementDef = async () => { const name = document.getElementById('new-achievement-name').value.trim(), description = document.getElementById('new-achievement-desc').value.trim(), icon = document.getElementById('new-achievement-icon').value.trim(); if (!name || !icon) { showMessage("Nome e Ícone da conquista são obrigatórios."); return; } try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'achievements'), { name, description, icon, createdAt: serverTimestamp() }); showMessage("Tipo de conquista criado com sucesso!"); document.getElementById('new-achievement-name').value = ''; document.getElementById('new-achievement-desc').value = ''; document.getElementById('new-achievement-icon').value = ''; } catch (e) { console.error("Erro ao criar conquista:", e); showMessage("Erro ao criar conquista."); } };
@@ -516,7 +545,7 @@
                     icon: data.icon,
                     link: data.link || null,
                     targetUnitId: data.targetUnitId || null,
-                    isRead: {}, 
+                    isRead: {},
                     timestamp: serverTimestamp()
                 });
             } catch (e) { console.error("Erro ao criar notificação:", e); }
@@ -530,11 +559,11 @@
 
             let unreadCount = 0;
             const relevantNotifications = allNotifications.filter(notif => {
-                if (userRole === 'secretary') return true; 
+                if (userRole === 'secretary') return true;
                 if (notif.targetUnitId) { return userRole === 'leader'; }
-                return true; 
+                return true;
             });
-            
+
             if (relevantNotifications.length === 0) {
                 listEl.innerHTML = '<p class="p-4 text-sm text-slate-500 text-center">Nenhuma notificação.</p>';
             } else {
@@ -554,42 +583,42 @@
                     `;
                 }).join('');
             }
-            
+
             countEl.textContent = unreadCount;
             countEl.classList.toggle('hidden', unreadCount === 0);
         }
-        
+
         async function handleNotificationClick(e) {
             const item = e.target.closest('.notification-item');
-            if(!item) return;
+            if (!item) return;
 
             const notifId = item.dataset.id;
             const link = item.dataset.link;
             const notif = allNotifications.find(n => n.id === notifId);
 
-            if(notif && !notif.isRead[currentUser.uid]) {
+            if (notif && !notif.isRead[currentUser.uid]) {
                 try {
                     const notifRef = doc(db, 'artifacts', appId, 'public', 'data', 'notifications', notifId);
                     await updateDoc(notifRef, { [`isRead.${currentUser.uid}`]: true });
-                } catch(e) { console.error("Erro ao marcar notificação como lida:", e); }
+                } catch (e) { console.error("Erro ao marcar notificação como lida:", e); }
             }
-            
-            if(link) { switchTab(link); }
+
+            if (link) { switchTab(link); }
             document.getElementById('notifications-panel').classList.add('hidden');
         }
-        
+
         async function handleMarkAllAsRead() {
             const unreadNotifications = allNotifications.filter(n => !n.isRead[currentUser.uid]);
-            if(unreadNotifications.length === 0) return;
-            
+            if (unreadNotifications.length === 0) return;
+
             showMessage(`Marcar ${unreadNotifications.length} notificações como lidas?`, async (confirmed) => {
-                if(!confirmed) return;
+                if (!confirmed) return;
                 const batch = writeBatch(db);
                 unreadNotifications.forEach(notif => {
                     const notifRef = doc(db, 'artifacts', appId, 'public', 'data', 'notifications', notif.id);
                     batch.update(notifRef, { [`isRead.${currentUser.uid}`]: true });
                 });
-                try { await batch.commit(); } catch(e) { console.error("Erro ao marcar todas como lidas:", e); }
+                try { await batch.commit(); } catch (e) { console.error("Erro ao marcar todas como lidas:", e); }
             }, true);
         }
 
@@ -622,7 +651,7 @@
                 document.getElementById('challenge-points').textContent = data.points;
                 const unitSelect = document.getElementById('challenge-unit-select');
                 unitSelect.innerHTML = currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-                
+
                 form.classList.toggle('hidden', userRole === 'viewer'); // Oculta formulário para visualizadores
                 banner.classList.remove('hidden');
 
@@ -648,7 +677,7 @@
                 banner.classList.add('hidden');
             }
         }
-        
+
         async function handleSubmitChallengeAnswer(e) {
             e.preventDefault();
             const unitId = document.getElementById('challenge-unit-select').value;
@@ -662,13 +691,13 @@
             const challengeSnap = await getDoc(challengeRef);
 
             if (!challengeSnap.exists()) { showMessage("O desafio já terminou!"); return; }
-            
+
             const challengeData = challengeSnap.data();
             if (challengeData.completedBy && challengeData.completedBy[unitId]) {
                 showMessage("Sua unidade já completou este desafio!");
                 return;
             }
-            
+
             if (challengeData.answer === answer) {
                 const points = challengeData.points;
                 const unitRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
@@ -676,9 +705,9 @@
                 if (unitSnap.exists()) {
                     await updateDoc(unitRef, { score: (unitSnap.data().score || 0) + points });
                 }
-                
+
                 await updateDoc(challengeRef, { [`completedBy.${unitId}`]: serverTimestamp() });
-                
+
                 showMessage(`Parabéns! Resposta correta! Sua unidade ganhou ${points} pontos!`);
                 await createNotification({ title: 'Desafio Concluído!', message: `A Unidade ${unitSnap.data().name} concluiu o desafio surpresa e ganhou ${points} pontos!`, icon: '🎉', targetUnitId: unitId });
                 document.getElementById('challenge-answer-input').value = '';
@@ -723,10 +752,11 @@
         function renderScoreChart(unitsData) {
             const scoreChartEl = document.getElementById('scoreChart'); if (!scoreChartEl) return;
             const ctx = scoreChartEl.getContext('2d'); if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, { type: 'bar', data: { labels: unitsData.map(item => wrapLabel(item.name, 15)), datasets: [{ label: 'Pontuação da Unidade', data: unitsData.map(item => item.score || 0), backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 5, }] },
-                options: { 
-                    indexAxis: 'y', responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} pontos` } } }, 
+            chartInstance = new Chart(ctx, {
+                type: 'bar', data: { labels: unitsData.map(item => wrapLabel(item.name, 15)), datasets: [{ label: 'Pontuação da Unidade', data: unitsData.map(item => item.score || 0), backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 5, }] },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} pontos` } } },
                     scales: { x: { beginAtZero: true, grid: { display: true, color: 'rgba(203, 213, 225, 0.5)' } }, y: { grid: { display: false }, ticks: { autoSkip: false } } },
                     onClick: (e) => {
                         const points = chartInstance.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
@@ -736,7 +766,7 @@
                             showUnitPage(unitId);
                         }
                     }
-                } 
+                }
             });
         }
 
@@ -750,10 +780,10 @@
                 monthDiv.appendChild(button); monthDiv.appendChild(contentDiv); container.appendChild(monthDiv);
             });
         }
-        
+
         function renderAchievementsTab() {
-            const feed = document.getElementById('achievements-feed'); if(!feed) return;
-            if(currentAwardedAchievements.length === 0) {
+            const feed = document.getElementById('achievements-feed'); if (!feed) return;
+            if (currentAwardedAchievements.length === 0) {
                 feed.innerHTML = '<p class="text-slate-500 col-span-full text-center">Nenhuma conquista concedida ainda.</p>';
                 return;
             }
@@ -832,9 +862,9 @@
                 <section class="admin-section"><h3 class="admin-h3 text-purple-600">Gerenciar Usuários</h3><div id="users-management-list" class="table-container"><p>Carregando usuários...</p></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-yellow-800">Envios Pendentes (<span id="pending-submissions-count">0</span>)</h3><div id="pending-submissions-list" class="table-container"><p>Nenhum pendente.</p></div></section>
                 <section class="admin-section !mb-0"><h3 class="admin-h3 text-slate-700">Histórico de Envios</h3><div id="all-submissions-list" class="table-container"><p>Nenhum registro.</p></div></section>`;
-            
+
             gestaoContent.querySelectorAll('.admin-section').forEach(el => el.classList.add('mb-8', 'p-4', 'rounded-xl', 'shadow-inner')); gestaoContent.querySelectorAll('.admin-h3').forEach(el => el.classList.add('text-xl', 'font-semibold', 'mb-4')); gestaoContent.querySelectorAll('.admin-input').forEach(el => el.classList.add('block', 'w-full', 'p-3', 'border', 'border-slate-300', 'rounded-lg', 'focus:ring-2')); gestaoContent.querySelectorAll('.admin-btn').forEach(el => el.classList.add('text-white', 'font-bold', 'py-3', 'px-4', 'rounded-lg', 'transition', 'duration-300', 'ease-in-out', 'transform', 'hover:scale-105', 'shadow-md')); gestaoContent.querySelectorAll('.admin-label').forEach(el => el.classList.add('block', 'text-sm', 'font-medium', 'text-slate-700', 'mb-1')); gestaoContent.querySelectorAll('.table-container').forEach(el => el.classList.add('overflow-x-auto')); gestaoContent.querySelectorAll('.admin-table').forEach(el => el.classList.add('min-w-full', 'bg-white', 'rounded-lg', 'shadow-md')); gestaoContent.querySelectorAll('.th-cell').forEach(th => th.classList.add('py-3', 'px-4', 'text-left', 'text-sm', 'font-semibold', 'text-slate-700'));
-            
+
             // Setup listeners
             document.getElementById('add-unit-btn').addEventListener('click', handleAddUnit);
             document.getElementById('add-activity-btn').addEventListener('click', handleAddActivity);
@@ -849,7 +879,7 @@
             const demeritUnitSelect = document.getElementById('demerit-unit-select'); demeritUnitSelect.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
             updateUnitsTable(); updateActivitiesTable(); updateDemeritsTable(); updateSubmissionsTables(); updateUsersTable(); updateAchievementDefsTable(); updateAwardAchievementDropdowns();
         }
-        
+
         function updateUnitsTable() {
             const tbody = document.getElementById('units-table-body'); if (!tbody) return;
             tbody.innerHTML = currentUnits.length === 0 ? '<tr><td colspan="3" class="text-center p-4">Nenhuma unidade cadastrada.</td></tr>' : currentUnits.map(u => `<tr><td><button class="unit-link text-blue-600 hover:underline" data-unit-id="${u.id}">${u.name}</button></td><td class="font-bold">${u.score || 0}</td><td class="whitespace-nowrap"><button data-id="${u.id}" class="edit-unit-btn admin-btn-xs bg-yellow-500 hover:bg-yellow-600 mr-1">Editar</button><button data-id="${u.id}" data-name="${u.name}" class="delete-unit-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
@@ -947,7 +977,7 @@
                 });
             });
         }
-        
+
         function updateAchievementDefsTable() { const tbody = document.getElementById('achievements-defs-table-body'); if (!tbody) return; tbody.innerHTML = currentAchievementDefs.map(def => `<tr> <td class="text-2xl">${def.icon}</td> <td>${def.name}</td> <td><button data-id="${def.id}" class="delete-ach-def-btn admin-btn-xs bg-red-500 hover:bg-red-600">X</button></td> </tr>`).join(''); applyTableStyles(tbody); tbody.querySelectorAll('.delete-ach-def-btn').forEach(btn => btn.addEventListener('click', (e) => handleDeleteAchievementDef(e.target.dataset.id))); }
         function updateAwardAchievementDropdowns() { const unitSelect = document.getElementById('award-ach-unit-select'), achSelect = document.getElementById('award-ach-select'); if (!unitSelect || !achSelect) return; unitSelect.innerHTML = currentUnits.length > 0 ? `<option value="">Selecione...</option>${currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('')}` : '<option>Nenhuma unidade</option>'; achSelect.innerHTML = currentAchievementDefs.length > 0 ? `<option value="">Selecione...</option>${currentAchievementDefs.map(a => `<option value="${a.id}">${a.icon} ${a.name}</option>`).join('')}` : '<option>Nenhuma conquista</option>'; }
 
@@ -969,11 +999,11 @@
 
         async function handleRejectSubmission(submissionId) {
             const reason = prompt("Por favor, insira o motivo da rejeição:");
-            if (reason === null || reason.trim() === "") { showMessage("A rejeição foi cancelada pois nenhum motivo foi fornecido.", () => {}, false); return; }
+            if (reason === null || reason.trim() === "") { showMessage("A rejeição foi cancelada pois nenhum motivo foi fornecido.", () => { }, false); return; }
             try {
                 const subDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
                 const subSnap = await getDoc(subDocRef);
-                if (subSnap.exists()) { 
+                if (subSnap.exists()) {
                     const subData = subSnap.data();
                     if (subData.status === 'approved' && subData.pointsAwarded > 0) { const unitIdAdj = subData.unitId, ptsRev = subData.pointsAwarded, unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitIdAdj), unitSnap = await getDoc(unitDocRef); if (unitSnap.exists()) { await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - ptsRev }); } }
                     await updateDoc(subDocRef, { status: 'rejected', pointsAwarded: 0, rejectionReason: reason.trim(), validatedAt: serverTimestamp(), validatedBy: currentUser.uid });
@@ -994,18 +1024,18 @@
         }
 
         let unsubscribers = [];
-        function cleanupListeners() { 
-            unsubscribers.forEach(unsub => unsub()); 
+        function cleanupListeners() {
+            unsubscribers.forEach(unsub => unsub());
             unsubscribers = [];
-            if(activeChallengeUnsub) { activeChallengeUnsub(); activeChallengeUnsub = null; }
-            if(countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+            if (activeChallengeUnsub) { activeChallengeUnsub(); activeChallengeUnsub = null; }
+            if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
         }
-        
+
         function showUnitPage(unitId) {
             document.querySelectorAll('.tab-button').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             document.getElementById('main-nav').classList.add('hidden'); // Oculta a navegação principal
-            
+
             const unitPageSection = document.getElementById('unit-page');
             unitPageSection.classList.add('active');
             renderUnitPageContent(unitId);
@@ -1013,7 +1043,7 @@
 
         function renderUnitPageContent(unitId) {
             const unit = currentUnits.find(u => u.id === unitId);
-            if(!unit) {
+            if (!unit) {
                 showMessage("Unidade não encontrada.");
                 switchTab('inicio'); // Volta para o início se a unidade não for achada
                 return;
@@ -1021,10 +1051,10 @@
 
             document.getElementById('unit-page-name').textContent = unit.name;
             document.getElementById('unit-page-score').textContent = unit.score || 0;
-            
+
             const achievementsContainer = document.getElementById('unit-page-achievements');
             const unitAchievements = currentAwardedAchievements.filter(a => a.unitId === unitId);
-            if(unitAchievements.length > 0) {
+            if (unitAchievements.length > 0) {
                 achievementsContainer.innerHTML = unitAchievements.map(a => `
                     <div title="${a.achievementName}" class="flex flex-col items-center p-2 bg-slate-100 rounded-lg">
                         <span class="text-4xl">${a.achievementIcon}</span>
@@ -1037,7 +1067,7 @@
 
             const submissionsContainer = document.getElementById('unit-page-submissions');
             const unitSubmissions = currentSubmissions.filter(s => s.unitId === unitId);
-            if(unitSubmissions.length > 0) {
+            if (unitSubmissions.length > 0) {
                 submissionsContainer.innerHTML = `<table class="min-w-full bg-white rounded-lg shadow-md"><thead class="bg-blue-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Status</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody>${unitSubmissions.map(s => {
                     let statusCellHtml = `<span class="status-badge ${s.status}">${s.status}</span>`;
                     if (s.status === 'rejected' && s.rejectionReason) {
@@ -1050,12 +1080,12 @@
                 submissionsContainer.innerHTML = '<p class="text-slate-500 text-center p-4">Nenhum envio registrado.</p>';
             }
         }
-        
+
         function switchTab(targetTabId) {
             document.getElementById('main-nav').classList.remove('hidden'); // Garante que a nav principal está visível
             document.querySelectorAll('.tab-button').forEach(t => t.classList.toggle('active', t.dataset.tab === targetTabId));
             document.querySelectorAll('.content-section').forEach(s => s.classList.toggle('active', s.id === targetTabId));
-            
+
             if (targetTabId === 'inicio') renderDashboard();
             else if (targetTabId === 'conquistas') renderAchievementsTab();
             else if (targetTabId === 'gestao') {
@@ -1078,27 +1108,27 @@
                     if (user) {
                         currentUser = user;
                         const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid); const userDocSnap = await getDoc(userDocRef);
-                        if (!userDocSnap.exists()) { 
+                        if (!userDocSnap.exists()) {
                             userRole = 'viewer'; // Novo usuário começa como 'viewer'
-                            await setDoc(userDocRef, { role: userRole, uid: user.uid, email: user.email || '', createdAt: serverTimestamp() }); 
+                            await setDoc(userDocRef, { role: userRole, uid: user.uid, email: user.email || '', createdAt: serverTimestamp() });
                         } else {
                             userRole = userDocSnap.data().role;
                         }
-                        
+
                         let welcomeMessage = "Olá!";
                         if (userRole === 'secretary') welcomeMessage = 'Olá, Secretário(a)';
                         else if (userRole === 'leader') welcomeMessage = 'Olá, Conselheiro(a)';
                         else if (userRole === 'viewer') welcomeMessage = 'Olá, Desbravador(a)';
-                        
+
                         if (userP) userP.textContent = `${welcomeMessage} (${user.email || 'Anônimo'})`;
-                        if (logoutB) logoutB.classList.remove('hidden'); 
+                        if (logoutB) logoutB.classList.remove('hidden');
                         if (notifBell) notifBell.classList.remove('hidden');
                         if (authSect) authSect.classList.add('hidden'); if (mainContent) mainContent.classList.remove('hidden');
                         initAppContent();
                     } else {
                         currentUser = null; userRole = null;
-                        if (userP) userP.textContent = 'Carregando...'; 
-                        if (logoutB) logoutB.classList.add('hidden'); 
+                        if (userP) userP.textContent = 'Carregando...';
+                        if (logoutB) logoutB.classList.add('hidden');
                         if (notifBell) notifBell.classList.add('hidden');
                         if (authSect) authSect.classList.remove('hidden'); if (mainContent) mainContent.classList.add('hidden');
                     }
@@ -1107,9 +1137,9 @@
         });
 
         async function initAppContent() {
-            const gestaoTabBtn = document.querySelector('button[data-tab="gestao"]'); 
+            const gestaoTabBtn = document.querySelector('button[data-tab="gestao"]');
             if (gestaoTabBtn) gestaoTabBtn.classList.toggle('hidden', userRole === 'viewer');
-            
+
             // Listeners de dados
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'), s => { currentUnits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0)); renderDashboard(); if (isActiveTabSecretary()) { updateUnitsTable(); updateAwardAchievementDropdowns(); } if (isActiveTabLeader()) populateLeaderUnitSelect(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), s => { currentActivities = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) updateActivitiesTable(); if (isActiveTabLeader()) populateLeaderActivitySelect(); }));
@@ -1117,14 +1147,14 @@
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), s => { currentDemerits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0)); if (isActiveTabSecretary()) updateDemeritsTable(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'users'), s => { currentUsers = s.docs.map(d => ({ id: d.id, ...d.data() })); if (isActiveTabSecretary()) updateUsersTable(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'achievements'), s => { currentAchievementDefs = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) { updateAchievementDefsTable(); updateAwardAchievementDropdowns(); } }));
-            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'awarded_achievements'), s => { currentAwardedAchievements = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.awardedAt?.toDate() || 0) - (a.awardedAt?.toDate() || 0)); if(document.getElementById('conquistas')?.classList.contains('active')) renderAchievementsTab(); }));
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'awarded_achievements'), s => { currentAwardedAchievements = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.awardedAt?.toDate() || 0) - (a.awardedAt?.toDate() || 0)); if (document.getElementById('conquistas')?.classList.contains('active')) renderAchievementsTab(); }));
             unsubscribers.push(onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'notifications'), orderBy('timestamp', 'desc')), s => { allNotifications = s.docs.map(d => ({ id: d.id, ...d.data() })); renderNotifications(); }));
-            
+
             // Listener para o Desafio Surpresa
             const challengeRef = doc(db, 'artifacts', appId, 'public', 'data', 'surprise_challenges', 'active');
             activeChallengeUnsub = onSnapshot(challengeRef, handleActiveChallengeUpdate);
             unsubscribers.push(activeChallengeUnsub);
-            
+
             // Configuração dos eventos da UI
             renderCalendar(); renderAbout();
             document.querySelectorAll('.tab-button').forEach(tab => { const newTab = tab.cloneNode(true); tab.parentNode.replaceChild(newTab, tab); newTab.addEventListener('click', () => switchTab(newTab.dataset.tab)); });
