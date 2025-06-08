@@ -18,7 +18,6 @@
 
         .tab-button.active {
             border-bottom-color: #2563eb;
-            /* theme-blue-600 */
             color: #2563eb;
         }
 
@@ -146,39 +145,30 @@
         </div>
     </div>
 
-
     <section id="auth-section"
         class="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-blue-200 p-4">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
             <h2 class="text-3xl font-bold text-blue-800 mb-6">Acesso à Gincana</h2>
             <form id="auth-form" class="space-y-4">
-                <div>
-                    <label for="email" class="sr-only">Email</label>
-                    <input type="email" id="email" placeholder="Email"
+                <div><label for="email" class="sr-only">Email</label><input type="email" id="email" placeholder="Email"
                         class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        required>
-                </div>
-                <div>
-                    <label for="password" class="sr-only">Palavra-passe</label>
-                    <input type="password" id="password" placeholder="Palavra-passe"
+                        required></div>
+                <div><label for="password" class="sr-only">Palavra-passe</label><input type="password" id="password"
+                        placeholder="Palavra-passe"
                         class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        required>
-                </div>
+                        required></div>
                 <button type="submit" id="login-btn"
                     class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Iniciar
                     Sessão</button>
                 <button type="button" id="register-btn"
                     class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Registar</button>
             </form>
-            <p class="text-sm text-slate-500 mt-4">
-                Após o registo, a sua conta terá acesso de visualização. Contacte a diretoria para obter permissões de
-                Líder ou Secretário.
-            </p>
+            <p class="text-sm text-slate-500 mt-4">Após o registo, a sua conta terá acesso de visualização. Contacte a
+                diretoria para obter permissões de Líder ou Secretário.</p>
         </div>
     </section>
 
     <div id="main-app-content" class="container mx-auto p-4 md:p-8 hidden">
-
         <div id="surprise-challenge-banner"
             class="hidden mb-8 p-6 bg-gradient-to-r from-amber-400 to-yellow-500 text-white rounded-xl shadow-2xl">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
@@ -200,12 +190,12 @@
         </div>
 
         <header class="mb-8">
-            <div class="flex flex-col md:flex-row justify-between md:items-center text-center md:text-left">
+            <div class="flex flex-col md:flex-row justify-between md:items-start text-center md:text-left">
                 <div>
                     <h1 class="text-3xl md:text-5xl font-bold text-blue-800">Gincana de Unidades</h1>
                     <h2 class="text-xl md:text-3xl font-semibold text-slate-600">Edição 2025</h2>
                 </div>
-                <div class="flex items-center justify-center md:justify-end space-x-4 mt-4 md:mt-0">
+                <div class="flex items-center justify-center space-x-4 mt-4 md:mt-0">
                     <div id="notifications-bell-container" class="relative hidden">
                         <button id="notifications-bell-btn" class="text-slate-500 hover:text-blue-600">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
@@ -216,181 +206,196 @@
                             <span id="notifications-count"
                                 class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
                         </button>
-                        <div id="notifications-panel"
-                            class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-slate-200 z-10">
-                            <div class="p-3 border-b font-bold text-slate-700">Notificações</div>
-                            <div id="notifications-list" class="max-h-96 overflow-y-auto"></div>
-                            <div class="p-2 border-t text-center">
-                                <button id="mark-all-read-btn" class="text-sm text-blue-600 hover:underline">Marcar
-                                    todas como lidas</button>
-                            </div>
-                        </div>
                     </div>
                     <button id="logout-btn"
                         class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md hidden">Sair</button>
                 </div>
             </div>
             <div class="text-center mt-4">
-                <p class="text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas,
-                    nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
+                <p class="text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso..."</p>
                 <p id="user-info" class="mt-2 text-sm text-slate-500">Carregando...</p>
             </div>
         </header>
 
-        <nav id="main-nav" class="flex md:justify-center border-b-2 border-slate-200 mb-8 overflow-x-auto">
-            <button data-tab="inicio"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏁
-                Início</button>
-            <button data-tab="conquistas"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏆
-                Conquistas</button>
-            <button data-tab="calendario"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📅
-                Calendário</button>
-            <button data-tab="regulamento"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📜
-                Regulamento</button>
-            <button data-tab="sobre"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🛡️
-                Sobre o Clube</button>
-            <button data-tab="gestao"
-                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap hidden">⚙️
-                Gestão</button>
-        </nav>
+        <nav id="main-nav" class="flex md:justify-center border-b-2 border-slate-200 mb-8 overflow-x-auto"></nav>
+        <main id="main-content"></main>
+    </div>
 
-        <main>
-            <section id="inicio" class="content-section">
-                <div id="inicio-empty-state" class="hidden text-center p-8 bg-white rounded-lg shadow-md">
-                    <h3 class="text-2xl font-bold text-slate-700">Bem-vindo(a) à Gincana!</h3>
-                    <p id="inicio-empty-state-secretary" class="hidden mt-4 text-slate-600">Ainda não há unidades
-                        cadastradas. Para começar, vá para a aba <strong class="text-blue-600">⚙️ Gestão</strong> e
-                        adicione sua primeira unidade.</p>
-                    <p id="inicio-empty-state-leader" class="hidden mt-2 text-slate-500">Aguarde até que o secretário do
-                        clube configure as unidades e atividades.</p>
-                </div>
+    <div id="notifications-panel"
+        class="hidden fixed top-16 right-4 md:right-8 w-80 bg-white rounded-lg shadow-xl border border-slate-200 z-50">
+        <div class="p-3 border-b font-bold text-slate-700">Notificações</div>
+        <div id="notifications-list" class="max-h-96 overflow-y-auto"></div>
+        <div class="p-2 border-t text-center">
+            <button id="mark-all-read-btn" class="text-sm text-blue-600 hover:underline">Marcar todas como
+                lidas</button>
+        </div>
+    </div>
+    </div>
+    <button id="logout-btn"
+        class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md hidden">Sair</button>
+    </div>
+    </div>
+    <div class="text-center mt-4">
+        <p class="text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas, nem te
+            espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
+        <p id="user-info" class="mt-2 text-sm text-slate-500">Carregando...</p>
+    </div>
+    </header>
 
-                <div id="dashboard-main-content">
-                    <p class="mb-6 text-slate-700 text-center">Bem-vindo ao painel da Gincana de Unidades! Aqui você
-                        encontra um resumo rápido do progresso e o placar geral das unidades.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center">
-                        <div class="bg-white p-6 rounded-xl shadow-md">
-                            <h3 class="text-slate-500 font-semibold text-base md:text-lg">Unidade em Destaque</h3>
-                            <p id="unidade-destaque" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">
-                                Carregando...</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-md">
-                            <h3 class="text-slate-500 font-semibold text-base md:text-lg">Total de Pontos Acumulados
-                            </h3>
-                            <p id="total-pontos" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">0</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-md">
-                            <h3 class="text-slate-500 font-semibold text-base md:text-lg">Atividades Concluídas</h3>
-                            <p id="atividades-realizadas" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">0
-                            </p>
-                        </div>
+    <nav id="main-nav" class="flex md:justify-center border-b-2 border-slate-200 mb-8 overflow-x-auto">
+        <button data-tab="inicio"
+            class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏁
+            Início</button>
+        <button data-tab="conquistas"
+            class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏆
+            Conquistas</button>
+        <button data-tab="calendario"
+            class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📅
+            Calendário</button>
+        <button data-tab="regulamento"
+            class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📜
+            Regulamento</button>
+        <button data-tab="sobre"
+            class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🛡️
+            Sobre o Clube</button>
+        <button data-tab="gestao"
+            class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap hidden">⚙️
+            Gestão</button>
+    </nav>
+
+    <main>
+        <section id="inicio" class="content-section">
+            <div id="inicio-empty-state" class="hidden text-center p-8 bg-white rounded-lg shadow-md">
+                <h3 class="text-2xl font-bold text-slate-700">Bem-vindo(a) à Gincana!</h3>
+                <p id="inicio-empty-state-secretary" class="hidden mt-4 text-slate-600">Ainda não há unidades
+                    cadastradas. Para começar, vá para a aba <strong class="text-blue-600">⚙️ Gestão</strong> e
+                    adicione sua primeira unidade.</p>
+                <p id="inicio-empty-state-leader" class="hidden mt-2 text-slate-500">Aguarde até que o secretário do
+                    clube configure as unidades e atividades.</p>
+            </div>
+
+            <div id="dashboard-main-content">
+                <p class="mb-6 text-slate-700 text-center">Bem-vindo ao painel da Gincana de Unidades! Aqui você
+                    encontra um resumo rápido do progresso e o placar geral das unidades.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-slate-500 font-semibold text-base md:text-lg">Unidade em Destaque</h3>
+                        <p id="unidade-destaque" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">
+                            Carregando...</p>
                     </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">Placar Geral da Gincana</h3>
-                        <div class="chart-container">
-                            <canvas id="scoreChart"></canvas>
-                        </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-slate-500 font-semibold text-base md:text-lg">Total de Pontos Acumulados
+                        </h3>
+                        <p id="total-pontos" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">0</p>
                     </div>
-                </div>
-            </section>
-
-            <section id="conquistas" class="content-section">
-                <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Mural de Honra: Conquistas</h2>
-                <p class="mb-6 text-slate-700 text-center">Aqui são exibidas todas as medalhas e conquistas especiais
-                    concedidas às unidades por feitos notáveis durante a gincana.</p>
-                <div id="achievements-feed" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                </div>
-            </section>
-
-            <section id="unit-page" class="content-section">
-                <button id="back-to-main-btn"
-                    class="mb-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd"
-                            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                            clip-rule="evenodd" />
-                    </svg>
-                    Voltar
-                </button>
-                <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
-                    <div class="text-center border-b pb-4 mb-6">
-                        <h2 id="unit-page-name" class="text-3xl md:text-4xl font-bold text-blue-800">Nome da Unidade
-                        </h2>
-                        <p class="text-xl md:text-2xl font-semibold text-slate-600 mt-2">Pontuação: <span
-                                id="unit-page-score" class="text-blue-600">0</span></p>
-                    </div>
-
-                    <div class="mb-8">
-                        <h3 class="text-2xl font-bold text-slate-700 mb-4">🏆 Conquistas da Unidade</h3>
-                        <div id="unit-page-achievements"
-                            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 text-center">
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 class="text-2xl font-bold text-slate-700 mb-4">📜 Histórico de Envios</h3>
-                        <div id="unit-page-submissions" class="overflow-x-auto">
-                        </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-slate-500 font-semibold text-base md:text-lg">Atividades Concluídas</h3>
+                        <p id="atividades-realizadas" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">0
+                        </p>
                     </div>
                 </div>
-            </section>
 
-            <section id="calendario" class="content-section">
-                <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Calendário de Atividades</h2>
-                <p class="mb-6 text-slate-700 text-center">Navegue pelas atividades diárias e semanais programadas para
-                    cada mês. As atividades semanais ocorrem sempre aos domingos.</p>
-                <div id="calendario-container" class="space-y-4">
-                </div>
-            </section>
-
-            <section id="regulamento" class="content-section">
-                <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Regulamento Interno da Gincana</h2>
-                <p class="mb-6 text-slate-700 text-center">Conheça as regras de pontuação, critérios de desempate,
-                    conduta esperada e procedimentos para recursos, garantindo uma gincana justa e organizada.</p>
-                <div class="space-y-4">
-                </div>
-            </section>
-
-            <section id="sobre" class="content-section">
-                <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Sobre o Clube de Desbravadores</h2>
-                <p class="mb-6 text-slate-700 text-center">Conheça os fundamentos, a história e a estrutura que guiam o
-                    Clube de Desbravadores, um movimento mundial dedicado ao desenvolvimento integral de juvenis e
-                    adolescentes.</p>
-                <div class="space-y-4">
-                    <div class="bg-white rounded-xl shadow-md">
-                        <button
-                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
-                            <span>As Bases do Clube</span>
-                            <span class="transform transition-transform duration-300">▼</span>
-                        </button>
-                        <div id="bases-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md">
-                        <button
-                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
-                            <span>Estrutura e Funções</span>
-                            <span class="transform transition-transform duration-300">▼</span>
-                        </button>
-                        <div id="funcoes-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                        </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">Placar Geral da Gincana</h3>
+                    <div class="chart-container">
+                        <canvas id="scoreChart"></canvas>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <section id="gestao" class="content-section">
-                <h2 id="gestao-title" class="text-3xl font-bold text-center mb-8 text-slate-700">
-                    Carregando informações de gestão...
-                </h2>
-                <div id="gestao-content" class="space-y-6">
+        <section id="conquistas" class="content-section">
+            <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Mural de Honra: Conquistas</h2>
+            <p class="mb-6 text-slate-700 text-center">Aqui são exibidas todas as medalhas e conquistas especiais
+                concedidas às unidades por feitos notáveis durante a gincana.</p>
+            <div id="achievements-feed" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+        </section>
+
+        <section id="unit-page" class="content-section">
+            <button id="back-to-main-btn"
+                class="mb-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                        clip-rule="evenodd" />
+                </svg>
+                Voltar
+            </button>
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <div class="text-center border-b pb-4 mb-6">
+                    <h2 id="unit-page-name" class="text-3xl md:text-4xl font-bold text-blue-800">Nome da Unidade
+                    </h2>
+                    <p class="text-xl md:text-2xl font-semibold text-slate-600 mt-2">Pontuação: <span
+                            id="unit-page-score" class="text-blue-600">0</span></p>
                 </div>
-            </section>
-        </main>
+
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold text-slate-700 mb-4">🏆 Conquistas da Unidade</h3>
+                    <div id="unit-page-achievements"
+                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 text-center">
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-700 mb-4">📜 Histórico de Envios</h3>
+                    <div id="unit-page-submissions" class="overflow-x-auto">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="calendario" class="content-section">
+            <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Calendário de Atividades</h2>
+            <p class="mb-6 text-slate-700 text-center">Navegue pelas atividades diárias e semanais programadas para
+                cada mês. As atividades semanais ocorrem sempre aos domingos.</p>
+            <div id="calendario-container" class="space-y-4">
+            </div>
+        </section>
+
+        <section id="regulamento" class="content-section">
+            <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Regulamento Interno da Gincana</h2>
+            <p class="mb-6 text-slate-700 text-center">Conheça as regras de pontuação, critérios de desempate,
+                conduta esperada e procedimentos para recursos, garantindo uma gincana justa e organizada.</p>
+            <div class="space-y-4">
+            </div>
+        </section>
+
+        <section id="sobre" class="content-section">
+            <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Sobre o Clube de Desbravadores</h2>
+            <p class="mb-6 text-slate-700 text-center">Conheça os fundamentos, a história e a estrutura que guiam o
+                Clube de Desbravadores, um movimento mundial dedicado ao desenvolvimento integral de juvenis e
+                adolescentes.</p>
+            <div class="space-y-4">
+                <div class="bg-white rounded-xl shadow-md">
+                    <button
+                        class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <span>As Bases do Clube</span>
+                        <span class="transform transition-transform duration-300">▼</span>
+                    </button>
+                    <div id="bases-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-md">
+                    <button
+                        class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
+                        <span>Estrutura e Funções</span>
+                        <span class="transform transition-transform duration-300">▼</span>
+                    </button>
+                    <div id="funcoes-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="gestao" class="content-section">
+            <h2 id="gestao-title" class="text-3xl font-bold text-center mb-8 text-slate-700">
+                Carregando informações de gestão...
+            </h2>
+            <div id="gestao-content" class="space-y-6">
+            </div>
+        </section>
+    </main>
     </div>
 
     <script type="module">
