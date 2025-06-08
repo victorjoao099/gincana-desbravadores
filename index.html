@@ -49,6 +49,10 @@
             max-height: 400px;
         }
 
+        #scoreChart {
+            cursor: pointer;
+        }
+
         @media (max-width: 768px) {
             .chart-container {
                 height: 60vh;
@@ -89,6 +93,21 @@
             background-color: #fee2e2;
             color: #dc2626;
         }
+        
+        #surprise-challenge-banner {
+            animation: slideDown 0.5s ease-in-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
@@ -111,7 +130,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 hidden">
         <div class="bg-white rounded-lg p-6 shadow-xl max-w-lg w-full">
             <h3 id="editModalTitle" class="text-2xl font-bold mb-4 text-slate-800"></h3>
@@ -150,27 +169,65 @@
                     class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">Registar</button>
             </form>
             <p class="text-sm text-slate-500 mt-4">
-                Se esta é a sua primeira vez, registe-se. Após o registo, o seu papel (Líder ou Secretário) será
-                definido no sistema.
+                Após o registo, a sua conta terá acesso de visualização. Contacte a diretoria para obter permissões de Líder ou Secretário.
             </p>
         </div>
     </section>
 
     <div id="main-app-content" class="container mx-auto p-4 md:p-8 hidden">
-        <header class="text-center mb-8">
-            <h1 class="text-4xl md:text-5xl font-bold text-blue-800">Gincana de Unidades</h1>
-            <h2 class="text-2xl md:text-3xl font-semibold text-slate-600">Edição 2025</h2>
+        
+        <div id="surprise-challenge-banner" class="hidden mb-8 p-6 bg-gradient-to-r from-amber-400 to-yellow-500 text-white rounded-xl shadow-2xl">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <h3 class="text-2xl font-bold">⚡ Desafio Surpresa Ativo!</h3>
+                <div id="challenge-timer" class="text-3xl font-bold bg-white text-yellow-500 rounded-lg px-4 py-2">00:00</div>
+            </div>
+            <h4 id="challenge-title" class="text-xl font-semibold"></h4>
+            <p id="challenge-description" class="mt-2"></p>
+            <p class="mt-2 font-bold">Vale: <span id="challenge-points"></span> pontos!</p>
+            <form id="challenge-submission-form" class="mt-4 flex flex-col md:flex-row gap-4">
+                <select id="challenge-unit-select" class="admin-input !text-slate-800 w-full md:w-auto" required></select>
+                <input type="text" id="challenge-answer-input" placeholder="Digite sua resposta aqui" class="admin-input !text-slate-800 flex-grow" required>
+                <button type="submit" class="admin-btn bg-white hover:bg-yellow-100 !text-yellow-600 font-bold">Enviar Resposta</button>
+            </form>
+        </div>
+
+        <header class="relative text-center mb-8">
+            <h1 class="text-3xl md:text-5xl font-bold text-blue-800">Gincana de Unidades</h1>
+            <h2 class="text-xl md:text-3xl font-semibold text-slate-600">Edição 2025</h2>
             <p class="mt-4 text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas,
                 nem te espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
             <p id="user-info" class="mt-2 text-sm text-slate-500">Carregando informações do utilizador...</p>
-            <button id="logout-btn"
-                class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md hidden">Sair</button>
+            
+            <div class="absolute top-0 right-0 flex items-center space-x-2 md:space-x-4">
+                <div id="notifications-bell-container" class="relative hidden">
+                    <button id="notifications-bell-btn" class="text-slate-500 hover:text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 md:h-8 md:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span id="notifications-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                    <div id="notifications-panel" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-slate-200 z-10">
+                        <div class="p-3 border-b font-bold text-slate-700">Notificações</div>
+                        <div id="notifications-list" class="max-h-96 overflow-y-auto"></div>
+                        <div class="p-2 border-t text-center">
+                            <button id="mark-all-read-btn" class="text-sm text-blue-600 hover:underline">Marcar todas como lidas</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="logout-btn"
+                    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 md:px-4 text-sm md:text-base rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md hidden">Sair</button>
+            </div>
+
         </header>
 
-        <nav class="flex md:justify-center border-b-2 border-slate-200 mb-8 overflow-x-auto">
+        <nav id="main-nav" class="flex md:justify-center border-b-2 border-slate-200 mb-8 overflow-x-auto">
             <button data-tab="inicio"
                 class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏁
                 Início</button>
+            <button data-tab="conquistas"
+                class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">🏆
+                Conquistas</button>
             <button data-tab="calendario"
                 class="tab-button text-lg font-semibold p-4 border-b-4 border-transparent hover:text-blue-600 transition-colors duration-300 whitespace-nowrap">📅
                 Calendário</button>
@@ -187,28 +244,68 @@
 
         <main>
             <section id="inicio" class="content-section">
-                <p class="mb-6 text-slate-700 text-center">Bem-vindo ao painel da Gincana de Unidades! Aqui você
-                    encontra um resumo rápido do progresso e o placar geral das unidades. Explore as outras abas para
-                    detalhes sobre o calendário, regulamento e informações do clube.</p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center">
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h3 class="text-slate-500 font-semibold text-lg">Unidade em Destaque</h3>
-                        <p id="unidade-destaque" class="text-3xl font-bold text-blue-600 mt-2">Carregando...</p>
+                <div id="inicio-empty-state" class="hidden text-center p-8 bg-white rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-slate-700">Bem-vindo(a) à Gincana!</h3>
+                    <p id="inicio-empty-state-secretary" class="hidden mt-4 text-slate-600">Ainda não há unidades cadastradas. Para começar, vá para a aba <strong class="text-blue-600">⚙️ Gestão</strong> e adicione sua primeira unidade.</p>
+                    <p id="inicio-empty-state-leader" class="hidden mt-2 text-slate-500">Aguarde até que o secretário do clube configure as unidades e atividades.</p>
+                </div>
+                
+                <div id="dashboard-main-content">
+                    <p class="mb-6 text-slate-700 text-center">Bem-vindo ao painel da Gincana de Unidades! Aqui você encontra um resumo rápido do progresso e o placar geral das unidades.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center">
+                        <div class="bg-white p-6 rounded-xl shadow-md">
+                            <h3 class="text-slate-500 font-semibold text-base md:text-lg">Unidade em Destaque</h3>
+                            <p id="unidade-destaque" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">Carregando...</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-md">
+                            <h3 class="text-slate-500 font-semibold text-base md:text-lg">Total de Pontos Acumulados</h3>
+                            <p id="total-pontos" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">0</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-md">
+                            <h3 class="text-slate-500 font-semibold text-base md:text-lg">Atividades Concluídas</h3>
+                            <p id="atividades-realizadas" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">0</p>
+                        </div>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h3 class="text-slate-500 font-semibold text-lg">Total de Pontos Acumulados</h3>
-                        <p id="total-pontos" class="text-3xl font-bold text-blue-600 mt-2">0</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h3 class="text-slate-500 font-semibold text-lg">Atividades Concluídas</h3>
-                        <p id="atividades-realizadas" class="text-3xl font-bold text-blue-600 mt-2">0 / 0</p>
+    
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">Placar Geral da Gincana</h3>
+                        <div class="chart-container">
+                            <canvas id="scoreChart"></canvas>
+                        </div>
                     </div>
                 </div>
+            </section>
 
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">Placar Geral da Gincana</h3>
-                    <div class="chart-container">
-                        <canvas id="scoreChart"></canvas>
+            <section id="conquistas" class="content-section">
+                <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">Mural de Honra: Conquistas</h2>
+                <p class="mb-6 text-slate-700 text-center">Aqui são exibidas todas as medalhas e conquistas especiais
+                    concedidas às unidades por feitos notáveis durante a gincana.</p>
+                <div id="achievements-feed"
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+            </section>
+
+            <section id="unit-page" class="content-section">
+                <button id="back-to-main-btn" class="mb-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                    Voltar
+                </button>
+                <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                    <div class="text-center border-b pb-4 mb-6">
+                        <h2 id="unit-page-name" class="text-3xl md:text-4xl font-bold text-blue-800">Nome da Unidade</h2>
+                        <p class="text-xl md:text-2xl font-semibold text-slate-600 mt-2">Pontuação: <span id="unit-page-score" class="text-blue-600">0</span></p>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <h3 class="text-2xl font-bold text-slate-700 mb-4">🏆 Conquistas da Unidade</h3>
+                        <div id="unit-page-achievements" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 text-center">
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-700 mb-4">📜 Histórico de Envios</h3>
+                        <div id="unit-page-submissions" class="overflow-x-auto">
+                        </div>
                     </div>
                 </div>
             </section>
@@ -226,102 +323,6 @@
                 <p class="mb-6 text-slate-700 text-center">Conheça as regras de pontuação, critérios de desempate,
                     conduta esperada e procedimentos para recursos, garantindo uma gincana justa e organizada.</p>
                 <div class="space-y-4">
-                    <div class="bg-white rounded-xl shadow-md">
-                        <button
-                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
-                            <span>1. Sistema de Pontuação</span>
-                            <span class="transform transition-transform duration-300">▼</span>
-                        </button>
-                        <div id="pontuacao-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                            <h4 class="font-bold text-lg text-slate-700">Pontuação Base por Atividade:</h4>
-                            <ul class="list-disc list-inside list-disc-custom space-y-1">
-                                <li><strong>Atividades Diárias:</strong> 5 pontos por Desbravador presente e ativo na
-                                    atividade. 5-10 pontos extras por Desbravador que concluir ou acertar o desafio.
-                                </li>
-                                <li><strong>Atividades Semanais:</strong> 20 pontos por unidade que participar
-                                    integralmente. 30-100 pontos por desempenho/conclusão. 10-50 pontos extras por
-                                    qualidade/criatividade.</li>
-                            </ul>
-                            <h4 class="font-bold text-lg text-slate-700 mt-4">Bônus Especiais:</h4>
-                            <ul class="list-disc list-inside list-disc-custom space-y-1">
-                                <li><strong>"Espírito Desbravador" (Semanal):</strong> 50 pontos.</li>
-                                <li><strong>"Unidade Nota 10" (Mensal):</strong> 100 pontos.</li>
-                                <li><strong>"Uniforme Impecável" (Semanal):</strong> 20 pontos.</li>
-                                <li><strong>"Desafio Surpresa":</strong> Pontos variáveis.</li>
-                            </ul>
-                            <h4 class="font-bold text-lg text-slate-700 mt-4">Penalidades:</h4>
-                            <ul class="list-disc list-inside list-disc-custom space-y-1">
-                                <li><strong>Atraso na Entrega:</strong> -10 pontos por dia.</li>
-                                <li><strong>Comportamento Antidesbravador:</strong> -20 a -50 pontos.</li>
-                                <li><strong>Falta em Atividades Obrigatórias:</strong> -10 pontos por membro.</li>
-                            </ul>
-                            <h4 class="font-bold text-lg text-slate-700 mt-4">Placar e Acompanhamento:</h4>
-                            <p>Um Placar Geral visível e atualizado semanalmente (online ou físico) com a pontuação de
-                                cada unidade. Um "Painel de Conquistas" registrará visualmente os progressos.</p>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md">
-                        <button
-                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
-                            <span>2. Critérios de Desempate</span>
-                            <span class="transform transition-transform duration-300">▼</span>
-                        </button>
-                        <div id="desempate-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                            <p>Em caso de empate na pontuação final ou em qualquer etapa decisiva, os seguintes
-                                critérios serão aplicados sequencialmente:</p>
-                            <ol class="list-decimal list-inside list-decimal-custom space-y-1">
-                                <li>Maior número de Bônus "Espírito Desbravador" acumulados.</li>
-                                <li>Maior número de Atividades Semanais concluídas com pontuação máxima.</li>
-                                <li>Menor número de Penalidades registradas.</li>
-                                <li>Sorteio: Em caso de persistência do empate, será realizado um sorteio justo e
-                                    transparente.</li>
-                            </ol>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md">
-                        <button
-                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
-                            <span>3. Conduta Esperada</span>
-                            <span class="transform transition-transform duration-300">▼</span>
-                        </button>
-                        <div id="conduta-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                            <p>Todos os Desbravadores e líderes devem aderir aos princípios de conduta do Clube:</p>
-                            <ul class="list-disc list-inside list-disc-custom space-y-1">
-                                <li><strong>Respeito:</strong> Tratar todos com respeito, cortesia e empatia.</li>
-                                <li><strong>Cooperação:</strong> Trabalhar em equipe, auxiliando os colegas e a unidade.
-                                </li>
-                                <li><strong>Disciplina:</strong> Seguir as instruções dos líderes e as regras do clube.
-                                </li>
-                                <li><strong>Integridade:</strong> Ser honesto em todas as atividades e submissões.</li>
-                                <li><strong>Espírito Esportivo:</strong> Aceitar vitórias e derrotas com humildade e
-                                    dignidade.</li>
-                                <li><strong>Segurança:</strong> Priorizar a segurança própria e alheia em todas as
-                                    atividades.</li>
-                            </ul>
-                            <p class="mt-2">Comportamentos que contrariem os ideais do Desbravador ou que prejudiquem o
-                                ambiente da gincana serão passíveis de penalidades.</p>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md">
-                        <button
-                            class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
-                            <span>4. Procedimentos para Recursos (Apelações)</span>
-                            <span class="transform transition-transform duration-300">▼</span>
-                        </button>
-                        <div id="recursos-content" class="accordion-content px-6 pb-6 text-slate-600 space-y-4">
-                            <p>Caso uma unidade ou líder discorde da pontuação atribuída ou de uma penalidade, poderá
-                                apresentar um recurso:</p>
-                            <ol class="list-decimal list-inside list-decimal-custom space-y-1">
-                                <li><strong>Comunicação Inicial:</strong> O líder da unidade deve comunicar formalmente
-                                    a secretária do clube, por escrito (e-mail ou mensagem oficial), no prazo máximo de
-                                    24 horas após a divulgação da pontuação contestada.</li>
-                                <li><strong>Análise Preliminar:</strong> A secretária e o diretor associado responsável
-                                    pela gincana analisarão o recurso e as evidências.</li>
-                                <li><strong>Decisão:</strong> A decisão será comunicada ao Conselheiro da unidade em até 48
-                                    horas. A decisão da diretoria é final e irrevogável.</li>
-                            </ol>
-                        </div>
-                    </div>
                 </div>
             </section>
 
@@ -363,19 +364,17 @@
     </div>
 
     <script type="module">
-        console.log("Script de módulo a ser executado - Versão: 2024-06-08_COM_MOTIVO_REJEICAO");
+        console.log("Script de módulo a ser executado - Versão: 2024-06-08_RESPONSIVO");
 
         // Importações do Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-storage.js";
-
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, serverTimestamp, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        
         // Variáveis de estado do Firebase e da aplicação
         let firebaseApp = null;
         let db = null;
         let auth = null;
-        let storage = null;
         let currentUser = null;
         let userRole = null;
 
@@ -438,15 +437,20 @@
         let currentSubmissions = [];
         let currentDemerits = [];
         let currentUsers = [];
+        let currentAchievementDefs = [];
+        let currentAwardedAchievements = [];
+        let allNotifications = [];
+        let activeChallengeUnsub = null;
+        let countdownInterval = null;
 
-        // Dados estáticos da aplicação (Calendário, Sobre, etc.)
+        // Dados estáticos da aplicação
         const staticData = {
             calendar: { "Junho: Mês do Pioneirismo e da Natureza": [{ date: "15/06/2025", title: "A divulgar", desc: "" }, { date: "22/06/2025", title: "A divulgar", desc: "" }, { date: "29/06/2025", title: "A divulgar", desc: "" }], },
-            bases: [{ title: "Origem Histórica", content: "O Clube de Desbravadores foi oficializado em nível mundial no ano de 1950 pela Associação Geral da Igreja Adventista do Sétimo Dia, nos Estados Unidos. Suas raízes, no entanto, remontam a iniciativas anteriores de clubes missionários e de jovens que buscavam o desenvolvimento integral." }, { title: "Filosofia", content: "A filosofia do Clube de Desbravadores baseia-se no desenvolvimento harmonioso das forças físicas, mentais e espirituais dos juvenis e adolescentes. O programa busca preparar os jovens para a cidadania útil, o serviço à comunidade e o compromisso com Deus. Tudo o que o Desbravador faz tem um sentido, uma base, um alicerce de valores cristãos e princípios de vida." }, { title: "Objetivos Prioritários", content: "Os objetivos do Clube são amplos e visam o crescimento completo do indivíduo: Desenvolvimento Físico, Mental, Espiritual e Social." }, { title: "Símbolos do Clube", content: "Os símbolos do Desbravador são elementos visuais e conceituais que representam seus princípios: Ideais (Voto e Lei), Hino, Emblemas, Bandeira, Bandeirim e o Uniforme." }],
-            funcoes: { "Cargos da Unidade": [{ title: "Conselheiro(a)", content: "É a autoridade máxima dentro da unidade, responsável pela ordem e andamento geral. Atua como elo entre a unidade e a direção do clube. Geralmente, deve ser batizado e ter mais de 18 anos (ou 16+ com supervisão de um diretor maior de idade em atividades externas)." }, { title: "Capitão(ã)", content: "Membro da unidade (10 a 15 anos) responsável por animar o grupo a cumprir o programa, por meio do exemplo e influência pessoal. Lidera a unidade em formações de Ordem Unida e a representa perante a direção. Deve ser organizado, ter liderança, disciplina, honestidade, fidelidade e humildade." }, { title: "Secretário(a) de Unidade", content: "Responsável por manter os registos da unidade atualizados, incluindo chamada de presença, pontualidade, assiduidade, uso do uniforme e higiene pessoal. Idade entre 10 e 15 anos." }, { title: "Tesoureiro(a) de Unidade", content: "Gerencia os pequenos recursos financeiros da unidade, mantendo registos precisos de despesas e receitas. Idade entre 10 e 15 anos." }, { title: "Padioleiro(a) de Unidade", content: "Atua como o 'enfermeiro' da unidade, responsável por auxiliar em pequenos acidentes e aplicar primeiros socorros básicos, sob supervisão. Idade entre 10 e 15 anos." }, { title: "Almoxarife de Unidade", content: "Responsável pela guarda e organização dos materiais e equipamentos da unidade. Idade entre 10 e 15 anos." }, { title: "Capelão(ã) de Unidade", content: "Mantém a ordem e harmonia espiritual da unidade, juntamente com o conselheiro, promovendo momentos de reflexão e estudo bíblico. Idade entre 10 e 15 anos, deve ser de boa índole e respeitador." }], "Cargos da Direção do Clube": [{ title: "Diretor(a) do Clube", content: "É a autoridade máxima do clube. Responsável por planejar, organizar e supervisionar todas as atividades, manter a ligação com o Pastor e a Associação, presidir as reuniões da comissão executiva e docente, e assegurar um programa completo para o clube. Deve ser um líder maduro, com boa reputação na Igreja e ter o treinamento para oficiais. Deve ser um exemplo de espiritualidade, prontidão, amabilidade, temperança, pontualidade e asseio pessoal, incluindo o uso adequado do uniforme." }, { title: "Diretores(as) Associados(as)", content: "São o braço direito do diretor, responsáveis pelo cumprimento do programa do clube. Coordenam as Classes, Especialidades e Unidades, gerenciando o trabalho dos instrutores e conselheiros. Geralmente há um diretor associado para a ala feminina e outro para a ala masculina. Não há limite para o número de diretores associados, dependendo do tamanho do clube." }, { title: "Secretário(a) do Clube", content: "Assume a responsabilidade pela documentação e registo das atividades do clube. Isso abrange a manutenção de registos de membros, elaboração de relatórios de eventos e comunicação de informações cruciais aos membros e suas famílias. Essencial para a organização administrativa do clube." }, { title: "Tesoureiro(a) do Clube", content: "Gerencia as finanças do clube, mantendo um registo preciso das despesas e receitas, elaborando orçamentos e assegurando o uso responsável dos recursos financeiros disponíveis. Responsável pela saúde financeira do clube." }, { title: "Capelão(ã) do Clube", content: "Encarregado da dimensão espiritual do clube, liderando estudos bíblicos, momentos de oração e promovendo os valores e princípios inerentes à crença Adventista do Sétimo Dia. Essencial para o desenvolvimento espiritual dos Desbravadores." }, { title: "Conselheiros(as) (Gerais) e Instrutores(as)", content: "Os conselheiros supervisionam as unidades, enquanto os instrutores são responsáveis por ensinar as classes e especialidades. Ambos trabalham em estreita colaboração com os diretores associados para garantir a execução do programa educativo do clube. A função de conselheiro é considerada uma das mais importantes, devido ao contato direto com os juvenis." }] }
+            bases: [],
+            funcoes: { "Cargos da Unidade": [], "Cargos da Direção do Clube": [] }
         };
 
-        // Funções de Renderização da UI
+        // Funções de utilidade e de manipulação de dados definidas antes de serem chamadas.
         function wrapLabel(label, maxLen) {
             if (!label || label.length <= maxLen) return label;
             const lines = []; let currentLine = ''; const words = label.split(' ');
@@ -461,12 +465,255 @@
             return lines;
         }
 
+        function applyTableStyles(tableBodyElement) { 
+            if(!tableBodyElement) return;
+            tableBodyElement.querySelectorAll('tr').forEach(tr => tr.classList.add('border-b', 'border-slate-200', 'last:border-b-0', 'hover:bg-slate-50')); 
+            tableBodyElement.querySelectorAll('td').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm')); 
+        }
+
+        const handleAddUnit = async () => { const name = document.getElementById('new-unit-name').value.trim(); if (!name) { showMessage("O nome da unidade não pode estar vazio."); return; } try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'units'), { name, score: 0, createdAt: serverTimestamp() }); showMessage(`Unidade "${name}" adicionada com sucesso!`); document.getElementById('new-unit-name').value = ''; } catch (err) { console.error("Erro ao adicionar unidade:", err); showMessage("Ocorreu um erro ao adicionar a unidade."); } };
+        const handleAddActivity = async () => { const name = document.getElementById('new-activity-name').value.trim(), type = document.getElementById('new-activity-type').value, maxPoints = parseInt(document.getElementById('new-activity-max-points').value), deadlineValue = document.getElementById('new-activity-deadline').value; if (!name || !type || isNaN(maxPoints) || maxPoints < 0) { showMessage("Por favor, preencha nome, tipo e pontos da atividade corretamente."); return; } const activityData = { name, type, maxPoints, createdAt: serverTimestamp() }; if (deadlineValue) activityData.deadline = new Date(deadlineValue); try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), activityData); showMessage(`Atividade "${name}" adicionada com sucesso!`); document.getElementById('new-activity-name').value = ''; document.getElementById('new-activity-type').value = ''; document.getElementById('new-activity-max-points').value = ''; document.getElementById('new-activity-deadline').value = ''; await createNotification({ title: "Nova Atividade!", message: `Uma nova atividade foi adicionada: ${name}`, icon: '📝', link: 'calendario' }); } catch (err) { console.error("Erro ao adicionar atividade:", err); showMessage("Ocorreu um erro ao adicionar a atividade."); } };
+        const handleApplyDemerit = async () => { const unitId = document.getElementById('demerit-unit-select').value, points = parseInt(document.getElementById('demerit-points').value), reason = document.getElementById('demerit-reason').value.trim(); if (!unitId || isNaN(points) || points <= 0 || !reason) { showMessage("Por favor, preencha todos os campos do demérito."); return; } const unitName = currentUnits.find(u => u.id === unitId)?.name || '?'; showMessage(`Aplicar ${points} pontos de demérito a "${unitName}" pelo motivo: "${reason}"?`, async (confirmed) => { if (!confirmed) return; try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), { unitId, unitName, points, reason, appliedBy: currentUser.uid, appliedAt: serverTimestamp() }); const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId); const unitSnap = await getDoc(unitDocRef); if (unitSnap.exists()) await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - points }); showMessage("Demérito aplicado com sucesso!"); await createNotification({ title: "Demérito Aplicado", message: `A unidade ${unitName} recebeu ${points} pontos de demérito.`, icon: '📉', targetUnitId: unitId, link: 'regulamento' }); document.getElementById('demerit-unit-select').value = ""; document.getElementById('demerit-points').value = ""; document.getElementById('demerit-reason').value = ""; } catch (err) { console.error("Erro ao aplicar demérito:", err); showMessage("Ocorreu um erro ao aplicar o demérito."); } }, true); };
+        const handleSendAnnouncement = async () => { const message = document.getElementById('new-announcement-message').value.trim(); if(!message) { showMessage("A mensagem do anúncio não pode estar vazia."); return; } await createNotification({ title: "Anúncio da Diretoria", message: message, icon: '📢' }); showMessage("Anúncio enviado com sucesso!"); document.getElementById('new-announcement-message').value = ''; };
+        const handleLaunchChallenge = async () => {
+            const title = document.getElementById('challenge-title-input').value.trim();
+            const description = document.getElementById('challenge-desc-input').value.trim();
+            const points = parseInt(document.getElementById('challenge-points-input').value, 10);
+            const duration = parseInt(document.getElementById('challenge-duration-input').value, 10);
+            const answer = document.getElementById('challenge-answer-input-admin').value.trim().toLowerCase();
+            if(!title || !description || isNaN(points) || isNaN(duration) || !answer) {
+                showMessage("Preencha todos os campos do desafio corretamente.");
+                return;
+            }
+            const now = new Date();
+            const endTime = new Date(now.getTime() + duration * 60000);
+            const challengeData = { title, description, points, answer, startTime: now, endTime, completedBy: {} };
+            const challengeRef = doc(db, 'artifacts', appId, 'public', 'data', 'surprise_challenges', 'active');
+            try {
+                await setDoc(challengeRef, challengeData);
+                showMessage("Desafio Surpresa lançado com sucesso!");
+                await createNotification({ title: "Desafio Surpresa!", message: `Um novo desafio foi lançado: ${title}`, icon: '⚡' });
+            } catch(e) { console.error("Erro ao lançar desafio:", e); showMessage("Ocorreu um erro ao lançar o desafio."); }
+        };
+        const handleEndChallenge = async () => {
+            const challengeRef = doc(db, 'artifacts', appId, 'public', 'data', 'surprise_challenges', 'active');
+            showMessage("Tem certeza que deseja encerrar o desafio atual?", async (confirmed) => {
+                if(!confirmed) return;
+                try { await deleteDoc(challengeRef); showMessage("Desafio encerrado com sucesso."); } catch(e) { console.error("Erro ao encerrar desafio:", e); }
+            }, true);
+        };
+        const handleAddAchievementDef = async () => { const name = document.getElementById('new-achievement-name').value.trim(), description = document.getElementById('new-achievement-desc').value.trim(), icon = document.getElementById('new-achievement-icon').value.trim(); if (!name || !icon) { showMessage("Nome e Ícone da conquista são obrigatórios."); return; } try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'achievements'), { name, description, icon, createdAt: serverTimestamp() }); showMessage("Tipo de conquista criado com sucesso!"); document.getElementById('new-achievement-name').value = ''; document.getElementById('new-achievement-desc').value = ''; document.getElementById('new-achievement-icon').value = ''; } catch (e) { console.error("Erro ao criar conquista:", e); showMessage("Erro ao criar conquista."); } };
+        const handleAwardAchievement = async () => { const unitId = document.getElementById('award-ach-unit-select').value, achievementId = document.getElementById('award-ach-select').value; if (!unitId || !achievementId) { showMessage("Selecione uma unidade e uma conquista para conceder."); return; } const unit = currentUnits.find(u => u.id === unitId); const achDef = currentAchievementDefs.find(a => a.id === achievementId); if (!unit || !achDef) { showMessage("Unidade ou conquista inválida."); return; } showMessage(`Conceder a conquista "${achDef.name}" para a unidade "${unit.name}"?`, async (confirmed) => { if (!confirmed) return; try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'awarded_achievements'), { unitId: unit.id, unitName: unit.name, achievementId: achDef.id, achievementName: achDef.name, achievementIcon: achDef.icon, awardedAt: serverTimestamp(), awardedBy: currentUser.uid, }); await createNotification({ title: "Nova Conquista!", message: `A unidade ${unit.name} ganhou a conquista: ${achDef.name}!`, icon: achDef.icon, targetUnitId: unit.id, link: 'conquistas' }); showMessage("Conquista concedida com sucesso!"); } catch (e) { console.error("Erro ao conceder conquista:", e); showMessage("Erro ao conceder conquista."); } }, true); };
+        const handleDeleteAchievementDef = async (defId) => { showMessage("Tem certeza que deseja excluir este tipo de conquista? Isso não afetará as que já foram concedidas.", async (confirmed) => { if (!confirmed) return; try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'achievements', defId)); showMessage("Tipo de conquista excluído."); } catch (e) { console.error("Erro ao excluir tipo de conquista:", e); showMessage("Erro ao excluir tipo de conquista."); } }, true); };
+
+        // --- Funções de Notificação ---
+        async function createNotification(data) {
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'notifications'), {
+                    title: data.title,
+                    message: data.message,
+                    icon: data.icon,
+                    link: data.link || null,
+                    targetUnitId: data.targetUnitId || null,
+                    isRead: {}, 
+                    timestamp: serverTimestamp()
+                });
+            } catch (e) { console.error("Erro ao criar notificação:", e); }
+        }
+
+        function renderNotifications() {
+            if (!currentUser) return;
+            const listEl = document.getElementById('notifications-list');
+            const countEl = document.getElementById('notifications-count');
+            if (!listEl || !countEl) return;
+
+            let unreadCount = 0;
+            const relevantNotifications = allNotifications.filter(notif => {
+                if (userRole === 'secretary') return true; 
+                if (notif.targetUnitId) { return userRole === 'leader'; }
+                return true; 
+            });
+            
+            if (relevantNotifications.length === 0) {
+                listEl.innerHTML = '<p class="p-4 text-sm text-slate-500 text-center">Nenhuma notificação.</p>';
+            } else {
+                listEl.innerHTML = relevantNotifications.slice(0, 20).map(notif => {
+                    const isRead = notif.isRead[currentUser.uid];
+                    if (!isRead) unreadCount++;
+                    return `
+                        <div data-id="${notif.id}" data-link="${notif.link || ''}" class="notification-item p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer flex items-start space-x-3">
+                            ${!isRead ? '<div class="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>' : '<div class="w-2 h-2 flex-shrink-0"></div>'}
+                            <div class="text-2xl flex-shrink-0">${notif.icon}</div>
+                            <div class="flex-grow">
+                                <p class="font-semibold text-slate-800 text-sm">${notif.title}</p>
+                                <p class="text-slate-600 text-sm">${notif.message}</p>
+                                <p class="text-xs text-slate-400 mt-1">${notif.timestamp ? timeAgo(notif.timestamp.toDate()) : ''}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            countEl.textContent = unreadCount;
+            countEl.classList.toggle('hidden', unreadCount === 0);
+        }
+        
+        async function handleNotificationClick(e) {
+            const item = e.target.closest('.notification-item');
+            if(!item) return;
+
+            const notifId = item.dataset.id;
+            const link = item.dataset.link;
+            const notif = allNotifications.find(n => n.id === notifId);
+
+            if(notif && !notif.isRead[currentUser.uid]) {
+                try {
+                    const notifRef = doc(db, 'artifacts', appId, 'public', 'data', 'notifications', notifId);
+                    await updateDoc(notifRef, { [`isRead.${currentUser.uid}`]: true });
+                } catch(e) { console.error("Erro ao marcar notificação como lida:", e); }
+            }
+            
+            if(link) { switchTab(link); }
+            document.getElementById('notifications-panel').classList.add('hidden');
+        }
+        
+        async function handleMarkAllAsRead() {
+            const unreadNotifications = allNotifications.filter(n => !n.isRead[currentUser.uid]);
+            if(unreadNotifications.length === 0) return;
+            
+            showMessage(`Marcar ${unreadNotifications.length} notificações como lidas?`, async (confirmed) => {
+                if(!confirmed) return;
+                const batch = writeBatch(db);
+                unreadNotifications.forEach(notif => {
+                    const notifRef = doc(db, 'artifacts', appId, 'public', 'data', 'notifications', notif.id);
+                    batch.update(notifRef, { [`isRead.${currentUser.uid}`]: true });
+                });
+                try { await batch.commit(); } catch(e) { console.error("Erro ao marcar todas como lidas:", e); }
+            }, true);
+        }
+
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 5) return "agora mesmo";
+            let interval = seconds / 31536000;
+            if (interval > 1) return `há ${Math.floor(interval)} anos`;
+            interval = seconds / 2592000;
+            if (interval > 1) return `há ${Math.floor(interval)} meses`;
+            interval = seconds / 86400;
+            if (interval > 1) return `há ${Math.floor(interval)} dias`;
+            interval = seconds / 3600;
+            if (interval > 1) return `há ${Math.floor(interval)} horas`;
+            interval = seconds / 60;
+            if (interval > 1) return `há ${Math.floor(interval)} minutos`;
+            return `há ${Math.floor(seconds)} segundos`;
+        }
+
+        // --- Funções do Desafio Surpresa ---
+        function handleActiveChallengeUpdate(challengeDoc) {
+            const banner = document.getElementById('surprise-challenge-banner');
+            const form = document.getElementById('challenge-submission-form');
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            if (challengeDoc.exists()) {
+                const data = challengeDoc.data();
+                document.getElementById('challenge-title').textContent = data.title;
+                document.getElementById('challenge-description').textContent = data.description;
+                document.getElementById('challenge-points').textContent = data.points;
+                const unitSelect = document.getElementById('challenge-unit-select');
+                unitSelect.innerHTML = currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+                
+                form.classList.toggle('hidden', userRole === 'viewer'); // Oculta formulário para visualizadores
+                banner.classList.remove('hidden');
+
+                const timerEl = document.getElementById('challenge-timer');
+                countdownInterval = setInterval(() => {
+                    const now = new Date();
+                    const end = data.endTime.toDate();
+                    const diff = end - now;
+
+                    if (diff <= 0) {
+                        clearInterval(countdownInterval);
+                        timerEl.textContent = "00:00";
+                        banner.classList.add('hidden');
+                        return;
+                    }
+
+                    const minutes = Math.floor((diff / 1000 / 60) % 60);
+                    const seconds = Math.floor((diff / 1000) % 60);
+                    timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+        
+        async function handleSubmitChallengeAnswer(e) {
+            e.preventDefault();
+            const unitId = document.getElementById('challenge-unit-select').value;
+            const answer = document.getElementById('challenge-answer-input').value.trim().toLowerCase();
+            if (!unitId || !answer) {
+                showMessage("Selecione sua unidade e digite uma resposta.");
+                return;
+            }
+
+            const challengeRef = doc(db, 'artifacts', appId, 'public', 'data', 'surprise_challenges', 'active');
+            const challengeSnap = await getDoc(challengeRef);
+
+            if (!challengeSnap.exists()) { showMessage("O desafio já terminou!"); return; }
+            
+            const challengeData = challengeSnap.data();
+            if (challengeData.completedBy && challengeData.completedBy[unitId]) {
+                showMessage("Sua unidade já completou este desafio!");
+                return;
+            }
+            
+            if (challengeData.answer === answer) {
+                const points = challengeData.points;
+                const unitRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId);
+                const unitSnap = await getDoc(unitRef);
+                if (unitSnap.exists()) {
+                    await updateDoc(unitRef, { score: (unitSnap.data().score || 0) + points });
+                }
+                
+                await updateDoc(challengeRef, { [`completedBy.${unitId}`]: serverTimestamp() });
+                
+                showMessage(`Parabéns! Resposta correta! Sua unidade ganhou ${points} pontos!`);
+                await createNotification({ title: 'Desafio Concluído!', message: `A Unidade ${unitSnap.data().name} concluiu o desafio surpresa e ganhou ${points} pontos!`, icon: '🎉', targetUnitId: unitId });
+                document.getElementById('challenge-answer-input').value = '';
+            } else {
+                showMessage("Resposta incorreta. Tente novamente!");
+            }
+        }
+
+        // Funções de Renderização da UI
         function renderDashboard() {
+            const emptyState = document.getElementById('inicio-empty-state');
+            const mainContent = document.getElementById('dashboard-main-content');
+            const emptyStateSecretary = document.getElementById('inicio-empty-state-secretary');
+            const emptyStateLeader = document.getElementById('inicio-empty-state-leader');
+
+            if (currentUnits.length === 0) {
+                mainContent.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                if (userRole === 'secretary') {
+                    emptyStateSecretary.classList.remove('hidden');
+                    emptyStateLeader.classList.add('hidden');
+                } else {
+                    emptyStateSecretary.classList.add('hidden');
+                    emptyStateLeader.classList.remove('hidden');
+                }
+                return;
+            }
+
+            mainContent.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
             const unidadeDestaqueEl = document.getElementById('unidade-destaque'), totalPontosEl = document.getElementById('total-pontos'), atividadesRealizadasEl = document.getElementById('atividades-realizadas');
             if (!unidadeDestaqueEl || !totalPontosEl || !atividadesRealizadasEl) return;
             const totalScore = currentUnits.reduce((sum, item) => sum + (item.score || 0), 0);
             const approvedSubmissionsCount = currentSubmissions.filter(sub => sub.status === 'approved').length;
-            unidadeDestaqueEl.textContent = currentUnits.length > 0 && currentUnits[0].name ? currentUnits[0].name : 'N/A';
+            unidadeDestaqueEl.textContent = currentUnits[0].name;
             totalPontosEl.textContent = totalScore;
             atividadesRealizadasEl.textContent = `${approvedSubmissionsCount}`;
             renderScoreChart(currentUnits);
@@ -475,7 +722,21 @@
         function renderScoreChart(unitsData) {
             const scoreChartEl = document.getElementById('scoreChart'); if (!scoreChartEl) return;
             const ctx = scoreChartEl.getContext('2d'); if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, { type: 'bar', data: { labels: unitsData.map(item => wrapLabel(item.name, 15)), datasets: [{ label: 'Pontuação da Unidade', data: unitsData.map(item => item.score || 0), backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 5, }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} pontos` } } }, scales: { x: { beginAtZero: true, grid: { display: true, color: 'rgba(203, 213, 225, 0.5)' } }, y: { grid: { display: false }, ticks: { autoSkip: false } } } } });
+            chartInstance = new Chart(ctx, { type: 'bar', data: { labels: unitsData.map(item => wrapLabel(item.name, 15)), datasets: [{ label: 'Pontuação da Unidade', data: unitsData.map(item => item.score || 0), backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 5, }] },
+                options: { 
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} pontos` } } }, 
+                    scales: { x: { beginAtZero: true, grid: { display: true, color: 'rgba(203, 213, 225, 0.5)' } }, y: { grid: { display: false }, ticks: { autoSkip: false } } },
+                    onClick: (e) => {
+                        const points = chartInstance.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+                        if (points.length) {
+                            const firstPoint = points[0];
+                            const unitId = currentUnits[firstPoint.index].id;
+                            showUnitPage(unitId);
+                        }
+                    }
+                } 
+            });
         }
 
         function renderCalendar() {
@@ -487,6 +748,22 @@
                 activities.forEach(activity => { contentDiv.innerHTML += `<div class="pt-4 border-t first:border-t-0 border-slate-200"><p class="font-semibold text-slate-700">${activity.date} - ${activity.title}</p><p class="text-sm">${activity.desc}</p></div>`; });
                 monthDiv.appendChild(button); monthDiv.appendChild(contentDiv); container.appendChild(monthDiv);
             });
+        }
+        
+        function renderAchievementsTab() {
+            const feed = document.getElementById('achievements-feed'); if(!feed) return;
+            if(currentAwardedAchievements.length === 0) {
+                feed.innerHTML = '<p class="text-slate-500 col-span-full text-center">Nenhuma conquista concedida ainda.</p>';
+                return;
+            }
+            feed.innerHTML = currentAwardedAchievements.map(award => `
+                <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center text-center transform hover:scale-105 transition-transform duration-300">
+                    <span class="text-6xl mb-4">${award.achievementIcon || '⭐'}</span>
+                    <h4 class="text-xl font-bold text-yellow-500">${award.achievementName}</h4>
+                    <p class="text-lg font-semibold text-slate-700 mt-2">Concedida à Unidade ${award.unitName}</p>
+                    <p class="text-sm text-slate-500 mt-1">${new Date(award.awardedAt.toDate()).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+            `).join('');
         }
 
         function renderAbout() {
@@ -545,29 +822,41 @@
             const gestaoTitleEl = document.getElementById('gestao-title'); if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Secretário'; else return;
             const gestaoContent = document.getElementById('gestao-content'); if (!gestaoContent) return;
             gestaoContent.innerHTML = `
+                <section class="admin-section"><h3 class="admin-h3 text-orange-600">Lançar Desafio Surpresa</h3><div class="space-y-4"> <input type="text" id="challenge-title-input" placeholder="Título do Desafio" class="admin-input"> <textarea id="challenge-desc-input" placeholder="Descrição do Desafio" class="admin-input" rows="2"></textarea><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><input type="number" id="challenge-points-input" placeholder="Pontos" class="admin-input"><input type="number" id="challenge-duration-input" placeholder="Duração (minutos)" class="admin-input"><input type="text" id="challenge-answer-input-admin" placeholder="Resposta Correta" class="admin-input"></div> <div class="flex gap-4"> <button id="launch-challenge-btn" class="admin-btn bg-orange-500 hover:bg-orange-600 w-full">⚡ Lançar Desafio!</button> <button id="end-challenge-btn" class="admin-btn bg-gray-500 hover:bg-gray-600 w-full">Encerrar Desafio Atual</button></div></div></section>
+                <section class="admin-section"><h3 class="admin-h3 text-indigo-600">Enviar Anúncio Global</h3><div class="space-y-4"> <textarea id="new-announcement-message" placeholder="Escreva sua mensagem aqui..." class="admin-input" rows="3"></textarea> <button id="send-announcement-btn" class="admin-btn bg-indigo-500 hover:bg-indigo-600 w-full">📢 Enviar Anúncio</button> </div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-blue-600">Gerenciar Unidades</h3><div class="flex flex-col sm:flex-row gap-4 mb-4"><input type="text" id="new-unit-name" placeholder="Nome da unidade" class="admin-input"><button id="add-unit-btn" class="admin-btn bg-blue-600 hover:bg-blue-700">Adicionar</button></div><div class="table-container"><table class="admin-table"><thead class="bg-blue-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="units-table-body"></tbody></table></div></section>
+                <section class="admin-section"><h3 class="admin-h3 text-yellow-600">Gerenciar Conquistas</h3><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div id="create-achievement-section"> <h4 class="text-lg font-semibold mb-2 text-yellow-800">1. Criar Tipo de Conquista</h4> <div class="space-y-4"> <input type="text" id="new-achievement-name" placeholder="Nome da Conquista (Ex: Pioneirismo)" class="admin-input"> <textarea id="new-achievement-desc" placeholder="Descrição da Conquista" class="admin-input" rows="2"></textarea> <input type="text" id="new-achievement-icon" placeholder="Ícone (Ex: 🏆)" class="admin-input"> <button id="add-achievement-def-btn" class="admin-btn bg-yellow-500 hover:bg-yellow-600 w-full">Criar Conquista</button> </div> <div class="table-container mt-4"> <table class="admin-table"> <thead class="bg-yellow-100"> <tr> <th class="th-cell">Ícone</th> <th class="th-cell">Nome</th> <th class="th-cell rounded-tr-lg">Ação</th> </tr> </thead> <tbody id="achievements-defs-table-body"></tbody> </table> </div> </div><div id="award-achievement-section"> <h4 class="text-lg font-semibold mb-2 text-yellow-800">2. Conceder Conquista</h4> <div class="space-y-4"> <div> <label for="award-ach-unit-select" class="admin-label">Unidade Premiada:</label> <select id="award-ach-unit-select" class="admin-input"></select> </div> <div> <label for="award-ach-select" class="admin-label">Conquista a Conceder:</label> <select id="award-ach-select" class="admin-input"></select> </div> <button id="award-achievement-btn" class="admin-btn bg-yellow-600 hover:bg-yellow-700 w-full">Conceder Conquista</button> </div> </div></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-green-600">Gerenciar Atividades</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4"><input type="text" id="new-activity-name" placeholder="Nome da Atividade" class="admin-input"><select id="new-activity-type" class="admin-input"><option value="">Tipo</option><option>Físico</option><option>Mental</option><option>Espiritual</option><option>Social</option><option>Pioneirismo</option><option>Natureza</option><option>Serviço</option><option>Culinária</option><option>Geral</option></select><input type="number" id="new-activity-max-points" placeholder="Pontos Máx." class="admin-input" min="0"><input type="datetime-local" id="new-activity-deadline" class="admin-input" title="Prazo Limite (opcional)"></div><button id="add-activity-btn" class="admin-btn bg-green-600 hover:bg-green-700 w-full">Adicionar Atividade</button><div class="table-container mt-6"><table class="admin-table"><thead class="bg-green-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Tipo</th><th class="th-cell">Pontos Máx.</th><th class="th-cell">Prazo Limite</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="activities-table-body"></tbody></table></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-red-700">Gerenciar Deméritos</h3><div class="space-y-4 mb-4"><div><label for="demerit-unit-select" class="admin-label">Unidade:</label><select id="demerit-unit-select" class="admin-input" required><option value="">Selecione</option></select></div><div><label for="demerit-points" class="admin-label">Pontos a Deduzir:</label><input type="number" id="demerit-points" min="1" class="admin-input" required placeholder="Ex: 10"></div><div><label for="demerit-reason" class="admin-label">Razão:</label><textarea id="demerit-reason" rows="3" class="admin-input" required placeholder="Motivo..."></textarea></div><button id="apply-demerit-btn" class="admin-btn bg-red-600 hover:bg-red-700 w-full">Aplicar</button></div><div class="table-container mt-6"><table class="admin-table"><thead class="bg-red-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell">Razão</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody id="demerits-table-body"></tbody></table></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-purple-600">Gerenciar Usuários</h3><div id="users-management-list" class="table-container"><p>Carregando usuários...</p></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-yellow-800">Envios Pendentes (<span id="pending-submissions-count">0</span>)</h3><div id="pending-submissions-list" class="table-container"><p>Nenhum pendente.</p></div></section>
                 <section class="admin-section !mb-0"><h3 class="admin-h3 text-slate-700">Histórico de Envios</h3><div id="all-submissions-list" class="table-container"><p>Nenhum registro.</p></div></section>`;
+            
             gestaoContent.querySelectorAll('.admin-section').forEach(el => el.classList.add('mb-8', 'p-4', 'rounded-xl', 'shadow-inner')); gestaoContent.querySelectorAll('.admin-h3').forEach(el => el.classList.add('text-xl', 'font-semibold', 'mb-4')); gestaoContent.querySelectorAll('.admin-input').forEach(el => el.classList.add('block', 'w-full', 'p-3', 'border', 'border-slate-300', 'rounded-lg', 'focus:ring-2')); gestaoContent.querySelectorAll('.admin-btn').forEach(el => el.classList.add('text-white', 'font-bold', 'py-3', 'px-4', 'rounded-lg', 'transition', 'duration-300', 'ease-in-out', 'transform', 'hover:scale-105', 'shadow-md')); gestaoContent.querySelectorAll('.admin-label').forEach(el => el.classList.add('block', 'text-sm', 'font-medium', 'text-slate-700', 'mb-1')); gestaoContent.querySelectorAll('.table-container').forEach(el => el.classList.add('overflow-x-auto')); gestaoContent.querySelectorAll('.admin-table').forEach(el => el.classList.add('min-w-full', 'bg-white', 'rounded-lg', 'shadow-md')); gestaoContent.querySelectorAll('.th-cell').forEach(th => th.classList.add('py-3', 'px-4', 'text-left', 'text-sm', 'font-semibold', 'text-slate-700'));
+            
+            // Setup listeners
+            document.getElementById('add-unit-btn').addEventListener('click', handleAddUnit);
+            document.getElementById('add-activity-btn').addEventListener('click', handleAddActivity);
+            document.getElementById('apply-demerit-btn').addEventListener('click', handleApplyDemerit);
+            document.getElementById('add-achievement-def-btn').addEventListener('click', handleAddAchievementDef);
+            document.getElementById('award-achievement-btn').addEventListener('click', handleAwardAchievement);
+            document.getElementById('send-announcement-btn').addEventListener('click', handleSendAnnouncement);
+            document.getElementById('launch-challenge-btn').addEventListener('click', handleLaunchChallenge);
+            document.getElementById('end-challenge-btn').addEventListener('click', handleEndChallenge);
+
+            // Populate initial data
             const demeritUnitSelect = document.getElementById('demerit-unit-select'); demeritUnitSelect.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
-            document.getElementById('add-unit-btn').addEventListener('click', async () => { const name = document.getElementById('new-unit-name').value.trim(); if (!name) { showMessage("O nome da unidade não pode estar vazio."); return; } try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'units'), { name, score: 0, createdAt: serverTimestamp() }); showMessage(`Unidade "${name}" adicionada com sucesso!`); document.getElementById('new-unit-name').value = ''; } catch (err) { console.error("Erro ao adicionar unidade:", err); showMessage("Ocorreu um erro ao adicionar a unidade."); } });
-            document.getElementById('add-activity-btn').addEventListener('click', async () => { const name = document.getElementById('new-activity-name').value.trim(), type = document.getElementById('new-activity-type').value, maxPoints = parseInt(document.getElementById('new-activity-max-points').value), deadlineValue = document.getElementById('new-activity-deadline').value; if (!name || !type || isNaN(maxPoints) || maxPoints < 0) { showMessage("Por favor, preencha nome, tipo e pontos da atividade corretamente."); return; } const activityData = { name, type, maxPoints, createdAt: serverTimestamp() }; if (deadlineValue) activityData.deadline = new Date(deadlineValue); try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), activityData); showMessage(`Atividade "${name}" adicionada com sucesso!`); document.getElementById('new-activity-name').value = ''; document.getElementById('new-activity-type').value = ''; document.getElementById('new-activity-max-points').value = ''; document.getElementById('new-activity-deadline').value = ''; } catch (err) { console.error("Erro ao adicionar atividade:", err); showMessage("Ocorreu um erro ao adicionar a atividade."); } });
-            document.getElementById('apply-demerit-btn').addEventListener('click', async () => { const unitId = demeritUnitSelect.value, points = parseInt(document.getElementById('demerit-points').value), reason = document.getElementById('demerit-reason').value.trim(); if (!unitId || isNaN(points) || points <= 0 || !reason) { showMessage("Por favor, preencha todos os campos do demérito."); return; } const unitName = currentUnits.find(u => u.id === unitId)?.name || '?'; showMessage(`Aplicar ${points} pontos de demérito a "${unitName}" pelo motivo: "${reason}"?`, async (confirmed) => { if (!confirmed) return; try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), { unitId, unitName, points, reason, appliedBy: currentUser.uid, appliedAt: serverTimestamp() }); const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId); const unitSnap = await getDoc(unitDocRef); if (unitSnap.exists()) await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - points }); showMessage("Demérito aplicado com sucesso!"); demeritUnitSelect.value = ""; document.getElementById('demerit-points').value = ""; document.getElementById('demerit-reason').value = ""; } catch (err) { console.error("Erro ao aplicar demérito:", err); showMessage("Ocorreu um erro ao aplicar o demérito."); } }, true); });
-            updateUnitsTable(); updateActivitiesTable(); updateDemeritsTable(); updateSubmissionsTables(); updateUsersTable();
+            updateUnitsTable(); updateActivitiesTable(); updateDemeritsTable(); updateSubmissionsTables(); updateUsersTable(); updateAchievementDefsTable(); updateAwardAchievementDropdowns();
         }
-
-        function applyTableStyles(tableBodyElement) { tableBodyElement.querySelectorAll('tr').forEach(tr => tr.classList.add('border-b', 'border-slate-200', 'last:border-b-0', 'hover:bg-slate-50')); tableBodyElement.querySelectorAll('td').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm')); }
-
+        
         function updateUnitsTable() {
             const tbody = document.getElementById('units-table-body'); if (!tbody) return;
-            tbody.innerHTML = currentUnits.length === 0 ? '<tr><td colspan="3" class="text-center p-4">Nenhuma unidade cadastrada.</td></tr>' : currentUnits.map(u => `<tr><td>${u.name}</td><td class="font-bold">${u.score || 0}</td><td class="whitespace-nowrap"><button data-id="${u.id}" class="edit-unit-btn admin-btn-xs bg-yellow-500 hover:bg-yellow-600 mr-1">Editar</button><button data-id="${u.id}" data-name="${u.name}" class="delete-unit-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
+            tbody.innerHTML = currentUnits.length === 0 ? '<tr><td colspan="3" class="text-center p-4">Nenhuma unidade cadastrada.</td></tr>' : currentUnits.map(u => `<tr><td><button class="unit-link text-blue-600 hover:underline" data-unit-id="${u.id}">${u.name}</button></td><td class="font-bold">${u.score || 0}</td><td class="whitespace-nowrap"><button data-id="${u.id}" class="edit-unit-btn admin-btn-xs bg-yellow-500 hover:bg-yellow-600 mr-1">Editar</button><button data-id="${u.id}" data-name="${u.name}" class="delete-unit-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button></td></tr>`).join('');
             applyTableStyles(tbody);
             tbody.querySelectorAll('.admin-btn-xs').forEach(btn => btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'));
             tbody.querySelectorAll('.delete-unit-btn').forEach(btn => btn.addEventListener('click', (e) => handleDeleteUnit(e.target.dataset.id, e.target.dataset.name)));
             tbody.querySelectorAll('.edit-unit-btn').forEach(btn => btn.addEventListener('click', (e) => handleEditUnit(e.target.dataset.id)));
+            tbody.querySelectorAll('.unit-link').forEach(btn => btn.addEventListener('click', (e) => showUnitPage(e.target.dataset.unitId)));
         }
 
         async function handleEditUnit(unitId) {
@@ -644,7 +933,7 @@
         function updateUsersTable() {
             const container = document.getElementById('users-management-list'); if (!container) return;
             if (currentUsers.length === 0) { container.innerHTML = '<p>Nenhum usuário registrado.</p>'; return; }
-            const tableHtml = `<table class="admin-table"><thead class="bg-purple-100"><tr><th class="th-cell">Email</th><th class="th-cell">Função</th><th class="th-cell rounded-tr-lg">Data de Registro</th></tr></thead><tbody>${currentUsers.map(user => `<tr><td>${user.email || 'N/A'}</td><td><select data-uid="${user.uid}" class="user-role-select admin-input !p-2 !text-sm"><option value="leader" ${user.role === 'leader' ? 'selected' : ''}>Conselheiro</option><option value="secretary" ${user.role === 'secretary' ? 'selected' : ''}>Secretário</option></select></td><td>${user.createdAt ? new Date(user.createdAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('')}</tbody></table>`;
+            const tableHtml = `<table class="admin-table"><thead class="bg-purple-100"><tr><th class="th-cell">Email</th><th class="th-cell">Função</th><th class="th-cell rounded-tr-lg">Data de Registro</th></tr></thead><tbody>${currentUsers.map(user => `<tr><td>${user.email || 'N/A'}</td><td><select data-uid="${user.uid}" class="user-role-select admin-input !p-2 !text-sm"><option value="viewer" ${user.role === 'viewer' ? 'selected' : ''}>Visualizador</option><option value="leader" ${user.role === 'leader' ? 'selected' : ''}>Conselheiro</option><option value="secretary" ${user.role === 'secretary' ? 'selected' : ''}>Secretário</option></select></td><td>${user.createdAt ? new Date(user.createdAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('')}</tbody></table>`;
             container.innerHTML = tableHtml; applyTableStyles(container.querySelector('tbody'));
             container.querySelectorAll('.user-role-select').forEach(select => {
                 select.addEventListener('change', async (e) => {
@@ -657,6 +946,9 @@
                 });
             });
         }
+        
+        function updateAchievementDefsTable() { const tbody = document.getElementById('achievements-defs-table-body'); if (!tbody) return; tbody.innerHTML = currentAchievementDefs.map(def => `<tr> <td class="text-2xl">${def.icon}</td> <td>${def.name}</td> <td><button data-id="${def.id}" class="delete-ach-def-btn admin-btn-xs bg-red-500 hover:bg-red-600">X</button></td> </tr>`).join(''); applyTableStyles(tbody); tbody.querySelectorAll('.delete-ach-def-btn').forEach(btn => btn.addEventListener('click', (e) => handleDeleteAchievementDef(e.target.dataset.id))); }
+        function updateAwardAchievementDropdowns() { const unitSelect = document.getElementById('award-ach-unit-select'), achSelect = document.getElementById('award-ach-select'); if (!unitSelect || !achSelect) return; unitSelect.innerHTML = currentUnits.length > 0 ? `<option value="">Selecione...</option>${currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('')}` : '<option>Nenhuma unidade</option>'; achSelect.innerHTML = currentAchievementDefs.length > 0 ? `<option value="">Selecione...</option>${currentAchievementDefs.map(a => `<option value="${a.id}">${a.icon} ${a.name}</option>`).join('')}` : '<option>Nenhuma conquista</option>'; }
 
         async function handleApproveSubmission(submissionId, unitId, points) {
             const sub = currentSubmissions.find(s => s.id === submissionId); if (!sub) { showMessage("Erro: Submissão não encontrada."); return; }
@@ -669,43 +961,25 @@
                     const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitId); const unitSnap = await getDoc(unitDocRef);
                     if (unitSnap.exists()) { const currentScore = unitSnap.data().score || 0; await updateDoc(unitDocRef, { score: currentScore + points }); }
                     showMessage("Atividade aprovada e pontuação atribuída!");
+                    await createNotification({ title: "Atividade Aprovada", message: `O envio para '${sub.activityName}' foi aprovado com ${points} pontos.`, icon: '✅', targetUnitId: unitId, link: 'gestao' });
                 } catch (err) { console.error("Erro ao aprovar submissão:", err); showMessage("Ocorreu um erro ao aprovar a submissão."); }
             }, true);
         }
 
         async function handleRejectSubmission(submissionId) {
             const reason = prompt("Por favor, insira o motivo da rejeição:");
-            if (reason === null || reason.trim() === "") {
-                showMessage("A rejeição foi cancelada pois nenhum motivo foi fornecido.", () => {}, false);
-                return;
-            }
-
+            if (reason === null || reason.trim() === "") { showMessage("A rejeição foi cancelada pois nenhum motivo foi fornecido.", () => {}, false); return; }
             try {
                 const subDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
                 const subSnap = await getDoc(subDocRef);
-
-                if (subSnap.exists() && subSnap.data().status === 'approved' && subSnap.data().pointsAwarded > 0) {
-                    const unitIdAdj = subSnap.data().unitId;
-                    const ptsRev = subSnap.data().pointsAwarded;
-                    const unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitIdAdj);
-                    const unitSnap = await getDoc(unitDocRef);
-                    if (unitSnap.exists()) {
-                        await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - ptsRev });
-                    }
+                if (subSnap.exists()) { 
+                    const subData = subSnap.data();
+                    if (subData.status === 'approved' && subData.pointsAwarded > 0) { const unitIdAdj = subData.unitId, ptsRev = subData.pointsAwarded, unitDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'units', unitIdAdj), unitSnap = await getDoc(unitDocRef); if (unitSnap.exists()) { await updateDoc(unitDocRef, { score: (unitSnap.data().score || 0) - ptsRev }); } }
+                    await updateDoc(subDocRef, { status: 'rejected', pointsAwarded: 0, rejectionReason: reason.trim(), validatedAt: serverTimestamp(), validatedBy: currentUser.uid });
+                    showMessage("Envio rejeitado com sucesso!");
+                    await createNotification({ title: "Atividade Rejeitada", message: `O envio para '${subData.activityName}' foi rejeitado. Motivo: ${reason.trim()}`, icon: '❌', targetUnitId: subData.unitId, link: 'gestao' });
                 }
-                
-                await updateDoc(subDocRef, {
-                    status: 'rejected',
-                    pointsAwarded: 0,
-                    rejectionReason: reason.trim(), // Salva o motivo
-                    validatedAt: serverTimestamp(),
-                    validatedBy: currentUser.uid
-                });
-                showMessage("Envio rejeitado com sucesso!");
-            } catch (err) {
-                console.error("Erro ao rejeitar submissão:", err);
-                showMessage("Ocorreu um erro ao rejeitar a submissão.");
-            }
+            } catch (err) { console.error("Erro ao rejeitar submissão:", err); showMessage("Ocorreu um erro ao rejeitar a submissão."); }
         }
 
 
@@ -719,52 +993,148 @@
         }
 
         let unsubscribers = [];
-        function cleanupListeners() { unsubscribers.forEach(unsub => unsub()); unsubscribers = []; }
+        function cleanupListeners() { 
+            unsubscribers.forEach(unsub => unsub()); 
+            unsubscribers = [];
+            if(activeChallengeUnsub) { activeChallengeUnsub(); activeChallengeUnsub = null; }
+            if(countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+        }
+        
+        function showUnitPage(unitId) {
+            document.querySelectorAll('.tab-button').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('main-nav').classList.add('hidden'); // Oculta a navegação principal
+            
+            const unitPageSection = document.getElementById('unit-page');
+            unitPageSection.classList.add('active');
+            renderUnitPageContent(unitId);
+        }
+
+        function renderUnitPageContent(unitId) {
+            const unit = currentUnits.find(u => u.id === unitId);
+            if(!unit) {
+                showMessage("Unidade não encontrada.");
+                switchTab('inicio'); // Volta para o início se a unidade não for achada
+                return;
+            }
+
+            document.getElementById('unit-page-name').textContent = unit.name;
+            document.getElementById('unit-page-score').textContent = unit.score || 0;
+            
+            const achievementsContainer = document.getElementById('unit-page-achievements');
+            const unitAchievements = currentAwardedAchievements.filter(a => a.unitId === unitId);
+            if(unitAchievements.length > 0) {
+                achievementsContainer.innerHTML = unitAchievements.map(a => `
+                    <div title="${a.achievementName}" class="flex flex-col items-center p-2 bg-slate-100 rounded-lg">
+                        <span class="text-4xl">${a.achievementIcon}</span>
+                        <span class="text-xs font-semibold mt-1 text-slate-600 truncate">${a.achievementName}</span>
+                    </div>
+                `).join('');
+            } else {
+                achievementsContainer.innerHTML = '<p class="text-slate-500 col-span-full">Nenhuma conquista ainda.</p>';
+            }
+
+            const submissionsContainer = document.getElementById('unit-page-submissions');
+            const unitSubmissions = currentSubmissions.filter(s => s.unitId === unitId);
+            if(unitSubmissions.length > 0) {
+                submissionsContainer.innerHTML = `<table class="min-w-full bg-white rounded-lg shadow-md"><thead class="bg-blue-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Status</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody>${unitSubmissions.map(s => {
+                    let statusCellHtml = `<span class="status-badge ${s.status}">${s.status}</span>`;
+                    if (s.status === 'rejected' && s.rejectionReason) {
+                        statusCellHtml += `<p class="text-xs text-red-600 italic mt-1" title="Motivo da Rejeição">${s.rejectionReason}</p>`;
+                    }
+                    return `<tr><td class="td-cell">${s.activityName || '?'}</td><td class="td-cell">${statusCellHtml}</td><td class="td-cell font-bold">${s.pointsAwarded != null ? s.pointsAwarded : 'N/A'}</td><td class="td-cell">${s.submittedAt ? new Date(s.submittedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`;
+                }).join('')}</tbody></table>`;
+                applyTableStyles(submissionsContainer.querySelector('tbody'));
+            } else {
+                submissionsContainer.innerHTML = '<p class="text-slate-500 text-center p-4">Nenhum envio registrado.</p>';
+            }
+        }
+        
+        function switchTab(targetTabId) {
+            document.getElementById('main-nav').classList.remove('hidden'); // Garante que a nav principal está visível
+            document.querySelectorAll('.tab-button').forEach(t => t.classList.toggle('active', t.dataset.tab === targetTabId));
+            document.querySelectorAll('.content-section').forEach(s => s.classList.toggle('active', s.id === targetTabId));
+            
+            if (targetTabId === 'inicio') renderDashboard();
+            else if (targetTabId === 'conquistas') renderAchievementsTab();
+            else if (targetTabId === 'gestao') {
+                if (userRole === 'secretary') renderSecretaryDashboard();
+                else if (userRole === 'leader') renderUnitLeaderDashboard();
+                else { showMessage("Sem permissão para aceder a esta área."); switchTab('inicio'); }
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
             const loadingOverlay = document.getElementById('loading-overlay');
             try {
                 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) throw new Error("Credenciais Firebase incompletas.");
-                firebaseApp = initializeApp(firebaseConfig); db = getFirestore(firebaseApp); auth = getAuth(firebaseApp); storage = getStorage(firebaseApp);
+                firebaseApp = initializeApp(firebaseConfig); db = getFirestore(firebaseApp); auth = getAuth(firebaseApp);
                 if (loadingOverlay) loadingOverlay.classList.add('hidden');
                 setupAuthFormListeners();
                 onAuthStateChanged(auth, async (user) => {
-                    const authSect = document.getElementById('auth-section'), mainContent = document.getElementById('main-app-content'), userP = document.getElementById('user-info'), logoutB = document.getElementById('logout-btn');
+                    const authSect = document.getElementById('auth-section'), mainContent = document.getElementById('main-app-content'), userP = document.getElementById('user-info'), logoutB = document.getElementById('logout-btn'), notifBell = document.getElementById('notifications-bell-container');
                     cleanupListeners();
                     if (user) {
                         currentUser = user;
                         const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid); const userDocSnap = await getDoc(userDocRef);
-                        userRole = userDocSnap.exists() ? userDocSnap.data().role : 'leader';
-                        if (!userDocSnap.exists()) { await setDoc(userDocRef, { role: 'leader', uid: user.uid, email: user.email || '', createdAt: serverTimestamp() }); }
-                        if (userP) userP.textContent = `Olá, ${userRole === 'secretary' ? 'Secretário(a)' : 'Conselheiro(a)'} (${user.email || 'Anônimo'})`;
-                        if (logoutB) logoutB.classList.remove('hidden'); if (authSect) authSect.classList.add('hidden'); if (mainContent) mainContent.classList.remove('hidden');
+                        if (!userDocSnap.exists()) { 
+                            userRole = 'viewer'; // Novo usuário começa como 'viewer'
+                            await setDoc(userDocRef, { role: userRole, uid: user.uid, email: user.email || '', createdAt: serverTimestamp() }); 
+                        } else {
+                            userRole = userDocSnap.data().role;
+                        }
+                        
+                        let welcomeMessage = "Olá!";
+                        if (userRole === 'secretary') welcomeMessage = 'Olá, Secretário(a)';
+                        else if (userRole === 'leader') welcomeMessage = 'Olá, Conselheiro(a)';
+                        else if (userRole === 'viewer') welcomeMessage = 'Olá, Desbravador(a)';
+                        
+                        if (userP) userP.textContent = `${welcomeMessage} (${user.email || 'Anônimo'})`;
+                        if (logoutB) logoutB.classList.remove('hidden'); 
+                        if (notifBell) notifBell.classList.remove('hidden');
+                        if (authSect) authSect.classList.add('hidden'); if (mainContent) mainContent.classList.remove('hidden');
                         initAppContent();
                     } else {
                         currentUser = null; userRole = null;
-                        if (userP) userP.textContent = 'Carregando...'; if (logoutB) logoutB.classList.add('hidden'); if (authSect) authSect.classList.remove('hidden'); if (mainContent) mainContent.classList.add('hidden');
+                        if (userP) userP.textContent = 'Carregando...'; 
+                        if (logoutB) logoutB.classList.add('hidden'); 
+                        if (notifBell) notifBell.classList.add('hidden');
+                        if (authSect) authSect.classList.remove('hidden'); if (mainContent) mainContent.classList.add('hidden');
                     }
                 });
             } catch (err) { console.error("Erro na inicialização do Firebase:", err); showMessage(`Erro Firebase: ${err.message}. Verifique a consola e a sua configuração.`); if (loadingOverlay) loadingOverlay.classList.add('hidden'); }
         });
 
         async function initAppContent() {
-            const gestaoTabBtn = document.querySelector('button[data-tab="gestao"]'); if (gestaoTabBtn) gestaoTabBtn.classList.toggle('hidden', !(userRole === 'leader' || userRole === 'secretary'));
-            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'), s => { currentUnits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0)); renderDashboard(); if (isActiveTabSecretary()) updateUnitsTable(); if (isActiveTabLeader()) populateLeaderUnitSelect(); }));
+            const gestaoTabBtn = document.querySelector('button[data-tab="gestao"]'); 
+            if (gestaoTabBtn) gestaoTabBtn.classList.toggle('hidden', userRole === 'viewer');
+            
+            // Listeners de dados
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'), s => { currentUnits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0)); renderDashboard(); if (isActiveTabSecretary()) { updateUnitsTable(); updateAwardAchievementDropdowns(); } if (isActiveTabLeader()) populateLeaderUnitSelect(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), s => { currentActivities = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) updateActivitiesTable(); if (isActiveTabLeader()) populateLeaderActivitySelect(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), s => { currentSubmissions = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0)); renderDashboard(); if (isActiveTabSecretary()) updateSubmissionsTables(); if (isActiveTabLeader()) updateLeaderSubmissionsList(document.getElementById('unit-select-leader')?.value); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), s => { currentDemerits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0)); if (isActiveTabSecretary()) updateDemeritsTable(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'users'), s => { currentUsers = s.docs.map(d => ({ id: d.id, ...d.data() })); if (isActiveTabSecretary()) updateUsersTable(); }));
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'achievements'), s => { currentAchievementDefs = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) { updateAchievementDefsTable(); updateAwardAchievementDropdowns(); } }));
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'awarded_achievements'), s => { currentAwardedAchievements = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.awardedAt?.toDate() || 0) - (a.awardedAt?.toDate() || 0)); if(document.getElementById('conquistas')?.classList.contains('active')) renderAchievementsTab(); }));
+            unsubscribers.push(onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'notifications'), orderBy('timestamp', 'desc')), s => { allNotifications = s.docs.map(d => ({ id: d.id, ...d.data() })); renderNotifications(); }));
+            
+            // Listener para o Desafio Surpresa
+            const challengeRef = doc(db, 'artifacts', appId, 'public', 'data', 'surprise_challenges', 'active');
+            activeChallengeUnsub = onSnapshot(challengeRef, handleActiveChallengeUpdate);
+            unsubscribers.push(activeChallengeUnsub);
+            
+            // Configuração dos eventos da UI
             renderCalendar(); renderAbout();
-            const tabs = document.querySelectorAll('.tab-button'), contentSections = document.querySelectorAll('.content-section');
-            function switchTab(targetTabId) {
-                tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === targetTabId)); contentSections.forEach(s => s.classList.toggle('active', s.id === targetTabId));
-                if (targetTabId === 'inicio') renderDashboard();
-                else if (targetTabId === 'gestao') {
-                    if (userRole === 'secretary') renderSecretaryDashboard(); else if (userRole === 'leader') renderUnitLeaderDashboard(); else { showMessage("Sem permissão para aceder a esta área."); switchTab('inicio'); }
-                }
-            }
-            tabs.forEach(tab => { const newTab = tab.cloneNode(true); tab.parentNode.replaceChild(newTab, tab); newTab.addEventListener('click', () => switchTab(newTab.dataset.tab)); });
+            document.querySelectorAll('.tab-button').forEach(tab => { const newTab = tab.cloneNode(true); tab.parentNode.replaceChild(newTab, tab); newTab.addEventListener('click', () => switchTab(newTab.dataset.tab)); });
             document.body.addEventListener('click', (event) => { const button = event.target.closest('.accordion-button'); if (button) { const content = button.nextElementSibling, icon = button.querySelector('span:last-child'); if (!content || !icon) return; button.classList.toggle('open'); icon.classList.toggle('rotate-180'); content.style.maxHeight = button.classList.contains('open') ? content.scrollHeight + 'px' : null; } });
+            document.getElementById('notifications-bell-btn').addEventListener('click', () => document.getElementById('notifications-panel').classList.toggle('hidden'));
+            document.getElementById('notifications-list').addEventListener('click', handleNotificationClick);
+            document.getElementById('mark-all-read-btn').addEventListener('click', handleMarkAllAsRead);
+            document.getElementById('challenge-submission-form').addEventListener('submit', handleSubmitChallengeAnswer);
+            document.getElementById('back-to-main-btn').addEventListener('click', () => switchTab('inicio'));
+
+            // Iniciar na aba "Início"
             switchTab('inicio');
         }
 
