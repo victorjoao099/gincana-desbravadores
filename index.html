@@ -153,8 +153,8 @@
                 <div><label for="email" class="sr-only">Email</label><input type="email" id="email" placeholder="Email"
                         class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                         required></div>
-                <div><label for="password" class="sr-only">Palavra-passe</label><input type="password" id="password"
-                        placeholder="Palavra-passe"
+                <div><label for="password" class="sr-only">senha</label><input type="password" id="password"
+                        placeholder="senha"
                         class="w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                         required></div>
                 <button type="submit" id="login-btn"
@@ -280,12 +280,12 @@
                             Carregando...</p>
                     </div>
                     <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h3 class="text-slate-500 font-semibold text-base md:text-lg">Total de Pontos Acumulados
+                        <h3 class="text-slate-500 font-semibold text-base md:text-lg">Total de Pontos Acumulados pelo Clube
                         </h3>
                         <p id="total-pontos" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">0</p>
                     </div>
                     <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h3 class="text-slate-500 font-semibold text-base md:text-lg">Atividades Concluídas</h3>
+                        <h3 class="text-slate-500 font-semibold text-base md:text-lg">Atividades Concluídas pelo clube</h3>
                         <p id="atividades-realizadas" class="text-2xl md:text-3xl font-bold text-blue-600 mt-2">0
                         </p>
                     </div>
@@ -1117,8 +1117,8 @@
         function setupAuthFormListeners() {
             const authForm = document.getElementById('auth-form'), emailIn = document.getElementById('email'), passIn = document.getElementById('password'), loginBtn = document.getElementById('login-btn'), regBtn = document.getElementById('register-btn'), logoutBtn = document.getElementById('logout-btn');
             if (authForm && loginBtn && regBtn) {
-                loginBtn.onclick = async (e) => { e.preventDefault(); const email = emailIn.value, pass = passIn.value; if (!email || !pass) { showMessage("Por favor, preencha o email e a palavra-passe."); return; } try { await signInWithEmailAndPassword(auth, email, pass); } catch (err) { console.error("Erro de Login:", err.code); showMessage(err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential' ? "Email ou palavra-passe incorretos." : "Erro ao tentar iniciar sessão."); } };
-                regBtn.onclick = async (e) => { e.preventDefault(); const email = emailIn.value, pass = passIn.value; if (!email || !pass) { showMessage("Por favor, preencha o email e a palavra-passe para se registar."); return; } if (pass.length < 6) { showMessage("A palavra-passe deve ter pelo menos 6 caracteres."); return; } try { await createUserWithEmailAndPassword(auth, email, pass); showMessage("Registo efetuado com sucesso! A iniciar sessão..."); } catch (err) { console.error("Erro de Registo:", err.code); showMessage(err.code === 'auth/email-already-in-use' ? "Este email já está em uso." : err.code === 'auth/weak-password' ? "A palavra-passe é muito fraca." : "Erro ao tentar registar."); } };
+                loginBtn.onclick = async (e) => { e.preventDefault(); const email = emailIn.value, pass = passIn.value; if (!email || !pass) { showMessage("Por favor, preencha o email e a senha."); return; } try { await signInWithEmailAndPassword(auth, email, pass); } catch (err) { console.error("Erro de Login:", err.code); showMessage(err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential' ? "Email ou senha incorretos." : "Erro ao tentar iniciar sessão."); } };
+                regBtn.onclick = async (e) => { e.preventDefault(); const email = emailIn.value, pass = passIn.value; if (!email || !pass) { showMessage("Por favor, preencha o email e a senha para se registar."); return; } if (pass.length < 6) { showMessage("A senha deve ter pelo menos 6 caracteres."); return; } try { await createUserWithEmailAndPassword(auth, email, pass); showMessage("Registo efetuado com sucesso! A iniciar sessão..."); } catch (err) { console.error("Erro de Registo:", err.code); showMessage(err.code === 'auth/email-already-in-use' ? "Este email já está em uso." : err.code === 'auth/weak-password' ? "A senha é muito fraca." : "Erro ao tentar registar."); } };
             }
             if (logoutBtn) { logoutBtn.onclick = async () => { try { await signOut(auth); showMessage("Sessão terminada com sucesso!"); } catch (err) { console.error("Erro de Logout:", err); showMessage("Ocorreu um erro ao terminar a sessão."); } }; }
         }
