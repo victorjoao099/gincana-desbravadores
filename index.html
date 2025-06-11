@@ -7,6 +7,9 @@
     <title>Gincana de Unidades: Edição 2025</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -145,6 +148,21 @@
         </div>
     </div>
 
+    <div id="qrScannerModal" class="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50 p-4 hidden">
+        <div class="bg-white rounded-lg p-6 shadow-xl max-w-lg w-full">
+            <h3 class="text-2xl font-bold mb-4 text-slate-800">Ler QR Code de Presença</h3>
+            <div id="qr-reader" class="w-full border-2 border-dashed border-slate-300 rounded-lg" style="min-height: 250px;"></div>
+            <p id="qr-scan-result" class="text-center font-semibold mt-4"></p>
+            <div class="flex justify-end mt-6">
+                <button id="qrScannerCancelBtn"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+
     <section id="auth-section"
         class="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-blue-200 p-4">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
@@ -213,7 +231,7 @@
             </div>
             <div class="text-center mt-4">
                 <p class="text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas, nem te
-            espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
+                espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
                 <p id="user-info" class="mt-2 text-sm text-slate-500">Carregando...</p>
             </div>
         </header>
@@ -387,8 +405,8 @@
                             <p>Um Placar Geral visível e atualizado semanalmente (online ou físico) com a pontuação de
                                 cada unidade. Um "Painel de Conquistas" registrará visualmente os progressos.</p>
                         </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md">
+                </div>
+                <div class="bg-white rounded-xl shadow-md">
                         <button
                             class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>2. Critérios de Desempate</span>
@@ -405,8 +423,8 @@
                                     transparente.</li>
                             </ol>
                         </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md">
+                </div>
+                <div class="bg-white rounded-xl shadow-md">
                         <button
                             class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>3. Conduta Esperada</span>
@@ -429,8 +447,8 @@
                             <p class="mt-2">Comportamentos que contrariem os ideais do Desbravador ou que prejudiquem o
                                 ambiente da gincana serão passíveis de penalidades.</p>
                         </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md">
+                </div>
+                <div class="bg-white rounded-xl shadow-md">
                         <button
                             class="accordion-button w-full text-left p-6 font-bold text-xl text-blue-800 flex justify-between items-center">
                             <span>4. Procedimentos para Recursos (Apelações)</span>
@@ -449,7 +467,7 @@
                                     horas. A decisão da diretoria é final e irrevogável.</li>
                             </ol>
                         </div>
-                    </div>
+                </div>
             </div>
         </section>
 
@@ -491,7 +509,7 @@
     </div>
 
     <script type="module">
-        console.log("Script de módulo a ser executado - Versão: 2024-06-08_RESPONSIVO");
+        console.log("Script de módulo a ser executado - Versão: 2024-06-08_RESPONSIVO_QRCODE");
 
         // Importações do Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
@@ -569,6 +587,13 @@
         let allNotifications = [];
         let activeChallengeUnsub = null;
         let countdownInterval = null;
+
+        // --- VARIÁVEIS ADICIONADAS PARA O QR CODE ---
+        let qrCodeGenerator = null;
+        let qrCodeScanner = null;
+        let qrPresenceTokenUnsub = null;
+        let qrPresenceCountdown = null;
+
 
         // Dados estáticos da aplicação
         const staticData = {
@@ -816,6 +841,231 @@
             }
         }
 
+        // --- INÍCIO: Funções adicionadas para QR Code de Presença ---
+
+        // Função para o secretário gerar o token de presença no Firestore
+        const handleGeneratePresenceToken = async () => {
+            const activitySelect = document.getElementById('presence-activity-select');
+            const activityId = activitySelect.value;
+            const activityName = activitySelect.options[activitySelect.selectedIndex].text;
+            
+            // O token expira em 5 minutos
+            const expiration = new Date(Date.now() + 5 * 60 * 1000);
+            const tokenData = {
+                activityId,
+                activityName,
+                expiresAt: expiration,
+                createdAt: new Date(),
+                usedBy: {} // Objeto para rastrear quem já usou
+            };
+
+            const tokenRef = doc(db, 'artifacts', appId, 'public', 'data', 'presence_tokens', 'active');
+            try {
+                await setDoc(tokenRef, tokenData);
+                showMessage("Token de presença ativo! O QR Code será gerado.");
+            } catch (e) {
+                console.error("Erro ao gerar token de presença:", e);
+                showMessage("Não foi possível gerar o token de presença.");
+            }
+        };
+
+        // Função que observa o token ativo e renderiza o QR Code
+        function listenToActivePresenceToken() {
+            if (userRole !== 'secretary') return; // Apenas secretários podem ver
+            const tokenRef = doc(db, 'artifacts', appId, 'public', 'data', 'presence_tokens', 'active');
+            if (qrPresenceTokenUnsub) qrPresenceTokenUnsub(); // Cancela o listener anterior
+
+            qrPresenceTokenUnsub = onSnapshot(tokenRef, (docSnap) => {
+                const container = document.getElementById('qrcode-container');
+                const qrcodeDiv = document.getElementById('qrcode');
+                const timerP = document.getElementById('qr-timer');
+                if (!container || !qrcodeDiv || !timerP) return;
+
+                if (qrPresenceCountdown) clearInterval(qrPresenceCountdown);
+
+                if (docSnap.exists()) {
+                    const tokenData = docSnap.data();
+                    const expiresAt = tokenData.expiresAt.toDate();
+                    
+                    if (new Date() > expiresAt) {
+                         container.classList.add('hidden');
+                         return;
+                    }
+
+                    container.classList.remove('hidden');
+                    qrcodeDiv.innerHTML = ''; // Limpa o QR Code anterior
+
+                    // Gera o QR Code com o ID do documento (que é 'active')
+                    new QRCode(qrcodeDiv, {
+                        text: docSnap.id,
+                        width: 200,
+                        height: 200,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+
+                    // Inicia o contador regressivo
+                    qrPresenceCountdown = setInterval(() => {
+                        const now = new Date();
+                        const diff = expiresAt - now;
+                        if (diff <= 0) {
+                            clearInterval(qrPresenceCountdown);
+                            container.classList.add('hidden');
+                            // Opcional: deletar o token expirado do Firestore
+                            deleteDoc(tokenRef);
+                        } else {
+                            const minutes = Math.floor((diff / 1000 / 60) % 60);
+                            const seconds = Math.floor((diff / 1000) % 60);
+                            timerP.textContent = `Este QR Code expira em: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                        }
+                    }, 1000);
+
+                } else {
+                    container.classList.add('hidden');
+                }
+            });
+            unsubscribers.push(qrPresenceTokenUnsub);
+        }
+        
+        // Populando o select de atividades para o QR Code
+        function populatePresenceActivitySelect() {
+            const select = document.getElementById('presence-activity-select');
+            if (!select) return;
+
+            const activitiesOptions = currentActivities.map(act => `<option value="${act.id}">${act.name}</option>`).join('');
+            select.innerHTML = '<option value="geral">Chamada Geral do Dia</option>' + activitiesOptions;
+        }
+
+        // Funções de Leitura de QR Code (Líder)
+        function setupQrScannerListeners() {
+            const scanBtn = document.getElementById('scan-qr-presence-btn');
+            const cancelBtn = document.getElementById('qrScannerCancelBtn');
+            const modal = document.getElementById('qrScannerModal');
+
+            if (scanBtn) {
+                scanBtn.addEventListener('click', () => {
+                    modal.classList.remove('hidden');
+                    startQrScanner();
+                });
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    stopQrScanner();
+                    modal.classList.add('hidden');
+                });
+            }
+        }
+
+        function startQrScanner() {
+            const resultP = document.getElementById('qr-scan-result');
+            resultP.textContent = 'Aponte a câmera para o QR Code...';
+            resultP.className = 'text-center font-semibold mt-4 text-slate-700';
+
+            qrCodeScanner = new Html5Qrcode("qr-reader");
+
+            qrCodeScanner.start(
+                { facingMode: "environment" }, // Usa a câmera traseira
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                async (decodedText, decodedResult) => {
+                    // Sucesso na leitura
+                    stopQrScanner();
+                    resultP.textContent = 'QR Code lido! Processando...';
+                    resultP.classList.add('text-green-600');
+                    await handlePresenceVerification(decodedText);
+                },
+                (errorMessage) => {
+                    // Erro ou não encontrou QR Code
+                })
+            .catch((err) => {
+                resultP.textContent = 'Erro ao iniciar a câmera. Verifique as permissões.';
+                resultP.className = 'text-center font-semibold mt-4 text-red-600';
+            });
+        }
+
+        function stopQrScanner() {
+            if (qrCodeScanner && qrCodeScanner.isScanning) {
+                qrCodeScanner.stop().catch(err => { /* Silencia erros ao parar */ });
+            }
+        }
+
+        async function handlePresenceVerification(tokenId) {
+            const modal = document.getElementById('qrScannerModal');
+            if (tokenId !== 'active') {
+                showMessage("Este não é um QR Code de presença válido.");
+                modal.classList.add('hidden');
+                return;
+            }
+            
+            const selectedUnitId = document.getElementById('unit-select-leader')?.value;
+            if (!selectedUnitId) {
+                showMessage("Selecione sua unidade no painel de gestão antes de confirmar a presença.");
+                modal.classList.add('hidden');
+                return;
+            }
+
+            const tokenRef = doc(db, 'artifacts', appId, 'public', 'data', 'presence_tokens', tokenId);
+            
+            try {
+                const tokenSnap = await getDoc(tokenRef);
+                if (!tokenSnap.exists()) {
+                    throw new Error("Token de presença não encontrado ou expirado.");
+                }
+
+                const tokenData = tokenSnap.data();
+                
+                if (new Date() > tokenData.expiresAt.toDate()) {
+                    throw new Error("Este QR Code de presença já expirou.");
+                }
+
+                // Verifica se a unidade já usou este token
+                if (tokenData.usedBy && tokenData.usedBy[selectedUnitId]) {
+                     throw new Error("A presença para sua unidade já foi registrada com este QR Code.");
+                }
+                
+                // Marca a presença da unidade
+                await updateDoc(tokenRef, {
+                    [`usedBy.${selectedUnitId}`]: {
+                        userId: currentUser.uid,
+                        userName: currentUser.email,
+                        timestamp: serverTimestamp()
+                    }
+                });
+                
+                // Cria uma submissão automática para a atividade de presença
+                const activityName = tokenData.activityName || 'Presença Geral';
+                const unitName = currentUnits.find(u => u.id === selectedUnitId)?.name || '?';
+                const pointsForPresence = 5;
+
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), {
+                     unitId: selectedUnitId,
+                     unitName: unitName,
+                     activityId: tokenData.activityId,
+                     activityName: activityName,
+                     details: `Presença confirmada via QR Code por ${currentUser.email}.`,
+                     status: 'approved', // Aprovação automática
+                     pointsAwarded: pointsForPresence,
+                     submittedBy: currentUser.uid,
+                     submittedAt: serverTimestamp(),
+                     validatedAt: serverTimestamp(),
+                     validatedBy: 'system_qr'
+                });
+                
+                showMessage(`Presença da unidade ${unitName} confirmada para "${activityName}"! Você ganhou ${pointsForPresence} pontos.`);
+
+            } catch (error) {
+                showMessage(`Erro na verificação: ${error.message}`);
+            } finally {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // --- FIM: Funções adicionadas para QR Code de Presença ---
+
         // Funções de Renderização da UI
         function renderDashboard() {
             const emptyState = document.getElementById('inicio-empty-state');
@@ -843,7 +1093,7 @@
             if (!unidadeDestaqueEl || !totalPontosEl || !atividadesRealizadasEl) return;
             const totalScore = currentUnits.reduce((sum, item) => sum + (item.score || 0), 0);
             const approvedSubmissionsCount = currentSubmissions.filter(sub => sub.status === 'approved').length;
-            unidadeDestaqueEl.textContent = currentUnits[0].name;
+            unidadeDestaqueEl.textContent = currentUnits[0] ? currentUnits[0].name : 'N/A';
             totalPontosEl.textContent = totalScore;
             atividadesRealizadasEl.textContent = `${approvedSubmissionsCount}`;
             renderScoreChart(currentUnits);
@@ -911,7 +1161,38 @@
         function renderUnitLeaderDashboard() {
             const gestaoTitleEl = document.getElementById('gestao-title'); if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Líder de Unidade'; else return;
             const gestaoContent = document.getElementById('gestao-content'); if (!gestaoContent) return;
-            gestaoContent.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-md mb-8"><h3 class="text-xl font-semibold text-blue-600 mb-4">Enviar Atividade Concluída</h3><form id="submit-activity-form" class="space-y-4 mb-8"><div><label for="unit-select-leader" class="block text-sm font-medium text-slate-700">Sua Unidade:</label><select id="unit-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione sua unidade</option></select><p id="no-units-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma unidade.</p></div><div><label for="activity-select-leader" class="block text-sm font-medium text-slate-700">Atividade:</label><select id="activity-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione uma atividade</option></select><p id="no-activities-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma atividade.</p></div><div><label for="details-leader" class="block text-sm font-medium text-slate-700">Detalhes da Conclusão:</label><textarea id="details-leader" rows="3" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required placeholder="Descreva..."></textarea></div><button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center">Enviar</button></form></div><div class="bg-white p-6 rounded-xl shadow-md"><h3 class="text-xl font-semibold text-blue-600 mb-4">Meus Envios Recentes</h3><div id="leader-submissions-list"><p class="text-slate-600">Selecione uma unidade.</p></div></div>`;
+            gestaoContent.innerHTML = `
+                <div class="mb-6">
+                    <button id="scan-qr-presence-btn" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 3h-1m-5 11v-1m-6-4H4m16 0h-1M6 6l1.414 1.414M18 18l-1.414-1.414M6 18l1.414-1.414M18 6l-1.414-1.414M12 12a2 2 0 100-4 2 2 0 000 4z" /></svg>
+                        Confirmar Presença com QR Code
+                    </button>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                    <h3 class="text-xl font-semibold text-blue-600 mb-4">Enviar Atividade Concluída</h3>
+                    <form id="submit-activity-form" class="space-y-4 mb-8">
+                        <div>
+                            <label for="unit-select-leader" class="block text-sm font-medium text-slate-700">Sua Unidade:</label>
+                            <select id="unit-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione sua unidade</option></select>
+                            <p id="no-units-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma unidade.</p>
+                        </div>
+                        <div>
+                            <label for="activity-select-leader" class="block text-sm font-medium text-slate-700">Atividade:</label>
+                            <select id="activity-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione uma atividade</option></select>
+                            <p id="no-activities-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma atividade.</p>
+                        </div>
+                        <div>
+                            <label for="details-leader" class="block text-sm font-medium text-slate-700">Detalhes da Conclusão:</label>
+                            <textarea id="details-leader" rows="3" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required placeholder="Descreva..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center">Enviar</button>
+                    </form>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-xl font-semibold text-blue-600 mb-4">Meus Envios Recentes</h3>
+                    <div id="leader-submissions-list"><p class="text-slate-600">Selecione uma unidade.</p></div>
+                </div>
+            `;
             populateLeaderUnitSelect(); populateLeaderActivitySelect();
             document.getElementById('submit-activity-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -931,6 +1212,8 @@
             });
             document.getElementById('unit-select-leader').addEventListener('change', (e) => updateLeaderSubmissionsList(e.target.value));
             updateLeaderSubmissionsList(document.getElementById('unit-select-leader').value);
+            // Configura o listener para o botão de scan
+            setupQrScannerListeners();
         }
 
         function updateLeaderSubmissionsList(selectedUnitId) {
@@ -954,6 +1237,7 @@
             const gestaoContent = document.getElementById('gestao-content'); if (!gestaoContent) return;
             gestaoContent.innerHTML = `
                 <section class="admin-section"><h3 class="admin-h3 text-orange-600">Lançar Desafio Surpresa</h3><div class="space-y-4"> <input type="text" id="challenge-title-input" placeholder="Título do Desafio" class="admin-input"> <textarea id="challenge-desc-input" placeholder="Descrição do Desafio" class="admin-input" rows="2"></textarea><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><input type="number" id="challenge-points-input" placeholder="Pontos" class="admin-input"><input type="number" id="challenge-duration-input" placeholder="Duração (minutos)" class="admin-input"><input type="text" id="challenge-answer-input-admin" placeholder="Resposta Correta" class="admin-input"></div> <div class="flex gap-4"> <button id="launch-challenge-btn" class="admin-btn bg-orange-500 hover:bg-orange-600 w-full">⚡ Lançar Desafio!</button> <button id="end-challenge-btn" class="admin-btn bg-gray-500 hover:bg-gray-600 w-full">Encerrar Desafio Atual</button></div></div></section>
+                <section class="admin-section"><h3 class="admin-h3 text-teal-600">Gerar QR Code de Presença</h3><div class="space-y-4"><div><label for="presence-activity-select" class="admin-label">Selecione a Atividade (Opcional):</label><select id="presence-activity-select" class="admin-input"><option value="geral">Chamada Geral do Dia</option></select></div><button id="generate-qr-btn" class="admin-btn bg-teal-500 hover:bg-teal-600 w-full">Gerar QR Code de Presença</button><div id="qrcode-container" class="mt-4 p-4 bg-white rounded-lg shadow-inner text-center hidden"><h4 class="text-lg font-semibold mb-2">Aponte a câmera para este QR Code!</h4><div id="qrcode" class="flex justify-center my-4"></div><p id="qr-timer" class="text-red-500 font-bold mt-2"></p></div></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-indigo-600">Enviar Anúncio Global</h3><div class="space-y-4"> <textarea id="new-announcement-message" placeholder="Escreva sua mensagem aqui..." class="admin-input" rows="3"></textarea> <button id="send-announcement-btn" class="admin-btn bg-indigo-500 hover:bg-indigo-600 w-full">📢 Enviar Anúncio</button> </div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-blue-600">Gerenciar Unidades</h3><div class="flex flex-col sm:flex-row gap-4 mb-4"><input type="text" id="new-unit-name" placeholder="Nome da unidade" class="admin-input"><button id="add-unit-btn" class="admin-btn bg-blue-600 hover:bg-blue-700">Adicionar</button></div><div class="table-container"><table class="admin-table"><thead class="bg-blue-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="units-table-body"></tbody></table></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-yellow-600">Gerenciar Conquistas</h3><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div id="create-achievement-section"> <h4 class="text-lg font-semibold mb-2 text-yellow-800">1. Criar Tipo de Conquista</h4> <div class="space-y-4"> <input type="text" id="new-achievement-name" placeholder="Nome da Conquista (Ex: Pioneirismo)" class="admin-input"> <textarea id="new-achievement-desc" placeholder="Descrição da Conquista" class="admin-input" rows="2"></textarea> <input type="text" id="new-achievement-icon" placeholder="Ícone (Ex: 🏆)" class="admin-input"> <button id="add-achievement-def-btn" class="admin-btn bg-yellow-500 hover:bg-yellow-600 w-full">Criar Conquista</button> </div> <div class="table-container mt-4"> <table class="admin-table"> <thead class="bg-yellow-100"> <tr> <th class="th-cell">Ícone</th> <th class="th-cell">Nome</th> <th class="th-cell rounded-tr-lg">Ação</th> </tr> </thead> <tbody id="achievements-defs-table-body"></tbody> </table> </div> </div><div id="award-achievement-section"> <h4 class="text-lg font-semibold mb-2 text-yellow-800">2. Conceder Conquista</h4> <div class="space-y-4"> <div> <label for="award-ach-unit-select" class="admin-label">Unidade Premiada:</label> <select id="award-ach-unit-select" class="admin-input"></select> </div> <div> <label for="award-ach-select" class="admin-label">Conquista a Conceder:</label> <select id="award-ach-select" class="admin-input"></select> </div> <button id="award-achievement-btn" class="admin-btn bg-yellow-600 hover:bg-yellow-700 w-full">Conceder Conquista</button> </div> </div></div></section>
@@ -974,10 +1258,13 @@
             document.getElementById('send-announcement-btn').addEventListener('click', handleSendAnnouncement);
             document.getElementById('launch-challenge-btn').addEventListener('click', handleLaunchChallenge);
             document.getElementById('end-challenge-btn').addEventListener('click', handleEndChallenge);
+            document.getElementById('generate-qr-btn').addEventListener('click', handleGeneratePresenceToken);
 
             // Populate initial data
             const demeritUnitSelect = document.getElementById('demerit-unit-select'); demeritUnitSelect.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
             updateUnitsTable(); updateActivitiesTable(); updateDemeritsTable(); updateSubmissionsTables(); updateUsersTable(); updateAchievementDefsTable(); updateAwardAchievementDropdowns();
+            populatePresenceActivitySelect();
+            listenToActivePresenceToken();
         }
 
         function updateUnitsTable() {
@@ -1129,6 +1416,9 @@
             unsubscribers = [];
             if (activeChallengeUnsub) { activeChallengeUnsub(); activeChallengeUnsub = null; }
             if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+            if (qrPresenceTokenUnsub) { qrPresenceTokenUnsub(); qrPresenceTokenUnsub = null; }
+            if (qrPresenceCountdown) { clearInterval(qrPresenceCountdown); qrPresenceCountdown = null; }
+            stopQrScanner();
         }
 
         function showUnitPage(unitId) {
@@ -1242,7 +1532,7 @@
 
             // Listeners de dados
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'), s => { currentUnits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0)); renderDashboard(); if (isActiveTabSecretary()) { updateUnitsTable(); updateAwardAchievementDropdowns(); } if (isActiveTabLeader()) populateLeaderUnitSelect(); }));
-            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), s => { currentActivities = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) updateActivitiesTable(); if (isActiveTabLeader()) populateLeaderActivitySelect(); }));
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), s => { currentActivities = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) { updateActivitiesTable(); populatePresenceActivitySelect(); } if (isActiveTabLeader()) populateLeaderActivitySelect(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), s => { currentSubmissions = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0)); renderDashboard(); if (isActiveTabSecretary()) updateSubmissionsTables(); if (isActiveTabLeader()) updateLeaderSubmissionsList(document.getElementById('unit-select-leader')?.value); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), s => { currentDemerits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0)); if (isActiveTabSecretary()) updateDemeritsTable(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'users'), s => { currentUsers = s.docs.map(d => ({ id: d.id, ...d.data() })); if (isActiveTabSecretary()) updateUsersTable(); }));
