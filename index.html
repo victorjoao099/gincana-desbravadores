@@ -213,7 +213,7 @@
             </div>
             <div class="text-center mt-4">
                 <p class="text-slate-500 italic max-w-3xl mx-auto">"Não to mandei eu? Sê forte e corajoso; não temas, nem te
-            espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
+                    espantes, porque o Senhor teu Deus é contigo, por onde quer que andares." – Josué 1:9</p>
                 <p id="user-info" class="mt-2 text-sm text-slate-500">Carregando...</p>
             </div>
         </header>
@@ -491,7 +491,7 @@
     </div>
 
     <script type="module">
-        console.log("Script de módulo a ser executado - Versão: 2024-06-08_RESPONSIVO");
+        console.log("Script de módulo a ser executado - Versão: 2024-06-08_RESPONSIVO_COM_MEMBROS");
 
         // Importações do Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
@@ -566,6 +566,7 @@
         let currentUsers = [];
         let currentAchievementDefs = [];
         let currentAwardedAchievements = [];
+        let currentMembers = []; // <-- NOVA VARIÁVEL DE ESTADO
         let allNotifications = [];
         let activeChallengeUnsub = null;
         let countdownInterval = null;
@@ -816,7 +817,7 @@
             }
         }
 
-        // Funções de Renderização da UI
+        // --- Funções de Renderização da UI ---
         function renderDashboard() {
             const emptyState = document.getElementById('inicio-empty-state');
             const mainContent = document.getElementById('dashboard-main-content');
@@ -959,6 +960,38 @@
                 <section class="admin-section"><h3 class="admin-h3 text-yellow-600">Gerenciar Conquistas</h3><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div id="create-achievement-section"> <h4 class="text-lg font-semibold mb-2 text-yellow-800">1. Criar Tipo de Conquista</h4> <div class="space-y-4"> <input type="text" id="new-achievement-name" placeholder="Nome da Conquista (Ex: Pioneirismo)" class="admin-input"> <textarea id="new-achievement-desc" placeholder="Descrição da Conquista" class="admin-input" rows="2"></textarea> <input type="text" id="new-achievement-icon" placeholder="Ícone (Ex: 🏆)" class="admin-input"> <button id="add-achievement-def-btn" class="admin-btn bg-yellow-500 hover:bg-yellow-600 w-full">Criar Conquista</button> </div> <div class="table-container mt-4"> <table class="admin-table"> <thead class="bg-yellow-100"> <tr> <th class="th-cell">Ícone</th> <th class="th-cell">Nome</th> <th class="th-cell rounded-tr-lg">Ação</th> </tr> </thead> <tbody id="achievements-defs-table-body"></tbody> </table> </div> </div><div id="award-achievement-section"> <h4 class="text-lg font-semibold mb-2 text-yellow-800">2. Conceder Conquista</h4> <div class="space-y-4"> <div> <label for="award-ach-unit-select" class="admin-label">Unidade Premiada:</label> <select id="award-ach-unit-select" class="admin-input"></select> </div> <div> <label for="award-ach-select" class="admin-label">Conquista a Conceder:</label> <select id="award-ach-select" class="admin-input"></select> </div> <button id="award-achievement-btn" class="admin-btn bg-yellow-600 hover:bg-yellow-700 w-full">Conceder Conquista</button> </div> </div></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-green-600">Gerenciar Atividades</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4"><input type="text" id="new-activity-name" placeholder="Nome da Atividade" class="admin-input"><select id="new-activity-type" class="admin-input"><option value="">Tipo</option><option>Físico</option><option>Mental</option><option>Espiritual</option><option>Social</option><option>Pioneirismo</option><option>Natureza</option><option>Serviço</option><option>Culinária</option><option>Geral</option></select><input type="number" id="new-activity-max-points" placeholder="Pontos Máx." class="admin-input" min="0"><input type="datetime-local" id="new-activity-deadline" class="admin-input" title="Prazo Limite (opcional)"></div><button id="add-activity-btn" class="admin-btn bg-green-600 hover:bg-green-700 w-full">Adicionar Atividade</button><div class="table-container mt-6"><table class="admin-table"><thead class="bg-green-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Tipo</th><th class="th-cell">Pontos Máx.</th><th class="th-cell">Prazo Limite</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="activities-table-body"></tbody></table></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-red-700">Gerenciar Deméritos</h3><div class="space-y-4 mb-4"><div><label for="demerit-unit-select" class="admin-label">Unidade:</label><select id="demerit-unit-select" class="admin-input" required><option value="">Selecione</option></select></div><div><label for="demerit-points" class="admin-label">Pontos a Deduzir:</label><input type="number" id="demerit-points" min="1" class="admin-input" required placeholder="Ex: 10"></div><div><label for="demerit-reason" class="admin-label">Razão:</label><textarea id="demerit-reason" rows="3" class="admin-input" required placeholder="Motivo..."></textarea></div><button id="apply-demerit-btn" class="admin-btn bg-red-600 hover:bg-red-700 w-full">Aplicar</button></div><div class="table-container mt-6"><table class="admin-table"><thead class="bg-red-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell">Razão</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody id="demerits-table-body"></tbody></table></div></section>
+                
+                <section class="admin-section">
+                    <h3 class="admin-h3 text-teal-600">Gerenciar Membros</h3>
+                    <div class="space-y-4 mb-4">
+                        <input type="text" id="new-member-name" placeholder="Nome completo do membro" class="admin-input">
+                        <select id="new-member-unit-select" class="admin-input"></select>
+                        <select id="new-member-role-select" class="admin-input">
+                            <option value="Desbravador">Desbravador</option>
+                            <option value="Conselheiro">Conselheiro</option>
+                            <option value="Capitão">Capitão</option>
+                            <option value="Secretário de Unidade">Secretário de Unidade</option>
+                        </select>
+                        <button id="add-member-btn" class="admin-btn bg-teal-600 hover:bg-teal-700 w-full">Adicionar Membro</button>
+                    </div>
+                    <div class="table-container mt-6">
+                        <table class="admin-table"><thead class="bg-teal-100"><tr><th class="th-cell">Nome</th><th class="th-cell">Unidade</th><th class="th-cell">Função</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="members-table-body"></tbody></table>
+                    </div>
+                </section>
+                
+                <section class="admin-section">
+                    <h3 class="admin-h3 text-cyan-600">Registo de Presença de Conselheiros</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="attendance-date" class="admin-label">Data da Reunião:</label>
+                            <input type="date" id="attendance-date" class="admin-input">
+                        </div>
+                        <div id="counselors-attendance-list" class="space-y-3 p-4 bg-slate-100 rounded-lg">
+                            <p>Selecione uma data para carregar a lista de conselheiros.</p>
+                        </div>
+                        <button id="save-attendance-btn" class="admin-btn bg-cyan-600 hover:bg-cyan-700 w-full hidden">Salvar Chamada</button>
+                    </div>
+                </section>
                 <section class="admin-section"><h3 class="admin-h3 text-purple-600">Gerenciar Usuários</h3><div id="users-management-list" class="table-container"><p>Carregando usuários...</p></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-yellow-800">Envios Pendentes (<span id="pending-submissions-count">0</span>)</h3><div id="pending-submissions-list" class="table-container"><p>Nenhum pendente.</p></div></section>
                 <section class="admin-section !mb-0"><h3 class="admin-h3 text-slate-700">Histórico de Envios</h3><div id="all-submissions-list" class="table-container"><p>Nenhum registro.</p></div></section>`;
@@ -974,10 +1007,22 @@
             document.getElementById('send-announcement-btn').addEventListener('click', handleSendAnnouncement);
             document.getElementById('launch-challenge-btn').addEventListener('click', handleLaunchChallenge);
             document.getElementById('end-challenge-btn').addEventListener('click', handleEndChallenge);
+            // INÍCIO: LISTENERS NOVOS
+            document.getElementById('add-member-btn').addEventListener('click', handleAddMember);
+            document.getElementById('attendance-date').addEventListener('change', (e) => renderAttendanceSheet(e.target.value));
+            document.getElementById('save-attendance-btn').addEventListener('click', handleSaveAttendance);
+            // FIM: LISTENERS NOVOS
 
             // Populate initial data
             const demeritUnitSelect = document.getElementById('demerit-unit-select'); demeritUnitSelect.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
-            updateUnitsTable(); updateActivitiesTable(); updateDemeritsTable(); updateSubmissionsTables(); updateUsersTable(); updateAchievementDefsTable(); updateAwardAchievementDropdowns();
+            updateUnitsTable(); 
+            updateActivitiesTable(); 
+            updateDemeritsTable(); 
+            updateSubmissionsTables(); 
+            updateUsersTable(); 
+            updateAchievementDefsTable(); 
+            updateAwardAchievementDropdowns();
+            updateMembersTable(); // <-- NOVA CHAMADA DE FUNÇÃO
         }
 
         function updateUnitsTable() {
@@ -1113,6 +1158,158 @@
             } catch (err) { console.error("Erro ao rejeitar submissão:", err); showMessage("Ocorreu um erro ao rejeitar a submissão."); }
         }
 
+        // --- INÍCIO: NOVAS FUNÇÕES PARA MEMBROS E CHAMADA ---
+
+        const handleAddMember = async () => {
+            const name = document.getElementById('new-member-name').value.trim();
+            const unitId = document.getElementById('new-member-unit-select').value;
+            const role = document.getElementById('new-member-role-select').value;
+
+            if (!name || !unitId || !role) {
+                showMessage("Por favor, preencha todos os campos para adicionar um membro.");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'members'), {
+                    name,
+                    unitId,
+                    role,
+                    registeredAt: serverTimestamp()
+                });
+                showMessage(`Membro "${name}" adicionado com sucesso!`);
+                document.getElementById('new-member-name').value = '';
+            } catch (err) {
+                console.error("Erro ao adicionar membro:", err);
+                showMessage("Ocorreu um erro ao adicionar o membro.");
+            }
+        };
+
+        function updateMembersTable() {
+            const tbody = document.getElementById('members-table-body');
+            if (!tbody) return;
+
+            const unitSelect = document.getElementById('new-member-unit-select');
+            if(unitSelect) {
+                unitSelect.innerHTML = currentUnits.length > 0
+                    ? '<option value="">Selecione a Unidade</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('')
+                    : '<option value="">Cadastre uma unidade primeiro</option>';
+            }
+
+            tbody.innerHTML = currentMembers.length === 0
+                ? '<tr><td colspan="4" class="text-center p-4">Nenhum membro cadastrado.</td></tr>'
+                : currentMembers.map(m => {
+                    const unitName = currentUnits.find(u => u.id === m.unitId)?.name || 'Sem unidade';
+                    return `<tr>
+                                <td>${m.name}</td>
+                                <td>${unitName}</td>
+                                <td>${m.role}</td>
+                                <td class="whitespace-nowrap">
+                                    <button data-id="${m.id}" class="delete-member-btn admin-btn-xs bg-red-500 hover:bg-red-600">Excluir</button>
+                                </td>
+                            </tr>`;
+                }).join('');
+            applyTableStyles(tbody);
+            tbody.querySelectorAll('.admin-btn-xs').forEach(btn => btn.classList.add('text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-xs'));
+
+            tbody.querySelectorAll('.delete-member-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const memberId = e.target.dataset.id;
+                    const memberName = currentMembers.find(m => m.id === memberId)?.name;
+                    showMessage(`Tem certeza que deseja excluir o membro "${memberName}"?`, async (confirmed) => {
+                        if(confirmed) {
+                            try {
+                                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'members', memberId));
+                                showMessage("Membro excluído.");
+                            } catch (err) {
+                                showMessage("Erro ao excluir membro.");
+                                console.error(err);
+                            }
+                        }
+                    }, true);
+                });
+            });
+        }
+
+        async function renderAttendanceSheet(dateString) {
+            const listContainer = document.getElementById('counselors-attendance-list');
+            const saveBtn = document.getElementById('save-attendance-btn');
+            if (!dateString) {
+                listContainer.innerHTML = '<p>Selecione uma data para carregar a lista de conselheiros.</p>';
+                saveBtn.classList.add('hidden');
+                return;
+            }
+
+            listContainer.innerHTML = '<p>A carregar...</p>';
+            const counselors = currentMembers.filter(m => m.role === 'Conselheiro');
+
+            if (counselors.length === 0) {
+                listContainer.innerHTML = '<p>Nenhum conselheiro cadastrado. Vá para "Gerenciar Membros" para adicioná-los.</p>';
+                saveBtn.classList.add('hidden');
+                return;
+            }
+
+            const recordId = dateString; // YYYY-MM-DD
+            const attendanceRef = doc(db, 'artifacts', appId, 'public', 'data', 'attendance_records', recordId);
+            const attendanceSnap = await getDoc(attendanceRef);
+            const existingAttendees = attendanceSnap.exists() ? attendanceSnap.data().attendees : {};
+
+            let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">';
+            counselors.sort((a,b) => a.name.localeCompare(b.name)).forEach(counselor => {
+                const unitName = currentUnits.find(u => u.id === counselor.unitId)?.name || 'N/A';
+                const isPresent = existingAttendees[counselor.id] === true;
+                html += `
+                    <div class="flex items-center justify-between bg-white p-2 rounded-md shadow-sm">
+                        <div>
+                            <span class="font-semibold">${counselor.name}</span>
+                            <span class="text-sm text-slate-500 ml-2">(${unitName})</span>
+                        </div>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" data-member-id="${counselor.id}" class="attendance-checkbox h-5 w-5 rounded text-blue-600 focus:ring-blue-500" ${isPresent ? 'checked' : ''}>
+                            <span class="ml-2 text-sm font-medium">Presente</span>
+                        </label>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            listContainer.innerHTML = html;
+            saveBtn.classList.remove('hidden');
+        }
+
+        async function handleSaveAttendance() {
+            const dateString = document.getElementById('attendance-date').value;
+            if (!dateString) {
+                showMessage("Por favor, selecione uma data primeiro.");
+                return;
+            }
+
+            const checkboxes = document.querySelectorAll('.attendance-checkbox');
+            const attendees = {};
+            checkboxes.forEach(box => {
+                if (box.checked) {
+                    attendees[box.dataset.memberId] = true;
+                }
+            });
+
+            const recordId = dateString;
+            const attendanceRef = doc(db, 'artifacts', appId, 'public', 'data', 'attendance_records', recordId);
+
+            try {
+                await setDoc(attendanceRef, {
+                    date: new Date(dateString + 'T12:00:00Z'),
+                    attendees: attendees,
+                    recordedBy: currentUser.uid,
+                    recordedAt: serverTimestamp()
+                }, { merge: true });
+
+                showMessage("Registo de presença salvo com sucesso!");
+            } catch (err) {
+                console.error("Erro ao salvar presença:", err);
+                showMessage("Ocorreu um erro ao salvar o registo de presença.");
+            }
+        }
+        // --- FIM: NOVAS FUNÇÕES ---
+
 
         function setupAuthFormListeners() {
             const authForm = document.getElementById('auth-form'), emailIn = document.getElementById('email'), passIn = document.getElementById('password'), loginBtn = document.getElementById('login-btn'), regBtn = document.getElementById('register-btn'), logoutBtn = document.getElementById('logout-btn');
@@ -1241,7 +1438,7 @@
             if (gestaoTabBtn) gestaoTabBtn.classList.toggle('hidden', userRole === 'viewer');
 
             // Listeners de dados
-            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'), s => { currentUnits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0)); renderDashboard(); if (isActiveTabSecretary()) { updateUnitsTable(); updateAwardAchievementDropdowns(); } if (isActiveTabLeader()) populateLeaderUnitSelect(); }));
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'), s => { currentUnits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0)); renderDashboard(); if (isActiveTabSecretary()) { updateUnitsTable(); updateAwardAchievementDropdowns(); updateMembersTable(); } if (isActiveTabLeader()) populateLeaderUnitSelect(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), s => { currentActivities = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) updateActivitiesTable(); if (isActiveTabLeader()) populateLeaderActivitySelect(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), s => { currentSubmissions = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0)); renderDashboard(); if (isActiveTabSecretary()) updateSubmissionsTables(); if (isActiveTabLeader()) updateLeaderSubmissionsList(document.getElementById('unit-select-leader')?.value); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), s => { currentDemerits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0)); if (isActiveTabSecretary()) updateDemeritsTable(); }));
@@ -1249,6 +1446,9 @@
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'achievements'), s => { currentAchievementDefs = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) { updateAchievementDefsTable(); updateAwardAchievementDropdowns(); } }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'awarded_achievements'), s => { currentAwardedAchievements = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.awardedAt?.toDate() || 0) - (a.awardedAt?.toDate() || 0)); if (document.getElementById('conquistas')?.classList.contains('active')) renderAchievementsTab(); }));
             unsubscribers.push(onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'notifications'), orderBy('timestamp', 'desc')), s => { allNotifications = s.docs.map(d => ({ id: d.id, ...d.data() })); renderNotifications(); }));
+            // INÍCIO: NOVO LISTENER
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'members'), s => { currentMembers = s.docs.map(d => ({ id: d.id, ...d.data() })); if (isActiveTabSecretary()) { updateMembersTable(); }}));
+            // FIM: NOVO LISTENER
 
             // Listener para o Desafio Surpresa
             const challengeRef = doc(db, 'artifacts', appId, 'public', 'data', 'surprise_challenges', 'active');
