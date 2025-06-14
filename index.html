@@ -491,9 +491,9 @@
     </div>
 
     <script type="module">
-        console.log("Script de módulo a ser executado - Versão: 2024-06-08_RESPONSIVO_COM_MEMBROS_E_FALTAS");
+        console.log("Script de módulo a ser executado - Versão: 2024-06-08_RELATORIO_FALTAS");
 
-        // Importações do Firebase SDK (com getDocs e where adicionados para a nova funcionalidade)
+        // Importações do Firebase SDK (com getDocs e where adicionados)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, serverTimestamp, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
@@ -504,6 +504,17 @@
         let auth = null;
         let currentUser = null;
         let userRole = null;
+
+        // --- NOVA CONSTANTE ---
+        // Define quais cargos são considerados Liderança para a chamada e relatórios
+        const LEADERSHIP_ROLES = [
+            'Diretor(a)', 
+            'Diretor(a) Associado(a)', 
+            'Secretário(a) do Clube', 
+            'Tesoureiro(a) do Clube', 
+            'Capelão(ã) do Clube',
+            'Conselheiro'
+        ];
 
         // Configuração do Firebase
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'gincana-de-unidade';
@@ -844,7 +855,7 @@
             if (!unidadeDestaqueEl || !totalPontosEl || !atividadesRealizadasEl) return;
             const totalScore = currentUnits.reduce((sum, item) => sum + (item.score || 0), 0);
             const approvedSubmissionsCount = currentSubmissions.filter(sub => sub.status === 'approved').length;
-            unidadeDestaqueEl.textContent = currentUnits[0].name;
+            unidadeDestaqueEl.textContent = currentUnits.length > 0 ? currentUnits[0].name : "N/A";
             totalPontosEl.textContent = totalScore;
             atividadesRealizadasEl.textContent = `${approvedSubmissionsCount}`;
             renderScoreChart(currentUnits);
@@ -953,13 +964,13 @@
         function renderSecretaryDashboard() {
             const gestaoTitleEl = document.getElementById('gestao-title'); if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Secretário'; else return;
             const gestaoContent = document.getElementById('gestao-content'); if (!gestaoContent) return;
+            // --- HTML DO PAINEL DO SECRETÁRIO ATUALIZADO ---
             gestaoContent.innerHTML = `
                 <section class="admin-section"><h3 class="admin-h3 text-orange-600">Lançar Desafio Surpresa</h3><div class="space-y-4"> <input type="text" id="challenge-title-input" placeholder="Título do Desafio" class="admin-input"> <textarea id="challenge-desc-input" placeholder="Descrição do Desafio" class="admin-input" rows="2"></textarea><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><input type="number" id="challenge-points-input" placeholder="Pontos" class="admin-input"><input type="number" id="challenge-duration-input" placeholder="Duração (minutos)" class="admin-input"><input type="text" id="challenge-answer-input-admin" placeholder="Resposta Correta" class="admin-input"></div> <div class="flex gap-4"> <button id="launch-challenge-btn" class="admin-btn bg-orange-500 hover:bg-orange-600 w-full">⚡ Lançar Desafio!</button> <button id="end-challenge-btn" class="admin-btn bg-gray-500 hover:bg-gray-600 w-full">Encerrar Desafio Atual</button></div></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-indigo-600">Enviar Anúncio Global</h3><div class="space-y-4"> <textarea id="new-announcement-message" placeholder="Escreva sua mensagem aqui..." class="admin-input" rows="3"></textarea> <button id="send-announcement-btn" class="admin-btn bg-indigo-500 hover:bg-indigo-600 w-full">📢 Enviar Anúncio</button> </div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-blue-600">Gerenciar Unidades</h3><div class="flex flex-col sm:flex-row gap-4 mb-4"><input type="text" id="new-unit-name" placeholder="Nome da unidade" class="admin-input"><button id="add-unit-btn" class="admin-btn bg-blue-600 hover:bg-blue-700">Adicionar</button></div><div class="table-container"><table class="admin-table"><thead class="bg-blue-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="units-table-body"></tbody></table></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-yellow-600">Gerenciar Conquistas</h3><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div id="create-achievement-section"> <h4 class="text-lg font-semibold mb-2 text-yellow-800">1. Criar Tipo de Conquista</h4> <div class="space-y-4"> <input type="text" id="new-achievement-name" placeholder="Nome da Conquista (Ex: Pioneirismo)" class="admin-input"> <textarea id="new-achievement-desc" placeholder="Descrição da Conquista" class="admin-input" rows="2"></textarea> <input type="text" id="new-achievement-icon" placeholder="Ícone (Ex: 🏆)" class="admin-input"> <button id="add-achievement-def-btn" class="admin-btn bg-yellow-500 hover:bg-yellow-600 w-full">Criar Conquista</button> </div> <div class="table-container mt-4"> <table class="admin-table"> <thead class="bg-yellow-100"> <tr> <th class="th-cell">Ícone</th> <th class="th-cell">Nome</th> <th class="th-cell rounded-tr-lg">Ação</th> </tr> </thead> <tbody id="achievements-defs-table-body"></tbody> </table> </div> </div><div id="award-achievement-section"> <h4 class="text-lg font-semibold mb-2 text-yellow-800">2. Conceder Conquista</h4> <div class="space-y-4"> <div> <label for="award-ach-unit-select" class="admin-label">Unidade Premiada:</label> <select id="award-ach-unit-select" class="admin-input"></select> </div> <div> <label for="award-ach-select" class="admin-label">Conquista a Conceder:</label> <select id="award-ach-select" class="admin-input"></select> </div> <button id="award-achievement-btn" class="admin-btn bg-yellow-600 hover:bg-yellow-700 w-full">Conceder Conquista</button> </div> </div></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-green-600">Gerenciar Atividades</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4"><input type="text" id="new-activity-name" placeholder="Nome da Atividade" class="admin-input"><select id="new-activity-type" class="admin-input"><option value="">Tipo</option><option>Físico</option><option>Mental</option><option>Espiritual</option><option>Social</option><option>Pioneirismo</option><option>Natureza</option><option>Serviço</option><option>Culinária</option><option>Geral</option></select><input type="number" id="new-activity-max-points" placeholder="Pontos Máx." class="admin-input" min="0"><input type="datetime-local" id="new-activity-deadline" class="admin-input" title="Prazo Limite (opcional)"></div><button id="add-activity-btn" class="admin-btn bg-green-600 hover:bg-green-700 w-full">Adicionar Atividade</button><div class="table-container mt-6"><table class="admin-table"><thead class="bg-green-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Tipo</th><th class="th-cell">Pontos Máx.</th><th class="th-cell">Prazo Limite</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="activities-table-body"></tbody></table></div></section>
-                <section class="admin-section"><h3 class="admin-h3 text-red-700">Gerenciar Deméritos</h3><div class="space-y-4 mb-4"><div><label for="demerit-unit-select" class="admin-label">Unidade:</label><select id="demerit-unit-select" class="admin-input" required><option value="">Selecione</option></select></div><div><label for="demerit-points" class="admin-label">Pontos a Deduzir:</label><input type="number" id="demerit-points" min="1" class="admin-input" required placeholder="Ex: 10"></div><div><label for="demerit-reason" class="admin-label">Razão:</label><textarea id="demerit-reason" rows="3" class="admin-input" required placeholder="Motivo..."></textarea></div><button id="apply-demerit-btn" class="admin-btn bg-red-600 hover:bg-red-700 w-full">Aplicar</button></div><div class="table-container mt-6"><table class="admin-table"><thead class="bg-red-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell">Razão</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody id="demerits-table-body"></tbody></table></div></section>
                 
                 <section class="admin-section">
                     <h3 class="admin-h3 text-teal-600">Gerenciar Membros</h3>
@@ -968,30 +979,61 @@
                         <select id="new-member-unit-select" class="admin-input"></select>
                         <select id="new-member-role-select" class="admin-input">
                             <option value="Desbravador">Desbravador</option>
-                            <option value="Conselheiro">Conselheiro</option>
-                            <option value="Capitão">Capitão</option>
-                            <option value="Secretário de Unidade">Secretário de Unidade</option>
+                            <optgroup label="Liderança de Unidade">
+                                <option value="Conselheiro">Conselheiro</option>
+                                <option value="Capitão">Capitão</option>
+                                <option value="Secretário de Unidade">Secretário de Unidade</option>
+                            </optgroup>
+                            <optgroup label="Direção do Clube">
+                                <option value="Diretor(a)">Diretor(a)</option>
+                                <option value="Diretor(a) Associado(a)">Diretor(a) Associado(a)</option>
+                                <option value="Secretário(a) do Clube">Secretário(a) do Clube</option>
+                                <option value="Tesoureiro(a) do Clube">Tesoureiro(a) do Clube</option>
+                                <option value="Capelão(ã) do Clube">Capelão(ã) do Clube</option>
+                            </optgroup>
                         </select>
                         <button id="add-member-btn" class="admin-btn bg-teal-600 hover:bg-teal-700 w-full">Adicionar Membro</button>
                     </div>
                     <div class="table-container mt-6">
-                        <table class="admin-table"><thead class="bg-teal-100"><tr><th class="th-cell">Nome</th><th class="th-cell">Unidade</th><th class="th-cell">Função</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="members-table-body"></tbody></table>
+                        <table class="admin-table"><thead class="bg-teal-100"><tr><th class="th-cell">Nome</th><th class="th-cell">Unidade/Clube</th><th class="th-cell">Função</th><th class="th-cell rounded-tr-lg">Ações</th></tr></thead><tbody id="members-table-body"></tbody></table>
                     </div>
                 </section>
                 
                 <section class="admin-section">
-                    <h3 class="admin-h3 text-cyan-600">Registo de Presença de Conselheiros</h3>
+                    <h3 class="admin-h3 text-cyan-600">Registo de Presença da Liderança</h3>
                     <div class="space-y-4">
                         <div>
                             <label for="attendance-date" class="admin-label">Data da Reunião:</label>
                             <input type="date" id="attendance-date" class="admin-input">
                         </div>
                         <div id="counselors-attendance-list" class="space-y-3 p-4 bg-slate-100 rounded-lg">
-                            <p>Selecione uma data para carregar a lista de conselheiros.</p>
+                            <p>Selecione uma data para carregar a lista da liderança.</p>
                         </div>
                         <button id="save-attendance-btn" class="admin-btn bg-cyan-600 hover:bg-cyan-700 w-full hidden">Salvar Chamada</button>
                     </div>
                 </section>
+
+                <section class="admin-section">
+                    <h3 class="admin-h3 text-rose-600">Relatório de Faltas da Direção</h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label for="report-start-date" class="admin-label">Data Início:</label>
+                                <input type="date" id="report-start-date" class="admin-input">
+                            </div>
+                            <div>
+                                <label for="report-end-date" class="admin-label">Data Fim:</label>
+                                <input type="date" id="report-end-date" class="admin-input">
+                            </div>
+                            <button id="generate-absence-report-btn" class="admin-btn bg-rose-600 hover:bg-rose-700 self-end">Gerar Relatório</button>
+                        </div>
+                        <div id="leadership-absence-report" class="table-container mt-4">
+                             <p class="text-slate-500 text-center p-4">Selecione um período e clique em "Gerar Relatório".</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="admin-section"><h3 class="admin-h3 text-red-700">Gerenciar Deméritos</h3><div class="space-y-4 mb-4"><div><label for="demerit-unit-select" class="admin-label">Unidade:</label><select id="demerit-unit-select" class="admin-input" required><option value="">Selecione</option></select></div><div><label for="demerit-points" class="admin-label">Pontos a Deduzir:</label><input type="number" id="demerit-points" min="1" class="admin-input" required placeholder="Ex: 10"></div><div><label for="demerit-reason" class="admin-label">Razão:</label><textarea id="demerit-reason" rows="3" class="admin-input" required placeholder="Motivo..."></textarea></div><button id="apply-demerit-btn" class="admin-btn bg-red-600 hover:bg-red-700 w-full">Aplicar</button></div><div class="table-container mt-6"><table class="admin-table"><thead class="bg-red-100"><tr><th class="th-cell">Unidade</th><th class="th-cell">Pontos</th><th class="th-cell">Razão</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody id="demerits-table-body"></tbody></table></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-purple-600">Gerenciar Usuários</h3><div id="users-management-list" class="table-container"><p>Carregando usuários...</p></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-yellow-800">Envios Pendentes (<span id="pending-submissions-count">0</span>)</h3><div id="pending-submissions-list" class="table-container"><p>Nenhum pendente.</p></div></section>
                 <section class="admin-section !mb-0"><h3 class="admin-h3 text-slate-700">Histórico de Envios</h3><div id="all-submissions-list" class="table-container"><p>Nenhum registro.</p></div></section>`;
@@ -1010,6 +1052,9 @@
             document.getElementById('add-member-btn').addEventListener('click', handleAddMember);
             document.getElementById('attendance-date').addEventListener('change', (e) => renderAttendanceSheet(e.target.value));
             document.getElementById('save-attendance-btn').addEventListener('click', handleSaveAttendance);
+            // Listener para o novo botão de relatório
+            document.getElementById('generate-absence-report-btn').addEventListener('click', generateLeadershipAbsenceReport);
+
 
             // Populate initial data
             const demeritUnitSelect = document.getElementById('demerit-unit-select'); demeritUnitSelect.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
@@ -1156,22 +1201,27 @@
             } catch (err) { console.error("Erro ao rejeitar submissão:", err); showMessage("Ocorreu um erro ao rejeitar a submissão."); }
         }
 
-        // --- INÍCIO: FUNÇÕES PARA MEMBROS E CHAMADA (COM SISTEMA DE ALERTA DE FALTAS) ---
+        // --- INÍCIO: FUNÇÕES PARA MEMBROS E CHAMADA (COM SISTEMA DE ALERTA DE FALTAS E RELATÓRIO) ---
 
         const handleAddMember = async () => {
             const name = document.getElementById('new-member-name').value.trim();
             const unitId = document.getElementById('new-member-unit-select').value;
             const role = document.getElementById('new-member-role-select').value;
 
-            if (!name || !unitId || !role) {
-                showMessage("Por favor, preencha todos os campos para adicionar um membro.");
+            if (!name || !role) {
+                showMessage("Nome e Função são campos obrigatórios.");
+                return;
+            }
+             // Para cargos de diretoria, a unidade não é obrigatória.
+            if (!unitId && !LEADERSHIP_ROLES.includes(role)) {
+                showMessage("Por favor, selecione uma unidade para este membro.");
                 return;
             }
 
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'members'), {
                     name,
-                    unitId,
+                    unitId: LEADERSHIP_ROLES.includes(role) ? null : unitId, // Salva null se for da direção
                     role,
                     registeredAt: serverTimestamp()
                 });
@@ -1190,14 +1240,14 @@
             const unitSelect = document.getElementById('new-member-unit-select');
             if(unitSelect) {
                 unitSelect.innerHTML = currentUnits.length > 0
-                    ? '<option value="">Selecione a Unidade</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('')
+                    ? '<option value="">Selecione a Unidade (se aplicável)</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('')
                     : '<option value="">Cadastre uma unidade primeiro</option>';
             }
 
             tbody.innerHTML = currentMembers.length === 0
                 ? '<tr><td colspan="4" class="text-center p-4">Nenhum membro cadastrado.</td></tr>'
-                : currentMembers.map(m => {
-                    const unitName = currentUnits.find(u => u.id === m.unitId)?.name || 'Sem unidade';
+                : currentMembers.sort((a,b) => a.name.localeCompare(b.name)).map(m => {
+                    const unitName = currentUnits.find(u => u.id === m.unitId)?.name || 'Direção';
                     return `<tr>
                                 <td>${m.name}</td>
                                 <td>${unitName}</td>
@@ -1229,12 +1279,11 @@
             });
         }
 
-        // NOVA FUNÇÃO DE ANÁLISE DE FALTAS
+        // FUNÇÃO DE ANÁLISE DE FALTAS (para alertas na folha de chamada)
         function analyzeCounselorAbsences(counselorId, allAttendanceRecords, selectedDate) {
             const thirtyDaysAgo = new Date(selectedDate);
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-            // Filtra registros dos últimos 30 dias e ordena do mais antigo para o mais novo
             const relevantRecords = allAttendanceRecords
                 .filter(record => record.date.toDate() >= thirtyDaysAgo && record.date.toDate() <= selectedDate)
                 .sort((a, b) => a.date.toDate() - b.date.toDate());
@@ -1246,10 +1295,8 @@
 
             relevantRecords.forEach(record => {
                 const attendanceData = record.attendance || {};
-                // Verifica se o conselheiro estava na lista de chamada daquele dia
                 if (attendanceData.hasOwnProperty(counselorId)) {
                     if (attendanceData[counselorId] === false) {
-                        // É uma falta
                         monthlyAbsences++;
                         if (lastStatusWasAbsent) {
                             consecutiveAbsences++;
@@ -1258,7 +1305,6 @@
                         }
                         lastStatusWasAbsent = true;
                     } else {
-                        // É uma presença, zera a contagem consecutiva
                         lastStatusWasAbsent = false;
                         consecutiveAbsences = 0;
                     }
@@ -1272,21 +1318,21 @@
             };
         }
 
-        // FUNÇÃO DE RENDERIZAR CHAMADA ATUALIZADA
+        // FOLHA DE PRESENÇA ATUALIZADA (para toda a liderança)
         async function renderAttendanceSheet(dateString) {
             const listContainer = document.getElementById('counselors-attendance-list');
             const saveBtn = document.getElementById('save-attendance-btn');
             if (!dateString) {
-                listContainer.innerHTML = '<p>Selecione uma data para carregar a lista de conselheiros.</p>';
+                listContainer.innerHTML = `<p>Selecione uma data para carregar a lista da liderança.</p>`;
                 saveBtn.classList.add('hidden');
                 return;
             }
 
             listContainer.innerHTML = '<div class="flex items-center justify-center p-4"><div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div><p class="ml-4">A carregar histórico...</p></div>';
-            const counselors = currentMembers.filter(m => m.role === 'Conselheiro');
+            const leadershipMembers = currentMembers.filter(m => LEADERSHIP_ROLES.includes(m.role));
 
-            if (counselors.length === 0) {
-                listContainer.innerHTML = '<p>Nenhum conselheiro cadastrado. Vá para "Gerenciar Membros" para adicioná-los.</p>';
+            if (leadershipMembers.length === 0) {
+                listContainer.innerHTML = '<p>Nenhum membro da liderança cadastrado. Vá para "Gerenciar Membros" para adicioná-los.</p>';
                 saveBtn.classList.add('hidden');
                 return;
             }
@@ -1307,11 +1353,11 @@
             const existingAttendance = recordForSelectedDate ? recordForSelectedDate.attendance : {};
 
             let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">';
-            counselors.sort((a,b) => a.name.localeCompare(b.name)).forEach(counselor => {
-                const unitName = currentUnits.find(u => u.id === counselor.unitId)?.name || 'N/A';
-                const isPresent = existingAttendance.hasOwnProperty(counselor.id) ? existingAttendance[counselor.id] : true;
+            leadershipMembers.sort((a,b) => a.name.localeCompare(b.name)).forEach(member => {
+                const unitName = currentUnits.find(u => u.id === member.unitId)?.name || 'Direção';
+                const isPresent = existingAttendance.hasOwnProperty(member.id) ? existingAttendance[member.id] : true;
                 
-                const absenceAnalysis = analyzeCounselorAbsences(counselor.id, allAttendanceRecords, selectedDate);
+                const absenceAnalysis = analyzeCounselorAbsences(member.id, allAttendanceRecords, selectedDate);
                 let alertHtml = '';
                 const alertMessages = [];
 
@@ -1329,12 +1375,12 @@
                 html += `
                     <div class="flex items-center justify-between bg-white p-2 rounded-md shadow-sm">
                         <div class="flex items-center">
-                            <span class="font-semibold">${counselor.name}</span>
+                            <span class="font-semibold">${member.name}</span>
                             ${alertHtml}
-                            <span class="text-sm text-slate-500 ml-2">(${unitName})</span>
+                            <span class="text-sm text-slate-500 ml-2">(${member.role === 'Conselheiro' ? unitName : member.role})</span>
                         </div>
                         <label class="flex items-center cursor-pointer">
-                            <input type="checkbox" data-member-id="${counselor.id}" class="attendance-checkbox h-5 w-5 rounded text-blue-600 focus:ring-blue-500" ${isPresent ? 'checked' : ''}>
+                            <input type="checkbox" data-member-id="${member.id}" class="attendance-checkbox h-5 w-5 rounded text-blue-600 focus:ring-blue-500" ${isPresent ? 'checked' : ''}>
                             <span class="ml-2 text-sm font-medium">Presente</span>
                         </label>
                     </div>
@@ -1358,7 +1404,7 @@
             checkboxes.forEach(box => {
                 const memberId = box.dataset.memberId;
                 if (memberId) {
-                    attendanceStatus[memberId] = box.checked; // Salva true para presente, false para ausente
+                    attendanceStatus[memberId] = box.checked;
                 }
             });
 
@@ -1368,7 +1414,7 @@
             try {
                 await setDoc(attendanceRef, {
                     date: new Date(dateString + 'T12:00:00Z'),
-                    attendance: attendanceStatus, // Salva o mapa de status completo
+                    attendance: attendanceStatus,
                     recordedBy: currentUser.uid,
                     recordedAt: serverTimestamp()
                 }, { merge: true });
@@ -1379,8 +1425,105 @@
                 showMessage("Ocorreu um erro ao salvar o registo de presença.");
             }
         }
-        // --- FIM: FUNÇÕES ATUALIZADAS ---
 
+        // --- NOVA FUNÇÃO PARA GERAR O RELATÓRIO DE FALTAS ---
+        async function generateLeadershipAbsenceReport() {
+            const startDateEl = document.getElementById('report-start-date');
+            const endDateEl = document.getElementById('report-end-date');
+            const reportContainer = document.getElementById('leadership-absence-report');
+
+            if (!startDateEl.value || !endDateEl.value) {
+                showMessage("Por favor, selecione a data de início e de fim para o relatório.");
+                return;
+            }
+
+            const startDate = new Date(startDateEl.value + 'T00:00:00Z');
+            const endDate = new Date(endDateEl.value + 'T23:59:59Z');
+
+            if (startDate > endDate) {
+                showMessage("A data de início não pode ser posterior à data de fim.");
+                return;
+            }
+
+            reportContainer.innerHTML = '<div class="flex items-center justify-center p-4"><div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-rose-500"></div><p class="ml-4">A gerar relatório...</p></div>';
+
+            try {
+                const leadershipMembers = currentMembers.filter(m => LEADERSHIP_ROLES.includes(m.role));
+                
+                const attendanceQuery = query(
+                    collection(db, 'artifacts', appId, 'public', 'data', 'attendance_records'),
+                    where('date', '>=', startDate),
+                    where('date', '<=', endDate)
+                );
+                const querySnapshot = await getDocs(attendanceQuery);
+                const recordsInRange = querySnapshot.docs.map(doc => doc.data());
+
+                const reportData = leadershipMembers.map(member => {
+                    let presences = 0;
+                    let absences = 0;
+                    let meetingsCounted = 0;
+
+                    recordsInRange.forEach(record => {
+                        if (record.attendance && record.attendance.hasOwnProperty(member.id)) {
+                            meetingsCounted++;
+                            if (record.attendance[member.id] === true) {
+                                presences++;
+                            } else {
+                                absences++;
+                            }
+                        }
+                    });
+
+                    const absencePercentage = meetingsCounted > 0 ? ((absences / meetingsCounted) * 100).toFixed(1) : "0.0";
+                    
+                    return {
+                        name: member.name,
+                        role: member.role,
+                        meetingsCounted,
+                        presences,
+                        absences,
+                        absencePercentage
+                    };
+                }).sort((a, b) => b.absencePercentage - a.absencePercentage); // Ordena por maior % de faltas
+
+                if (reportData.length === 0) {
+                     reportContainer.innerHTML = '<p class="text-slate-500 text-center p-4">Nenhum membro da liderança cadastrado.</p>';
+                     return;
+                }
+
+                let tableHtml = `<table class="admin-table"><thead class="bg-rose-100"><tr>
+                                    <th class="th-cell">Nome</th>
+                                    <th class="th-cell">Função</th>
+                                    <th class="th-cell text-center">Reuniões no Período</th>
+                                    <th class="th-cell text-center">Presenças</th>
+                                    <th class="th-cell text-center">Faltas</th>
+                                    <th class="th-cell text-center rounded-tr-lg">% Faltas</th>
+                                 </tr></thead><tbody>`;
+                
+                reportData.forEach(data => {
+                    const percentageClass = data.absencePercentage > 25 ? 'text-red-600' : (data.absencePercentage > 10 ? 'text-amber-600' : 'text-green-600');
+                    tableHtml += `<tr>
+                                    <td>${data.name}</td>
+                                    <td>${data.role}</td>
+                                    <td class="text-center">${data.meetingsCounted}</td>
+                                    <td class="text-center font-semibold text-green-700">${data.presences}</td>
+                                    <td class="text-center font-semibold text-red-700">${data.absences}</td>
+                                    <td class="text-center font-bold ${percentageClass}">${data.absencePercentage}%</td>
+                                  </tr>`;
+                });
+
+                tableHtml += '</tbody></table>';
+                reportContainer.innerHTML = tableHtml;
+                applyTableStyles(reportContainer.querySelector('tbody'));
+
+            } catch (err) {
+                console.error("Erro ao gerar relatório:", err);
+                reportContainer.innerHTML = '<p class="text-red-500 text-center p-4">Ocorreu um erro ao gerar o relatório. Tente novamente.</p>';
+            }
+        }
+
+
+        // --- FIM: NOVAS FUNÇÕES ---
 
         function setupAuthFormListeners() {
             const authForm = document.getElementById('auth-form'), emailIn = document.getElementById('email'), passIn = document.getElementById('password'), loginBtn = document.getElementById('login-btn'), regBtn = document.getElementById('register-btn'), logoutBtn = document.getElementById('logout-btn');
