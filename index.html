@@ -491,12 +491,12 @@
     </div>
 
     <script type="module">
-        console.log("Script de módulo a ser executado - Versão: 2024-06-08_RESPONSIVO_COM_MEMBROS");
+        console.log("Script de módulo a ser executado - Versão: 2024-06-08_RESPONSIVO_COM_MEMBROS_E_FALTAS");
 
-        // Importações do Firebase SDK
+        // Importações do Firebase SDK (com getDocs e where adicionados para a nova funcionalidade)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, serverTimestamp, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, serverTimestamp, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
         // Variáveis de estado do Firebase e da aplicação
         let firebaseApp = null;
@@ -566,7 +566,7 @@
         let currentUsers = [];
         let currentAchievementDefs = [];
         let currentAwardedAchievements = [];
-        let currentMembers = []; // <-- NOVA VARIÁVEL DE ESTADO
+        let currentMembers = []; 
         let allNotifications = [];
         let activeChallengeUnsub = null;
         let countdownInterval = null;
@@ -1007,11 +1007,9 @@
             document.getElementById('send-announcement-btn').addEventListener('click', handleSendAnnouncement);
             document.getElementById('launch-challenge-btn').addEventListener('click', handleLaunchChallenge);
             document.getElementById('end-challenge-btn').addEventListener('click', handleEndChallenge);
-            // INÍCIO: LISTENERS NOVOS
             document.getElementById('add-member-btn').addEventListener('click', handleAddMember);
             document.getElementById('attendance-date').addEventListener('change', (e) => renderAttendanceSheet(e.target.value));
             document.getElementById('save-attendance-btn').addEventListener('click', handleSaveAttendance);
-            // FIM: LISTENERS NOVOS
 
             // Populate initial data
             const demeritUnitSelect = document.getElementById('demerit-unit-select'); demeritUnitSelect.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade</option>';
@@ -1022,7 +1020,7 @@
             updateUsersTable(); 
             updateAchievementDefsTable(); 
             updateAwardAchievementDropdowns();
-            updateMembersTable(); // <-- NOVA CHAMADA DE FUNÇÃO
+            updateMembersTable(); 
         }
 
         function updateUnitsTable() {
@@ -1158,7 +1156,7 @@
             } catch (err) { console.error("Erro ao rejeitar submissão:", err); showMessage("Ocorreu um erro ao rejeitar a submissão."); }
         }
 
-        // --- INÍCIO: NOVAS FUNÇÕES PARA MEMBROS E CHAMADA ---
+        // --- INÍCIO: FUNÇÕES PARA MEMBROS E CHAMADA (COM SISTEMA DE ALERTA DE FALTAS) ---
 
         const handleAddMember = async () => {
             const name = document.getElementById('new-member-name').value.trim();
@@ -1231,6 +1229,50 @@
             });
         }
 
+        // NOVA FUNÇÃO DE ANÁLISE DE FALTAS
+        function analyzeCounselorAbsences(counselorId, allAttendanceRecords, selectedDate) {
+            const thirtyDaysAgo = new Date(selectedDate);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            // Filtra registros dos últimos 30 dias e ordena do mais antigo para o mais novo
+            const relevantRecords = allAttendanceRecords
+                .filter(record => record.date.toDate() >= thirtyDaysAgo && record.date.toDate() <= selectedDate)
+                .sort((a, b) => a.date.toDate() - b.date.toDate());
+            
+            let monthlyAbsences = 0;
+            let consecutiveAbsences = 0;
+            let lastStatusWasAbsent = false;
+            let maxConsecutive = 0;
+
+            relevantRecords.forEach(record => {
+                const attendanceData = record.attendance || {};
+                // Verifica se o conselheiro estava na lista de chamada daquele dia
+                if (attendanceData.hasOwnProperty(counselorId)) {
+                    if (attendanceData[counselorId] === false) {
+                        // É uma falta
+                        monthlyAbsences++;
+                        if (lastStatusWasAbsent) {
+                            consecutiveAbsences++;
+                        } else {
+                            consecutiveAbsences = 1;
+                        }
+                        lastStatusWasAbsent = true;
+                    } else {
+                        // É uma presença, zera a contagem consecutiva
+                        lastStatusWasAbsent = false;
+                        consecutiveAbsences = 0;
+                    }
+                }
+                maxConsecutive = Math.max(maxConsecutive, consecutiveAbsences);
+            });
+
+            return {
+                consecutive: maxConsecutive,
+                monthly: monthlyAbsences
+            };
+        }
+
+        // FUNÇÃO DE RENDERIZAR CHAMADA ATUALIZADA
         async function renderAttendanceSheet(dateString) {
             const listContainer = document.getElementById('counselors-attendance-list');
             const saveBtn = document.getElementById('save-attendance-btn');
@@ -1240,7 +1282,7 @@
                 return;
             }
 
-            listContainer.innerHTML = '<p>A carregar...</p>';
+            listContainer.innerHTML = '<div class="flex items-center justify-center p-4"><div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div><p class="ml-4">A carregar histórico...</p></div>';
             const counselors = currentMembers.filter(m => m.role === 'Conselheiro');
 
             if (counselors.length === 0) {
@@ -1249,19 +1291,46 @@
                 return;
             }
 
-            const recordId = dateString; // YYYY-MM-DD
-            const attendanceRef = doc(db, 'artifacts', appId, 'public', 'data', 'attendance_records', recordId);
-            const attendanceSnap = await getDoc(attendanceRef);
-            const existingAttendees = attendanceSnap.exists() ? attendanceSnap.data().attendees : {};
+            const selectedDate = new Date(dateString + 'T12:00:00Z');
+            const thirtyDaysAgo = new Date(selectedDate);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            const attendanceQuery = query(
+                collection(db, 'artifacts', appId, 'public', 'data', 'attendance_records'),
+                where('date', '>=', thirtyDaysAgo),
+                where('date', '<=', selectedDate)
+            );
+            const querySnapshot = await getDocs(attendanceQuery);
+            const allAttendanceRecords = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            const recordForSelectedDate = allAttendanceRecords.find(r => r.id === dateString);
+            const existingAttendance = recordForSelectedDate ? recordForSelectedDate.attendance : {};
 
             let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">';
             counselors.sort((a,b) => a.name.localeCompare(b.name)).forEach(counselor => {
                 const unitName = currentUnits.find(u => u.id === counselor.unitId)?.name || 'N/A';
-                const isPresent = existingAttendees[counselor.id] === true;
+                const isPresent = existingAttendance.hasOwnProperty(counselor.id) ? existingAttendance[counselor.id] : true;
+                
+                const absenceAnalysis = analyzeCounselorAbsences(counselor.id, allAttendanceRecords, selectedDate);
+                let alertHtml = '';
+                const alertMessages = [];
+
+                if (absenceAnalysis.consecutive >= 2) {
+                    alertMessages.push(`${absenceAnalysis.consecutive} faltas consecutivas.`);
+                }
+                if (absenceAnalysis.monthly >= 3) {
+                    alertMessages.push(`${absenceAnalysis.monthly} faltas no último mês.`);
+                }
+
+                if(alertMessages.length > 0) {
+                    alertHtml = `<span class="ml-2 text-red-500 cursor-pointer" title="${alertMessages.join(' ')}">⚠️</span>`;
+                }
+                
                 html += `
                     <div class="flex items-center justify-between bg-white p-2 rounded-md shadow-sm">
-                        <div>
+                        <div class="flex items-center">
                             <span class="font-semibold">${counselor.name}</span>
+                            ${alertHtml}
                             <span class="text-sm text-slate-500 ml-2">(${unitName})</span>
                         </div>
                         <label class="flex items-center cursor-pointer">
@@ -1276,6 +1345,7 @@
             saveBtn.classList.remove('hidden');
         }
 
+        // FUNÇÃO DE SALVAR CHAMADA ATUALIZADA
         async function handleSaveAttendance() {
             const dateString = document.getElementById('attendance-date').value;
             if (!dateString) {
@@ -1284,10 +1354,11 @@
             }
 
             const checkboxes = document.querySelectorAll('.attendance-checkbox');
-            const attendees = {};
+            const attendanceStatus = {};
             checkboxes.forEach(box => {
-                if (box.checked) {
-                    attendees[box.dataset.memberId] = true;
+                const memberId = box.dataset.memberId;
+                if (memberId) {
+                    attendanceStatus[memberId] = box.checked; // Salva true para presente, false para ausente
                 }
             });
 
@@ -1297,7 +1368,7 @@
             try {
                 await setDoc(attendanceRef, {
                     date: new Date(dateString + 'T12:00:00Z'),
-                    attendees: attendees,
+                    attendance: attendanceStatus, // Salva o mapa de status completo
                     recordedBy: currentUser.uid,
                     recordedAt: serverTimestamp()
                 }, { merge: true });
@@ -1308,7 +1379,7 @@
                 showMessage("Ocorreu um erro ao salvar o registo de presença.");
             }
         }
-        // --- FIM: NOVAS FUNÇÕES ---
+        // --- FIM: FUNÇÕES ATUALIZADAS ---
 
 
         function setupAuthFormListeners() {
@@ -1446,9 +1517,7 @@
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'achievements'), s => { currentAchievementDefs = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) { updateAchievementDefsTable(); updateAwardAchievementDropdowns(); } }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'awarded_achievements'), s => { currentAwardedAchievements = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.awardedAt?.toDate() || 0) - (a.awardedAt?.toDate() || 0)); if (document.getElementById('conquistas')?.classList.contains('active')) renderAchievementsTab(); }));
             unsubscribers.push(onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'notifications'), orderBy('timestamp', 'desc')), s => { allNotifications = s.docs.map(d => ({ id: d.id, ...d.data() })); renderNotifications(); }));
-            // INÍCIO: NOVO LISTENER
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'members'), s => { currentMembers = s.docs.map(d => ({ id: d.id, ...d.data() })); if (isActiveTabSecretary()) { updateMembersTable(); }}));
-            // FIM: NOVO LISTENER
 
             // Listener para o Desafio Surpresa
             const challengeRef = doc(db, 'artifacts', appId, 'public', 'data', 'surprise_challenges', 'active');
