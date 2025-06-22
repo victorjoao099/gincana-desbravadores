@@ -491,9 +491,9 @@
     </div>
 
     <script type="module">
-        console.log("Script de módulo a ser executado - Versão: 2024-06-08_RELATORIO_FALTAS");
+        console.log("Script de módulo a ser executado - Versão: 2024-06-08_VINCULO_LIDER_UNIDADE");
 
-        // Importações do Firebase SDK (com getDocs e where adicionados)
+        // Importações do Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, serverTimestamp, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
@@ -504,18 +504,15 @@
         let auth = null;
         let currentUser = null;
         let userRole = null;
+        let userData = {}; // Objeto para guardar dados do usuário logado, como linkedUnitId
 
-        // --- NOVA CONSTANTE ---
-        // Define quais cargos são considerados Liderança para a chamada e relatórios
         const LEADERSHIP_ROLES = [
             'Diretor(a)', 
             'Diretor(a) Associado(a)', 
             'Secretário(a) do Clube', 
             'Tesoureiro(a) do Clube', 
             'Capelão(ã) do Clube',
-            'Instrutor(a)',
-            'Conselheiro',
-            'Apoio'
+            'Conselheiro'
         ];
 
         // Configuração do Firebase
@@ -674,7 +671,9 @@
             let unreadCount = 0;
             const relevantNotifications = allNotifications.filter(notif => {
                 if (userRole === 'secretary') return true;
-                if (notif.targetUnitId) { return userRole === 'leader'; }
+                if (notif.targetUnitId && userRole === 'leader') {
+                    return notif.targetUnitId === userData.linkedUnitId;
+                }
                 return true;
             });
 
@@ -763,10 +762,20 @@
                 document.getElementById('challenge-title').textContent = data.title;
                 document.getElementById('challenge-description').textContent = data.description;
                 document.getElementById('challenge-points').textContent = data.points;
+                
                 const unitSelect = document.getElementById('challenge-unit-select');
-                unitSelect.innerHTML = currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+                if (userRole === 'leader' && userData.linkedUnitId) {
+                    const linkedUnit = currentUnits.find(u => u.id === userData.linkedUnitId);
+                    if(linkedUnit){
+                        unitSelect.innerHTML = `<option value="${linkedUnit.id}" selected>${linkedUnit.name}</option>`;
+                        unitSelect.disabled = true;
+                    }
+                } else {
+                    unitSelect.innerHTML = currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+                    unitSelect.disabled = false;
+                }
 
-                form.classList.toggle('hidden', userRole === 'viewer'); // Oculta formulário para visualizadores
+                form.classList.toggle('hidden', userRole === 'viewer');
                 banner.classList.remove('hidden');
 
                 const timerEl = document.getElementById('challenge-timer');
@@ -922,15 +931,118 @@
             });
         }
 
+        // --- FUNÇÕES DE DASHBOARD DO LÍDER (CONSELHEIRO) ATUALIZADAS ---
+        function updateLeaderDemeritsList(selectedUnitId) {
+            const listEl = document.getElementById('leader-demerits-list');
+            if (!listEl) return;
+
+            if (!selectedUnitId) {
+                listEl.innerHTML = '<p class="text-slate-500 p-4 text-center">Selecione uma unidade para ver os deméritos.</p>';
+                return;
+            }
+
+            const unitDemerits = currentDemerits.filter(d => d.unitId === selectedUnitId);
+
+            if (unitDemerits.length === 0) {
+                listEl.innerHTML = '<p class="text-slate-500 p-4 text-center">Nenhum demérito registado para esta unidade. Bom trabalho! 👍</p>';
+                return;
+            }
+
+            const tableHtml = `
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white rounded-lg shadow-md">
+                        <thead class="bg-red-100">
+                            <tr>
+                                <th class="th-cell">Razão</th>
+                                <th class="th-cell text-center">Pontos Deduzidos</th>
+                                <th class="th-cell rounded-tr-lg">Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${unitDemerits.map(d => `
+                                <tr>
+                                    <td class="td-cell">${d.reason}</td>
+                                    <td class="td-cell text-center font-bold text-red-600">-${d.points}</td>
+                                    <td class="td-cell">${d.appliedAt ? new Date(d.appliedAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            listEl.innerHTML = tableHtml;
+
+            listEl.querySelectorAll('.th-cell').forEach(th => th.classList.add('py-3', 'px-4', 'text-left', 'text-sm', 'font-semibold', 'text-slate-700'));
+            listEl.querySelectorAll('.td-cell').forEach(td => td.classList.add('py-3', 'px-4', 'text-sm', 'border-b', 'border-slate-200'));
+        }
+
         function renderUnitLeaderDashboard() {
-            const gestaoTitleEl = document.getElementById('gestao-title'); if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Líder de Unidade'; else return;
-            const gestaoContent = document.getElementById('gestao-content'); if (!gestaoContent) return;
-            gestaoContent.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-md mb-8"><h3 class="text-xl font-semibold text-blue-600 mb-4">Enviar Atividade Concluída</h3><form id="submit-activity-form" class="space-y-4 mb-8"><div><label for="unit-select-leader" class="block text-sm font-medium text-slate-700">Sua Unidade:</label><select id="unit-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione sua unidade</option></select><p id="no-units-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma unidade.</p></div><div><label for="activity-select-leader" class="block text-sm font-medium text-slate-700">Atividade:</label><select id="activity-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione uma atividade</option></select><p id="no-activities-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma atividade.</p></div><div><label for="details-leader" class="block text-sm font-medium text-slate-700">Detalhes da Conclusão:</label><textarea id="details-leader" rows="3" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required placeholder="Descreva..."></textarea></div><button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center">Enviar</button></form></div><div class="bg-white p-6 rounded-xl shadow-md"><h3 class="text-xl font-semibold text-blue-600 mb-4">Meus Envios Recentes</h3><div id="leader-submissions-list"><p class="text-slate-600">Selecione uma unidade.</p></div></div>`;
-            populateLeaderUnitSelect(); populateLeaderActivitySelect();
+            const gestaoTitleEl = document.getElementById('gestao-title');
+            if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Conselheiro';
+            
+            const gestaoContent = document.getElementById('gestao-content');
+            if (!gestaoContent) return;
+
+            // ** LÓGICA DE VINCULAÇÃO **
+            if (userRole === 'leader' && !userData.linkedUnitId) {
+                gestaoContent.innerHTML = `
+                    <div class="text-center p-8 bg-white rounded-lg shadow-md">
+                        <h3 class="text-2xl font-bold text-yellow-700">Acesso Restrito</h3>
+                        <p class="mt-4 text-slate-600">Sua conta de Conselheiro não está vinculada a nenhuma unidade.</p>
+                        <p class="mt-2 text-slate-500">Por favor, peça a um Secretário(a) do clube para fazer a vinculação no painel de Gestão > Gerenciar Usuários.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const linkedUnit = currentUnits.find(u => u.id === userData.linkedUnitId);
+
+            gestaoContent.innerHTML = `
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                    <h3 class="text-xl font-semibold text-blue-600 mb-4">Enviar Atividade Concluída</h3>
+                    <form id="submit-activity-form" class="space-y-4 mb-8">
+                        <div>
+                            <label for="unit-select-leader" class="block text-sm font-medium text-slate-700">Sua Unidade:</label>
+                            <select id="unit-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-slate-100" disabled>
+                                ${linkedUnit ? `<option value="${linkedUnit.id}">${linkedUnit.name}</option>` : '<option>Erro: Unidade não encontrada</option>'}
+                            </select>
+                            <p class="text-sm text-slate-500 mt-1">Você está enviando como conselheiro da Unidade ${linkedUnit?.name || 'Inválida'}.</p>
+                        </div>
+                        <div>
+                            <label for="activity-select-leader" class="block text-sm font-medium text-slate-700">Atividade:</label>
+                            <select id="activity-select-leader" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required><option value="">Selecione uma atividade</option></select>
+                            <p id="no-activities-message-leader" class="text-red-500 text-sm mt-2 hidden">Nenhuma atividade.</p>
+                        </div>
+                        <div>
+                            <label for="details-leader" class="block text-sm font-medium text-slate-700">Detalhes da Conclusão:</label>
+                            <textarea id="details-leader" rows="3" class="mt-1 block w-full p-3 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required placeholder="Descreva..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center">Enviar</button>
+                    </form>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-semibold text-blue-600 mb-4">Meus Envios Recentes</h3>
+                        <div id="leader-submissions-list"><p class="text-slate-600 text-center p-4">Carregando envios...</p></div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-semibold text-red-600 mb-4">Deméritos da Unidade</h3>
+                        <div id="leader-demerits-list"><p class="text-slate-600 text-center p-4">Carregando deméritos...</p></div>
+                    </div>
+                </div>
+            `;
+
+            populateLeaderActivitySelect();
+
             document.getElementById('submit-activity-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const submitBtn = e.target.querySelector('button[type="submit"]'); const originalBtnText = submitBtn.innerHTML; submitBtn.disabled = true; submitBtn.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>`;
-                const unitId = document.getElementById('unit-select-leader').value, actId = document.getElementById('activity-select-leader').value, details = document.getElementById('details-leader').value;
+                const unitId = document.getElementById('unit-select-leader').value; 
+                const actId = document.getElementById('activity-select-leader').value;
+                const details = document.getElementById('details-leader').value;
+
                 if (!unitId || !actId || !details.trim()) { showMessage("Preencha todos os campos obrigatórios."); submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; return; }
                 const selectedActivity = currentActivities.find(a => a.id === actId);
                 if (selectedActivity && selectedActivity.deadline) {
@@ -940,18 +1052,20 @@
                 try {
                     if (!selectedActivity) { showMessage("Atividade inválida."); throw new Error("Atividade selecionada é inválida"); }
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), { unitId, unitName: currentUnits.find(u => u.id === unitId)?.name || '?', activityId: actId, activityName: selectedActivity.name, details, status: 'pending', submittedBy: currentUser.uid, submittedAt: serverTimestamp() });
-                    showMessage("Atividade enviada para avaliação com sucesso!"); e.target.reset(); document.getElementById('unit-select-leader').value = ""; document.getElementById('activity-select-leader').value = ""; updateLeaderSubmissionsList("");
+                    showMessage("Atividade enviada para avaliação com sucesso!"); e.target.reset();
                 } catch (err) { console.error("Erro no envio:", err); showMessage("Ocorreu um erro ao enviar a atividade. Verifique o console para mais detalhes."); } finally { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; }
             });
-            document.getElementById('unit-select-leader').addEventListener('change', (e) => updateLeaderSubmissionsList(e.target.value));
-            updateLeaderSubmissionsList(document.getElementById('unit-select-leader').value);
+            
+            // Carrega os dados da unidade vinculada automaticamente
+            updateLeaderSubmissionsList(userData.linkedUnitId);
+            updateLeaderDemeritsList(userData.linkedUnitId);
         }
 
         function updateLeaderSubmissionsList(selectedUnitId) {
             const listEl = document.getElementById('leader-submissions-list'); if (!listEl) return;
-            if (!selectedUnitId) { listEl.innerHTML = '<p class="text-slate-600">Selecione uma unidade para ver os envios.</p>'; return; }
+            if (!selectedUnitId) { listEl.innerHTML = '<p class="text-slate-500 text-center p-4">Nenhuma unidade vinculada.</p>'; return; }
             const unitSubs = currentSubmissions.filter(s => s.unitId === selectedUnitId);
-            if (unitSubs.length === 0) { listEl.innerHTML = '<p class="text-slate-600">Nenhum envio para esta unidade.</p>'; return; }
+            if (unitSubs.length === 0) { listEl.innerHTML = '<p class="text-slate-500 text-center p-4">Nenhum envio para esta unidade.</p>'; return; }
             listEl.innerHTML = `<div class="overflow-x-auto"><table class="min-w-full bg-white rounded-lg shadow-md"><thead class="bg-blue-100"><tr><th class="th-cell">Atividade</th><th class="th-cell">Detalhes</th><th class="th-cell">Status</th><th class="th-cell">Pontos</th><th class="th-cell rounded-tr-lg">Data</th></tr></thead><tbody>${unitSubs.map(s => {
                 let statusCellHtml = `<span class="status-badge ${s.status}">${s.status}</span>`;
                 if (s.status === 'rejected' && s.rejectionReason) {
@@ -966,7 +1080,6 @@
         function renderSecretaryDashboard() {
             const gestaoTitleEl = document.getElementById('gestao-title'); if (gestaoTitleEl) gestaoTitleEl.textContent = 'Dashboard do Secretário'; else return;
             const gestaoContent = document.getElementById('gestao-content'); if (!gestaoContent) return;
-            // --- HTML DO PAINEL DO SECRETÁRIO ATUALIZADO ---
             gestaoContent.innerHTML = `
                 <section class="admin-section"><h3 class="admin-h3 text-orange-600">Lançar Desafio Surpresa</h3><div class="space-y-4"> <input type="text" id="challenge-title-input" placeholder="Título do Desafio" class="admin-input"> <textarea id="challenge-desc-input" placeholder="Descrição do Desafio" class="admin-input" rows="2"></textarea><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><input type="number" id="challenge-points-input" placeholder="Pontos" class="admin-input"><input type="number" id="challenge-duration-input" placeholder="Duração (minutos)" class="admin-input"><input type="text" id="challenge-answer-input-admin" placeholder="Resposta Correta" class="admin-input"></div> <div class="flex gap-4"> <button id="launch-challenge-btn" class="admin-btn bg-orange-500 hover:bg-orange-600 w-full">⚡ Lançar Desafio!</button> <button id="end-challenge-btn" class="admin-btn bg-gray-500 hover:bg-gray-600 w-full">Encerrar Desafio Atual</button></div></div></section>
                 <section class="admin-section"><h3 class="admin-h3 text-indigo-600">Enviar Anúncio Global</h3><div class="space-y-4"> <textarea id="new-announcement-message" placeholder="Escreva sua mensagem aqui..." class="admin-input" rows="3"></textarea> <button id="send-announcement-btn" class="admin-btn bg-indigo-500 hover:bg-indigo-600 w-full">📢 Enviar Anúncio</button> </div></section>
@@ -992,8 +1105,6 @@
                                 <option value="Secretário(a) do Clube">Secretário(a) do Clube</option>
                                 <option value="Tesoureiro(a) do Clube">Tesoureiro(a) do Clube</option>
                                 <option value="Capelão(ã) do Clube">Capelão(ã) do Clube</option>
-                                <option value="Instrutor(a)">Instrutor(a)</option>
-                                <option value="Apoio">Apoio</option>
                             </optgroup>
                         </select>
                         <button id="add-member-btn" class="admin-btn bg-teal-600 hover:bg-teal-700 w-full">Adicionar Membro</button>
@@ -1056,7 +1167,6 @@
             document.getElementById('add-member-btn').addEventListener('click', handleAddMember);
             document.getElementById('attendance-date').addEventListener('change', (e) => renderAttendanceSheet(e.target.value));
             document.getElementById('save-attendance-btn').addEventListener('click', handleSaveAttendance);
-            // Listener para o novo botão de relatório
             document.getElementById('generate-absence-report-btn').addEventListener('click', generateLeadershipAbsenceReport);
 
 
@@ -1153,11 +1263,50 @@
             }
         }
 
+        // --- FUNÇÃO DE GERENCIAR USUÁRIOS ATUALIZADA ---
+        async function handleLinkUserToUnit(userId, unitId) {
+            const userDocRef = doc(db, 'artifacts', appId, 'users', userId);
+            try {
+                await updateDoc(userDocRef, { linkedUnitId: unitId || null });
+                showMessage("Vínculo do usuário atualizado com sucesso!");
+            } catch (err) {
+                console.error("Erro ao vincular usuário:", err);
+                showMessage("Ocorreu um erro ao atualizar o vínculo do usuário.");
+            }
+        }
+
         function updateUsersTable() {
             const container = document.getElementById('users-management-list'); if (!container) return;
             if (currentUsers.length === 0) { container.innerHTML = '<p>Nenhum usuário registrado.</p>'; return; }
-            const tableHtml = `<table class="admin-table"><thead class="bg-purple-100"><tr><th class="th-cell">Email</th><th class="th-cell">Função</th><th class="th-cell rounded-tr-lg">Data de Registro</th></tr></thead><tbody>${currentUsers.map(user => `<tr><td>${user.email || 'N/A'}</td><td><select data-uid="${user.uid}" class="user-role-select admin-input !p-2 !text-sm"><option value="viewer" ${user.role === 'viewer' ? 'selected' : ''}>Visualizador</option><option value="leader" ${user.role === 'leader' ? 'selected' : ''}>Conselheiro</option><option value="secretary" ${user.role === 'secretary' ? 'selected' : ''}>Secretário</option></select></td><td>${user.createdAt ? new Date(user.createdAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td></tr>`).join('')}</tbody></table>`;
-            container.innerHTML = tableHtml; applyTableStyles(container.querySelector('tbody'));
+            
+            const tableHtml = `<table class="admin-table"><thead class="bg-purple-100"><tr>
+                                <th class="th-cell">Email</th>
+                                <th class="th-cell">Função</th>
+                                <th class="th-cell">Unidade Vinculada</th>
+                                <th class="th-cell rounded-tr-lg">Data de Registro</th>
+                               </tr></thead><tbody>
+                               ${currentUsers.map(user => {
+                                   const isLeader = user.role === 'leader';
+                                   const unitOptions = currentUnits.map(u => `<option value="${u.id}" ${user.linkedUnitId === u.id ? 'selected' : ''}>${u.name}</option>`).join('');
+                                   const unitSelectorHtml = isLeader ? `
+                                        <select data-uid="${user.uid}" class="user-unit-link-select admin-input !p-2 !text-sm">
+                                            <option value="">Nenhuma</option>
+                                            ${unitOptions}
+                                        </select>
+                                    ` : '<span class="text-slate-400">N/A</span>';
+
+                                   return `<tr>
+                                            <td>${user.email || 'N/A'}</td>
+                                            <td><select data-uid="${user.uid}" class="user-role-select admin-input !p-2 !text-sm"><option value="viewer" ${user.role === 'viewer' ? 'selected' : ''}>Visualizador</option><option value="leader" ${user.role === 'leader' ? 'selected' : ''}>Conselheiro</option><option value="secretary" ${user.role === 'secretary' ? 'selected' : ''}>Secretário</option></select></td>
+                                            <td>${unitSelectorHtml}</td>
+                                            <td>${user.createdAt ? new Date(user.createdAt.toDate()).toLocaleDateString('pt-BR') : 'N/A'}</td>
+                                           </tr>`;
+                               }).join('')}
+                               </tbody></table>`;
+            
+            container.innerHTML = tableHtml; 
+            applyTableStyles(container.querySelector('tbody'));
+            
             container.querySelectorAll('.user-role-select').forEach(select => {
                 select.addEventListener('change', async (e) => {
                     const userId = e.target.dataset.uid, newRole = e.target.value, userEmail = currentUsers.find(u => u.uid === userId)?.email || 'este usuário';
@@ -1166,6 +1315,14 @@
                             try { const userDocRef = doc(db, 'artifacts', appId, 'users', userId); await updateDoc(userDocRef, { role: newRole }); showMessage("Função do usuário atualizada com sucesso!"); } catch (err) { console.error("Erro ao atualizar função:", err); showMessage("Ocorreu um erro ao atualizar a função do usuário."); e.target.value = currentUsers.find(u => u.uid === userId)?.role; }
                         } else { e.target.value = currentUsers.find(u => u.uid === userId)?.role; }
                     }, true);
+                });
+            });
+
+            container.querySelectorAll('.user-unit-link-select').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const userId = e.target.dataset.uid;
+                    const unitId = e.target.value;
+                    handleLinkUserToUnit(userId, unitId);
                 });
             });
         }
@@ -1205,7 +1362,7 @@
             } catch (err) { console.error("Erro ao rejeitar submissão:", err); showMessage("Ocorreu um erro ao rejeitar a submissão."); }
         }
 
-        // --- INÍCIO: FUNÇÕES PARA MEMBROS E CHAMADA (COM SISTEMA DE ALERTA DE FALTAS E RELATÓRIO) ---
+        // --- FUNÇÕES DE MEMBROS E CHAMADA ---
 
         const handleAddMember = async () => {
             const name = document.getElementById('new-member-name').value.trim();
@@ -1216,8 +1373,7 @@
                 showMessage("Nome e Função são campos obrigatórios.");
                 return;
             }
-             // Para cargos de diretoria, a unidade não é obrigatória.
-            if (!unitId && !LEADERSHIP_ROLES.includes(role)) {
+            if (!unitId && !LEADERSHIP_ROLES.includes(role) && role !== 'Desbravador') {
                 showMessage("Por favor, selecione uma unidade para este membro.");
                 return;
             }
@@ -1225,7 +1381,7 @@
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'members'), {
                     name,
-                    unitId: LEADERSHIP_ROLES.includes(role) ? null : unitId, // Salva null se for da direção
+                    unitId: LEADERSHIP_ROLES.includes(role) ? null : unitId,
                     role,
                     registeredAt: serverTimestamp()
                 });
@@ -1283,7 +1439,6 @@
             });
         }
 
-        // FUNÇÃO DE ANÁLISE DE FALTAS (para alertas na folha de chamada)
         function analyzeCounselorAbsences(counselorId, allAttendanceRecords, selectedDate) {
             const thirtyDaysAgo = new Date(selectedDate);
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -1322,7 +1477,6 @@
             };
         }
 
-        // FOLHA DE PRESENÇA ATUALIZADA (para toda a liderança)
         async function renderAttendanceSheet(dateString) {
             const listContainer = document.getElementById('counselors-attendance-list');
             const saveBtn = document.getElementById('save-attendance-btn');
@@ -1395,7 +1549,6 @@
             saveBtn.classList.remove('hidden');
         }
 
-        // FUNÇÃO DE SALVAR CHAMADA ATUALIZADA
         async function handleSaveAttendance() {
             const dateString = document.getElementById('attendance-date').value;
             if (!dateString) {
@@ -1429,8 +1582,7 @@
                 showMessage("Ocorreu um erro ao salvar o registo de presença.");
             }
         }
-
-        // --- NOVA FUNÇÃO PARA GERAR O RELATÓRIO DE FALTAS ---
+        
         async function generateLeadershipAbsenceReport() {
             const startDateEl = document.getElementById('report-start-date');
             const endDateEl = document.getElementById('report-end-date');
@@ -1488,7 +1640,7 @@
                         absences,
                         absencePercentage
                     };
-                }).sort((a, b) => b.absencePercentage - a.absencePercentage); // Ordena por maior % de faltas
+                }).sort((a, b) => b.absencePercentage - a.absencePercentage);
 
                 if (reportData.length === 0) {
                      reportContainer.innerHTML = '<p class="text-slate-500 text-center p-4">Nenhum membro da liderança cadastrado.</p>';
@@ -1527,7 +1679,7 @@
         }
 
 
-        // --- FIM: NOVAS FUNÇÕES ---
+        // --- FIM: FUNÇÕES ATUALIZADAS ---
 
         function setupAuthFormListeners() {
             const authForm = document.getElementById('auth-form'), emailIn = document.getElementById('email'), passIn = document.getElementById('password'), loginBtn = document.getElementById('login-btn'), regBtn = document.getElementById('register-btn'), logoutBtn = document.getElementById('logout-btn');
@@ -1597,7 +1749,7 @@
         }
 
         function switchTab(targetTabId) {
-            document.getElementById('main-nav').classList.remove('hidden'); // Garante que a nav principal está visível
+            document.getElementById('main-nav').classList.remove('hidden');
             document.querySelectorAll('.tab-button').forEach(t => t.classList.toggle('active', t.dataset.tab === targetTabId));
             document.querySelectorAll('.content-section').forEach(s => s.classList.toggle('active', s.id === targetTabId));
 
@@ -1617,18 +1769,23 @@
                 firebaseApp = initializeApp(firebaseConfig); db = getFirestore(firebaseApp); auth = getAuth(firebaseApp);
                 if (loadingOverlay) loadingOverlay.classList.add('hidden');
                 setupAuthFormListeners();
+                
+                // --- onAuthStateChanged ATUALIZADO ---
                 onAuthStateChanged(auth, async (user) => {
                     const authSect = document.getElementById('auth-section'), mainContent = document.getElementById('main-app-content'), userP = document.getElementById('user-info'), logoutB = document.getElementById('logout-btn'), notifBell = document.getElementById('notifications-bell-container');
                     cleanupListeners();
                     if (user) {
                         currentUser = user;
-                        const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid); const userDocSnap = await getDoc(userDocRef);
+                        const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid); 
+                        const userDocSnap = await getDoc(userDocRef);
+                        
                         if (!userDocSnap.exists()) {
-                            userRole = 'viewer'; // Novo usuário começa como 'viewer'
-                            await setDoc(userDocRef, { role: userRole, uid: user.uid, email: user.email || '', createdAt: serverTimestamp() });
+                            userData = { role: 'viewer', uid: user.uid, email: user.email || '', linkedUnitId: null };
+                            await setDoc(userDocRef, { ...userData, createdAt: serverTimestamp() });
                         } else {
-                            userRole = userDocSnap.data().role;
+                            userData = userDocSnap.data();
                         }
+                        userRole = userData.role;
 
                         let welcomeMessage = "Olá!";
                         if (userRole === 'secretary') welcomeMessage = 'Olá, Secretário(a)';
@@ -1641,7 +1798,7 @@
                         if (authSect) authSect.classList.add('hidden'); if (mainContent) mainContent.classList.remove('hidden');
                         initAppContent();
                     } else {
-                        currentUser = null; userRole = null;
+                        currentUser = null; userRole = null; userData = {};
                         if (userP) userP.textContent = 'Carregando...';
                         if (logoutB) logoutB.classList.add('hidden');
                         if (notifBell) notifBell.classList.add('hidden');
@@ -1656,10 +1813,10 @@
             if (gestaoTabBtn) gestaoTabBtn.classList.toggle('hidden', userRole === 'viewer');
 
             // Listeners de dados
-            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'), s => { currentUnits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0)); renderDashboard(); if (isActiveTabSecretary()) { updateUnitsTable(); updateAwardAchievementDropdowns(); updateMembersTable(); } if (isActiveTabLeader()) populateLeaderUnitSelect(); }));
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'units'), s => { currentUnits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0)); renderDashboard(); if (isActiveTabSecretary()) { updateUnitsTable(); updateAwardAchievementDropdowns(); updateMembersTable(); } if (isActiveTabLeader() && userData.linkedUnitId) { renderUnitLeaderDashboard(); } }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), s => { currentActivities = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) updateActivitiesTable(); if (isActiveTabLeader()) populateLeaderActivitySelect(); }));
-            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), s => { currentSubmissions = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0)); renderDashboard(); if (isActiveTabSecretary()) updateSubmissionsTables(); if (isActiveTabLeader()) updateLeaderSubmissionsList(document.getElementById('unit-select-leader')?.value); }));
-            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), s => { currentDemerits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0)); if (isActiveTabSecretary()) updateDemeritsTable(); }));
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), s => { currentSubmissions = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0)); renderDashboard(); if (isActiveTabSecretary()) updateSubmissionsTables(); if (isActiveTabLeader() && userData.linkedUnitId) { updateLeaderSubmissionsList(userData.linkedUnitId); } }));
+            unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'demerits'), s => { currentDemerits = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.appliedAt?.toDate() || 0) - (a.appliedAt?.toDate() || 0)); if (isActiveTabSecretary()) { updateDemeritsTable(); } if (isActiveTabLeader() && userData.linkedUnitId) { updateLeaderDemeritsList(userData.linkedUnitId); } }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'users'), s => { currentUsers = s.docs.map(d => ({ id: d.id, ...d.data() })); if (isActiveTabSecretary()) updateUsersTable(); }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'achievements'), s => { currentAchievementDefs = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.name.localeCompare(b.name)); if (isActiveTabSecretary()) { updateAchievementDefsTable(); updateAwardAchievementDropdowns(); } }));
             unsubscribers.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'awarded_achievements'), s => { currentAwardedAchievements = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.awardedAt?.toDate() || 0) - (a.awardedAt?.toDate() || 0)); if (document.getElementById('conquistas')?.classList.contains('active')) renderAchievementsTab(); }));
@@ -1687,11 +1844,6 @@
 
         function isActiveTabSecretary() { return document.getElementById('gestao')?.classList.contains('active') && userRole === 'secretary'; }
         function isActiveTabLeader() { return document.getElementById('gestao')?.classList.contains('active') && userRole === 'leader'; }
-
-        function populateLeaderUnitSelect() {
-            const unitSL = document.getElementById('unit-select-leader'), noUnitsMsgL = document.getElementById('no-units-message-leader');
-            if (unitSL) { unitSL.innerHTML = currentUnits.length > 0 ? '<option value="">Selecione sua unidade</option>' + currentUnits.map(u => `<option value="${u.id}">${u.name}</option>`).join('') : '<option value="">Nenhuma unidade cadastrada</option>'; if (noUnitsMsgL) noUnitsMsgL.classList.toggle('hidden', currentUnits.length > 0); }
-        }
 
         function populateLeaderActivitySelect() {
             const actSL = document.getElementById('activity-select-leader'), noActsMsgL = document.getElementById('no-activities-message-leader');
